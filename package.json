@@ -1,0 +1,25 @@
+{
+  "name": "ppspider",
+  "author": "xiyuan_fengyu <xiyuan_fengyu@163.com> (https://github.com/xiyuan-fengyu)",
+  "version": "0.1.0",
+  "description": "spider build with puppeteer",
+  "main": "./lib/index.js",
+  "types": "./lib/index.d.ts",
+  "scripts": {
+    "auto build": "tsc"
+  },
+  "keywords": [
+    "spider"
+  ],
+  "dependencies": {
+    "later": "^1.2.0",
+    "puppeteer": "^1.2.0",
+    "request": "^2.85.0",
+    "typescript": "^2.7.2"
+  },
+  "devDependencies": {
+    "@types/node": "^9.4.7",
+    "@types/puppeteer": "^1.2.0",
+    "@types/jquery": "^3.3.1"
+  }
+}
