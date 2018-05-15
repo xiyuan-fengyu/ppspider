@@ -1,4 +1,4 @@
-import {AddToQueueConfig} from "../data/Types";
+import {AddToQueueConfig, AddToQueueInfo} from "../data/Types";
 import {instanceofJob, Job} from "../job/Job";
 import {queueManager} from "../manager/QueueManager";
 
@@ -58,17 +58,18 @@ export function AddToQueue(queueConfigs: AddToQueueConfig | AddToQueueConfig[]) 
                 }
             }
 
-            const addToQueueDatas = [];
+            const addToQueueDatas: AddToQueueInfo[] = [];
             if (res && res.constructor == Object) {
                 // 多个队列
-                for (let queueName of res) {
+                for (let queueName in res) {
                     const queueConfig = getAddToQueueConfig(queueConfigs, queueName);
                     if (queueConfig) {
                         addToQueueDatas.push({
                             queueName: queueConfig.name,
-                            jobs: res,
+                            jobs: res[queueName],
                             queueType: queueConfig.queueType,
-                            filterType: queueConfig.filterType
+                            filterType: queueConfig.filterType,
+                            keyOverride: queueConfig.keyOverride
                         });
                     }
                 }
@@ -81,7 +82,8 @@ export function AddToQueue(queueConfigs: AddToQueueConfig | AddToQueueConfig[]) 
                         queueName: queueConfig.name,
                         jobs: res,
                         queueType: queueConfig.queueType,
-                        filterType: queueConfig.filterType
+                        filterType: queueConfig.filterType,
+                        keyOverride: queueConfig.keyOverride
                     });
                 }
             }

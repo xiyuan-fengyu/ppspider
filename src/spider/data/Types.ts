@@ -52,10 +52,13 @@ export type AddToQueueData = Promise<CanCastToJob | {
     [queueName: string]: CanCastToJob
 }>
 
+export type JobKeyOverride = (job: Job) => string;
+
 export type AddToQueueConfig = {
     name: string;
     queueType?: QueueClass;
     filterType?: FilterClass;
+    keyOverride?: JobKeyOverride;
 }
 
 export type AddToQueueInfo = {
@@ -64,6 +67,7 @@ export type AddToQueueInfo = {
     queueType: QueueClass;
     filterType: FilterClass;
     other?: any;
+    keyOverride?: JobKeyOverride;
 };
 
 export type AddToQueueInfos = AddToQueueInfo | AddToQueueInfo[];

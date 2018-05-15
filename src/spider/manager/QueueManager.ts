@@ -1,7 +1,7 @@
 import {
     AddToQueueInfo,
     AddToQueueInfos, FromQueueConfig,
-    JobConfig,
+    JobConfig, JobKeyOverride,
     OnStartConfig, OnTimeConfig,
     Queues,
     WorkerFactoryMap
@@ -94,11 +94,11 @@ export class QueueManager {
 
                 const jobs = jobInfo.jobs;
                 if (jobs.constructor == String || instanceofJob(jobs)) {
-                    QueueManager.addJobToQueue(jobs, parent, queueName, queue, filter, jobInfo.other);
+                    QueueManager.addJobToQueue(jobs, parent, queueName, queue, filter, jobInfo.other, jobInfo.keyOverride);
                 }
                 else if (jobs.constructor == Array) {
                     for (let job of jobs) {
-                        QueueManager.addJobToQueue(job, parent, queueName, queue, filter, jobInfo.other);
+                        QueueManager.addJobToQueue(job, parent, queueName, queue, filter, jobInfo.other, jobInfo.keyOverride);
                     }
                 }
             }
@@ -145,8 +145,11 @@ export class QueueManager {
         this.addQueueConfig(config.name, config);
     }
 
-    private static addJobToQueue(jobOrUrl: any, parent: Job, queueName: string, queue: Queue, filter: Filter, other?: any) {
+    private static addJobToQueue(jobOrUrl: any, parent: Job, queueName: string, queue: Queue, filter: Filter, other?: any, keyOverride?: JobKeyOverride) {
         const job = instanceofJob(jobOrUrl) ? jobOrUrl as Job : new DefaultJob(jobOrUrl);
+
+        // 重写 key
+        if (keyOverride) job.key = (key?: string) => keyOverride(job);
 
         // 添加额外信息
         if (other) {
@@ -231,7 +234,7 @@ export class QueueManager {
                                 else {
                                     job.status(JobStatus.Retry);
                                 }
-                                console.log(e.message);
+                                console.log(e.stack);
                             }
                             return worker;
                         }).then(async worker => {
