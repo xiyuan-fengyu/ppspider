@@ -1,5 +1,5 @@
 import {launch} from "puppeteer";
-import {JqueryUtil} from "../spider/jquery/JqueryUtil";
+import {PuppeteerUtil} from "../spider/util/PuppeteerUtil";
 
 (async() => {
 
@@ -12,7 +12,8 @@ import {JqueryUtil} from "../spider/jquery/JqueryUtil";
         width: 1920,
         height: 1080
     });
+    await PuppeteerUtil.setImgLoad(page, false);
     await page.goto("http://www.baidu.com");
-    await JqueryUtil.addToPage(page);
+    await PuppeteerUtil.addJquery(page);
 
 })();
