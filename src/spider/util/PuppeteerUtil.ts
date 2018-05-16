@@ -2,7 +2,8 @@ import {DownloadUtil} from "../../common/util/DownloadUtil";
 import * as os from "os";
 import {Page} from "puppeteer";
 
-const requestInterception_imgLoad = "requestListener_imgLoad";
+const kRequestInterceptionNum = "_requestInterceptionNum";
+const kRequestInterception_ImgLoad = "_requestListener_imgLoad";
 
 export class PuppeteerUtil {
 
@@ -19,16 +20,23 @@ export class PuppeteerUtil {
         });
     }
 
+    private static async requestInterceptionNumDelta(page: Page, delta: number) {
+        let requestInterceptionNum = (page[kRequestInterceptionNum] || 0) + delta;
+        if (requestInterceptionNum < 0) requestInterceptionNum = 0;
+        page[kRequestInterceptionNum] = requestInterceptionNum;
+        await page.setRequestInterception(requestInterceptionNum > 0);
+    }
+
     static async setImgLoad(page: Page, enable: boolean) {
-        await page.setRequestInterception(true);
+        await this.requestInterceptionNumDelta(page, enable ? -1 : 1);
         if (enable) {
-            if (page[requestInterception_imgLoad]) {
-                page.removeListener("request", page[requestInterception_imgLoad]);
+            if (page[kRequestInterception_ImgLoad]) {
+                page.removeListener("request", page[kRequestInterception_ImgLoad]);
             }
         }
         else {
-            if (!page[requestInterception_imgLoad]) {
-                page[requestInterception_imgLoad] = async request => {
+            if (!page[kRequestInterception_ImgLoad]) {
+                page[kRequestInterception_ImgLoad] = async request => {
                     const interceptionHandled = request["_interceptionHandled"];
                     if (!interceptionHandled) {
                         if (request.resourceType() == "image") {
@@ -42,7 +50,7 @@ export class PuppeteerUtil {
                     }
                 };
             }
-            page.on("request", page[requestInterception_imgLoad]);
+            page.on("request", page[kRequestInterception_ImgLoad]);
         }
     }
 

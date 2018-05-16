@@ -15,5 +15,5 @@ import {PuppeteerUtil} from "../spider/util/PuppeteerUtil";
     await PuppeteerUtil.setImgLoad(page, false);
     await page.goto("http://www.baidu.com");
     await PuppeteerUtil.addJquery(page);
-
+    // await PuppeteerUtil.setImgLoad(page, true);
 })();
