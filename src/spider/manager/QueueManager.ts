@@ -1,7 +1,7 @@
 import {
     AddToQueueInfo,
     AddToQueueInfos, FromQueueConfig,
-    JobConfig, JobKeyOverride,
+    JobConfig, JobOverrideConfigs, JobOverrideConfig,
     OnStartConfig, OnTimeConfig,
     Queues,
     WorkerFactoryMap
@@ -20,7 +20,13 @@ export class QueueManager {
 
     private readonly queues: Queues = {};
 
+    private jobOverrideConfigs: JobOverrideConfigs = {};
+
     private dispatchQueueIndex = 0;
+
+    addJobOverrideConfig(queueName: string, jobOverrideConfig: JobOverrideConfig) {
+        this.jobOverrideConfigs[queueName] = jobOverrideConfig;
+    }
 
     addQueueConfig(queueName: string, config: JobConfig): string {
         if (!queueName) {
@@ -94,11 +100,11 @@ export class QueueManager {
 
                 const jobs = jobInfo.jobs;
                 if (jobs.constructor == String || instanceofJob(jobs)) {
-                    QueueManager.addJobToQueue(jobs, parent, queueName, queue, filter, jobInfo.other, jobInfo.keyOverride);
+                    QueueManager.addJobToQueue(jobs, parent, queueName, queue, filter, jobInfo.other, this.jobOverrideConfigs[queueName]);
                 }
                 else if (jobs.constructor == Array) {
                     for (let job of jobs) {
-                        QueueManager.addJobToQueue(job, parent, queueName, queue, filter, jobInfo.other, jobInfo.keyOverride);
+                        QueueManager.addJobToQueue(job, parent, queueName, queue, filter, jobInfo.other, this.jobOverrideConfigs[queueName]);
                     }
                 }
             }
@@ -145,11 +151,11 @@ export class QueueManager {
         this.addQueueConfig(config.name, config);
     }
 
-    private static addJobToQueue(jobOrUrl: any, parent: Job, queueName: string, queue: Queue, filter: Filter, other?: any, keyOverride?: JobKeyOverride) {
+    private static addJobToQueue(jobOrUrl: any, parent: Job, queueName: string, queue: Queue, filter: Filter, other?: any, jobOverrideConfig?: JobOverrideConfig) {
         const job = instanceofJob(jobOrUrl) ? jobOrUrl as Job : new DefaultJob(jobOrUrl);
 
-        // 重写 key
-        if (keyOverride) job.key = (key?: string) => keyOverride(job);
+        // 重写 job 的一些信息
+        if (jobOverrideConfig) jobOverrideConfig.method.call(jobOverrideConfig.target, job);
 
         // 添加额外信息
         if (other) {

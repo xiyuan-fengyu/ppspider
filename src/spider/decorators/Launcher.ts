@@ -1,14 +1,11 @@
 import {Looper, LooperTask} from "./LooperTask";
-import {WorkerFactory} from "../worker/WorkerFactory";
 import {queueManager} from "../manager/QueueManager";
-import {WorkerFactoryMap} from "../data/Types";
+import {AppInfo, WorkerFactoryMap} from "../data/Types";
 
 const mainLooper = new Looper();
 
-export function Launcher(appInfo: {
-    tasks: any[],
-    workerFactorys: WorkerFactory<any>[]
-}) {
+export function Launcher(appInfo: AppInfo) {
+
     const workerFactoryMap: WorkerFactoryMap = {};
     for (let workerFactory of appInfo.workerFactorys) {
         workerFactoryMap[(workerFactory as any).constructor.name] = workerFactory;

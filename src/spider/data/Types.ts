@@ -46,19 +46,25 @@ export type FromQueueConfig = {
 
 export type JobConfig =  OnStartConfig | OnTimeConfig | FromQueueConfig;
 
+export type JobOverrideConfig = {
+    target: any;
+    method: (job: Job) => void;
+}
+
+export type JobOverrideConfigs = {
+    [queueName: string]: JobOverrideConfig
+}
+
 export type CanCastToJob = string | string[] | Job | Job[];
 
 export type AddToQueueData = Promise<CanCastToJob | {
     [queueName: string]: CanCastToJob
 }>
 
-export type JobKeyOverride = (job: Job) => string;
-
 export type AddToQueueConfig = {
     name: string;
     queueType?: QueueClass;
     filterType?: FilterClass;
-    keyOverride?: JobKeyOverride;
 }
 
 export type AddToQueueInfo = {
@@ -67,7 +73,6 @@ export type AddToQueueInfo = {
     queueType: QueueClass;
     filterType: FilterClass;
     other?: any;
-    keyOverride?: JobKeyOverride;
 };
 
 export type AddToQueueInfos = AddToQueueInfo | AddToQueueInfo[];
@@ -84,4 +89,9 @@ export type Queues = {
 
 export type WorkerFactoryMap = {
     [typeName: string]: WorkerFactory<any>
+}
+
+export type AppInfo = {
+    tasks: any[],
+    workerFactorys: WorkerFactory<any>[]
 }

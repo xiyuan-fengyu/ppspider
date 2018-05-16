@@ -68,8 +68,7 @@ export function AddToQueue(queueConfigs: AddToQueueConfig | AddToQueueConfig[]) 
                             queueName: queueConfig.name,
                             jobs: res[queueName],
                             queueType: queueConfig.queueType,
-                            filterType: queueConfig.filterType,
-                            keyOverride: queueConfig.keyOverride
+                            filterType: queueConfig.filterType
                         });
                     }
                 }
@@ -82,8 +81,7 @@ export function AddToQueue(queueConfigs: AddToQueueConfig | AddToQueueConfig[]) 
                         queueName: queueConfig.name,
                         jobs: res,
                         queueType: queueConfig.queueType,
-                        filterType: queueConfig.filterType,
-                        keyOverride: queueConfig.keyOverride
+                        filterType: queueConfig.filterType
                     });
                 }
             }

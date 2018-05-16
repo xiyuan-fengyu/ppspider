@@ -5,17 +5,23 @@ import {Job} from "../../spider/job/Job";
 import {OnStart} from "../../spider/decorators/OnStart";
 import {AddToQueueData} from "../../spider/data/Types";
 import {FromQueue} from "../../spider/decorators/FromQueue";
+import {JobOverride} from "../../spider/decorators/JobOverride";
 
 const queue_qq = {
     name: "qq"
 };
 
 const queue_qq_song = {
-    name: "qq_song",
-    keyOverride: job => (job.url().match("https://y.qq.com/n/yqq/song/(.*?)\\.html.*") || ["", ""])[1]
+    name: "qq_song"
 };
 
 export class QqMusicTask {
+
+    @JobOverride("qq_song")
+    qqSongJobOverride(job: Job) {
+        const match = job.url().match("https://y.qq.com/n/yqq/song/(.*?)\\.html.*");
+        if (match) job.key(match[1]);
+    }
 
     @OnStart({
         urls: "https://y.qq.com/",
@@ -58,9 +64,7 @@ export class QqMusicTask {
         queue_qq_song
     ])
     async roaming(page: Page, job: Job): AddToQueueData {
-        if (job.url().startsWith("https://y.qq.com/n/yqq/song/")) {
-            console.log(job.key() + "    " + job.url());
-        }
+        console.log(job.key() + "    " + job.url());
 
         await page.goto(job.url());
         const info = await page.$$eval("a", as => {
