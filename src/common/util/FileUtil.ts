@@ -34,12 +34,12 @@ export class FileUtil {
         else return "";
     }
 
-    static write(pathStr: string, content: any, charset: string = "utf-8"): boolean {
+    static write(pathStr: string, content: any, charset?: string): boolean {
         try {
             if (this.mkdirs(this.parent(pathStr))) {
-                fs.writeFileSync(pathStr, content, {
+                fs.writeFileSync(pathStr, content, charset ? {
                     encoding: charset
-                });
+                } : null);
                 return true;
             }
         }

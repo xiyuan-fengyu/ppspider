@@ -51,6 +51,13 @@ export class PuppeteerUtil {
         });
     }
 
+    static jsonInJsonp(jsonp: string): string {
+        if (!jsonp) return "";
+        const lIndex = jsonp.indexOf("({");
+        const rIndex = jsonp.lastIndexOf("})");
+        return lIndex > -1 && rIndex > -1 ? jsonp.substring(lIndex + 1, rIndex + 1) : "";
+    }
+
     private static async requestInterceptionNumDelta(page: Page, delta: number) {
         let requestInterceptionNum = (page[kRequestInterceptionNum] || 0) + delta;
         if (requestInterceptionNum < 0) requestInterceptionNum = 0;
