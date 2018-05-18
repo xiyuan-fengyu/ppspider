@@ -21,6 +21,8 @@ const queue_qq_song = {
 export class QqMusicTask {
 
     @JobOverride("qq_song")
+    @JobOverride("OnStart_QqMusicTask_index")
+    @JobOverride("OnStart_QqMusicTask_song")
     qqSongJobOverride(job: Job) {
         const match = job.url().match("https://y.qq.com/n/yqq/song/(.*?)\\.html.*");
         if (match) job.key(match[1]);
@@ -33,7 +35,8 @@ export class QqMusicTask {
     @FromQueue({
         name: "qq",
         workerFactory: PuppeteerWorkerFactory,
-        parallel: 1
+        parallel: 1,
+        exeInterval: 5000
     })
     @AddToQueue([
         queue_qq,
@@ -49,6 +52,11 @@ export class QqMusicTask {
         };
     }
 
+
+    // @OnStart({
+    //     urls: "https://y.qq.com/n/yqq/song/000js1DS4QfOr9.html",
+    //     workerFactory: PuppeteerWorkerFactory
+    // })
     @FromQueue({
         name: "qq_song",
         workerFactory: PuppeteerWorkerFactory,
@@ -58,7 +66,7 @@ export class QqMusicTask {
         queue_qq,
         queue_qq_song
     ])
-    async roaming(page: Page, job: Job): AddToQueueData {
+    async song(page: Page, job: Job): AddToQueueData {
         console.log(job.key() + "    " + job.url());
 
         const songId = job.key();
@@ -96,7 +104,34 @@ export class QqMusicTask {
             }, 2);
 
         await page.goto(job.url());
+        // 等待基本信息和第一页的评论抓取完成
         await PromiseUtil.waitPromises([songRes, albumRes, lyricRes, commentRes]);
+
+        if (await PuppeteerUtil.count(page, ".mod_page_nav.js_pager_comment") > 0) {
+            // 有多页评论，等待分页控件加载完毕
+            await page.waitForSelector(".mod_page_nav.js_pager_comment .current", {
+                timeout: 10000
+            });
+
+            // 抓取前10页的评论
+            let nextCommentPageNum = 2;
+            while (nextCommentPageNum <= 10) {
+                const selector = `a.js_pageindex[data-index='${nextCommentPageNum}']`;
+                const nexPageBtnCount = await PuppeteerUtil.count(page, selector);
+                if (nexPageBtnCount) {
+                    const nextCommentPageRes = PuppeteerUtil.onceResponse(page,
+                        "https://c.y.qq.com/base/fcgi-bin/fcg_global_comment_h5.fcg\\?.*", async response => {
+                            const text = await response.text();
+                            const pageNum = response.url().match(".*&pagenum=(\\d+).*")[1];
+                            FileUtil.write(__dirname + "/" + songId + "/comment_" + pageNum + ".json", JSON.stringify(PuppeteerUtil.jsonp(text)));
+                        });
+                    page.tap(selector);
+                    await nextCommentPageRes;
+                }
+                else break;
+                nextCommentPageNum++;
+            }
+        }
 
         const hrefs = await PuppeteerUtil.links(page, ["https://y.qq.com/n/yqq/song/.*", "https://y.qq.com/.*"]);
         return {

@@ -99,12 +99,14 @@ export class QueueManager {
                 }
 
                 const jobs = jobInfo.jobs;
-                if (jobs.constructor == String || instanceofJob(jobs)) {
-                    QueueManager.addJobToQueue(jobs, parent, queueName, queue, filter, jobInfo.other, this.jobOverrideConfigs[queueName]);
-                }
-                else if (jobs.constructor == Array) {
-                    for (let job of jobs) {
-                        QueueManager.addJobToQueue(job, parent, queueName, queue, filter, jobInfo.other, this.jobOverrideConfigs[queueName]);
+                if (jobs) {
+                    if (jobs.constructor == String || instanceofJob(jobs)) {
+                        QueueManager.addJobToQueue(jobs, parent, queueName, queue, filter, jobInfo.other, this.jobOverrideConfigs[queueName]);
+                    }
+                    else if (jobs.constructor == Array) {
+                        for (let job of jobs) {
+                            QueueManager.addJobToQueue(job, parent, queueName, queue, filter, jobInfo.other, this.jobOverrideConfigs[queueName]);
+                        }
                     }
                 }
             }

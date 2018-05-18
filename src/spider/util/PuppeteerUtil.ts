@@ -136,12 +136,18 @@ export class PuppeteerUtil {
     private static initResponseListener(page: Page) {
         let responseListener: ResponseListener = page[kResponseListener];
         if (!responseListener) {
-            page[kResponseListener] = responseListener = (response: Response) => {
+            page[kResponseListener] = responseListener = async (response: Response) => {
                 let responseCheckUrls: ResponseCheckUrlInfo[] = page[kResponseCheckUrls] || [];
                 const removes = [];
                 for (let responseCheckUrl of responseCheckUrls) {
                     if (response.url().match(responseCheckUrl.url) || response.url() === responseCheckUrl.url) {
-                        responseCheckUrl.listener(response);
+                        try {
+                            await responseCheckUrl.listener(response);
+                        }
+                        catch (e) {
+                            console.warn(e);
+                        }
+
                         responseCheckUrl.fireInfo.cur++;
                         if (responseCheckUrl.fireInfo.max > 0 && responseCheckUrl.fireInfo.cur >= responseCheckUrl.fireInfo.max) {
                             removes.push(responseCheckUrl);
@@ -363,6 +369,14 @@ export class PuppeteerUtil {
             }
         }
         return matchHrefs;
+    }
+
+    static async count(page: Page, selector: string): Promise<number> {
+        return await page.evaluate(selector => {
+            const doms = document.querySelectorAll(selector);
+            if (doms) return doms.length;
+            else return 0;
+        }, selector);
     }
 
 }
