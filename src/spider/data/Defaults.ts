@@ -5,4 +5,8 @@ export class Defaults {
 
     static maxTry = 3;
 
+    static responseTimeout = 30000;
+
+    static responseTimeoutMin = 1000;
+
 }

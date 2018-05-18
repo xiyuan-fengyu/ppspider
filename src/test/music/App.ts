@@ -8,7 +8,8 @@ import {QqMusicTask} from "./QqMusicTask";
     ],
     workerFactorys: [
         new PuppeteerWorkerFactory({
-            headless: false
+            headless: false,
+            devtools: true
         })
     ]
 })
