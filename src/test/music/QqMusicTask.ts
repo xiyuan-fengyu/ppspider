@@ -7,6 +7,8 @@ import {AddToQueueData} from "../../spider/data/Types";
 import {FromQueue} from "../../spider/decorators/FromQueue";
 import {JobOverride} from "../../spider/decorators/JobOverride";
 import {PuppeteerUtil} from "../../spider/util/PuppeteerUtil";
+import {FileUtil} from "../../common/util/FileUtil";
+import {PromiseUtil} from "../../common/util/PromiseUtil";
 
 const queue_qq = {
     name: "qq"
@@ -38,21 +40,13 @@ export class QqMusicTask {
         queue_qq_song
     ])
     async index(page: Page, job: Job): AddToQueueData {
+        await PuppeteerUtil.setImgLoad(page, false);
         await page.goto(job.url());
-        return await page.$$eval("a", as => {
-            const hrefs = {
-                qq: [],
-                qq_song: []
-            };
-            as.forEach(a => {
-                const href = (a as any).href;
-                if (href.startsWith("https://y.qq.com")) {
-                    if (href.substr(16, 12) == "/n/yqq/song/") hrefs.qq_song.push(href);
-                    else hrefs.qq.push(href);
-                }
-            });
-            return hrefs;
-        });
+        const hrefs = await PuppeteerUtil.links(page, ["https://y.qq.com/n/yqq/song/.*", "https://y.qq.com/.*"]);
+        return {
+            "qq_song": hrefs[0],
+            "qq": hrefs[1]
+        };
     }
 
     @FromQueue({
@@ -67,29 +61,48 @@ export class QqMusicTask {
     async roaming(page: Page, job: Job): AddToQueueData {
         console.log(job.key() + "    " + job.url());
 
-        await PuppeteerUtil.defaultViewPort(page);
+        const songId = job.key();
+
         await PuppeteerUtil.setImgLoad(page, false);
 
-        await page.goto(job.url());
-        const info = await page.$$eval("a", as => {
-            const info: any = {};
-
-            const hrefs = {
-                qq: [],
-                qq_song: []
-            };
-            as.forEach(a => {
-                const href = (a as any).href;
-                if (href.startsWith("https://y.qq.com")) {
-                    if (href.substr(16, 12) == "/n/yqq/song/") hrefs.qq_song.push(href);
-                    else hrefs.qq.push(href);
-                }
+        const songRes = PuppeteerUtil.onceResponse(page,
+            "https://c.y.qq.com/v8/fcg-bin/fcg_play_single_song.fcg\\?.*", async response => {
+                const text = await response.text();
+                FileUtil.write(__dirname + "/" + songId + "/song.json", JSON.stringify(PuppeteerUtil.jsonp(text)));
             });
-            info.hrefs = hrefs;
 
-            return info;
-        });
-        return info.hrefs;
+        const albumRes = PuppeteerUtil.onceResponse(page,
+            "https://c.y.qq.com/v8/fcg-bin/fcg_v8_album_info_cp.fcg\\?.*", async response => {
+                const text = await response.text();
+                FileUtil.write(__dirname + "/" + songId + "/album.json", JSON.stringify(PuppeteerUtil.jsonp(text)));
+            });
+
+        const lyricRes = PuppeteerUtil.onceResponse(page,
+            "https://c.y.qq.com/lyric/fcgi-bin/fcg_query_lyric.fcg\\?.*", async response => {
+                const text = await response.text();
+                FileUtil.write(__dirname + "/" + songId + "/lyric.json", JSON.stringify(PuppeteerUtil.jsonp(text)));
+            });
+
+        const commentRes = PuppeteerUtil.onResponse(page,
+            "https://c.y.qq.com/base/fcgi-bin/fcg_global_comment_h5.fcg\\?.*", async response => {
+                const text = await response.text();
+                const json = PuppeteerUtil.jsonp(text);
+                if (json.hasOwnProperty("commenttotal")) {
+                    FileUtil.write(__dirname + "/" + songId + "/comment_total.json", JSON.stringify(json));
+                }
+                else {
+                    FileUtil.write(__dirname + "/" + songId + "/comment_0.json", JSON.stringify(json));
+                }
+            }, 2);
+
+        await page.goto(job.url());
+        await PromiseUtil.waitPromises([songRes, albumRes, lyricRes, commentRes]);
+
+        const hrefs = await PuppeteerUtil.links(page, ["https://y.qq.com/n/yqq/song/.*", "https://y.qq.com/.*"]);
+        return {
+            "qq_song": hrefs[0],
+            "qq": hrefs[1]
+        };
     }
 
 }
