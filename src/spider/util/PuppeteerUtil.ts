@@ -1,9 +1,10 @@
 import {DownloadUtil} from "../../common/util/DownloadUtil";
 import * as os from "os";
-import {Page, Request, Response, Viewport} from "puppeteer";
+import {Page, Request, Response} from "puppeteer";
 import {FileUtil} from "../../common/util/FileUtil";
 import * as fs from "fs";
 import {Defaults} from "../data/Defaults";
+import {LinkPredictType} from "../data/Types";
 
 export type ResponseListener = (response: Response) => any;
 
@@ -76,6 +77,7 @@ export class PuppeteerUtil {
         });
     }
 
+    // noinspection JSUnusedGlobalSymbols
     static jsonp(jsonp: string): any {
         let index;
         if (jsonp == null || (index = jsonp.indexOf('(')) == -1) return {};
@@ -328,6 +330,39 @@ export class PuppeteerUtil {
                 });
             }
         });
+    }
+
+    static async links(page: Page, predicts: LinkPredictType[], addToFirstMatch: boolean = true) {
+        if (predicts == null || predicts.length == 0) return [];
+        const hrefs = await page.evaluate(() => {
+            const hrefs = {};
+            document.querySelectorAll("a").forEach(a => {
+                hrefs[a.href] = true;
+            });
+            return hrefs;
+        });
+        const matchHrefs = new Array<string[]>(predicts.length);
+        for (let href in hrefs) {
+            if (hrefs.hasOwnProperty(href)) {
+                for (let i = 0; i < predicts.length; i++) {
+                    let predict = predicts[i];
+                    let predictHrefs = matchHrefs[i];
+                    if (!predictHrefs) matchHrefs[i] = predictHrefs = [];
+                    let match = false;
+                    if (typeof predict == 'function') {
+                        if (predict(href)) match = true;
+                    }
+                    else {
+                        if (href.match(predict.toString())) match = true;
+                    }
+                    if (match) {
+                        predictHrefs.push(href);
+                        if (addToFirstMatch) break;
+                    }
+                }
+            }
+        }
+        return matchHrefs;
     }
 
 }

@@ -43,6 +43,15 @@ import {FileUtil} from "../common/util/FileUtil";
     // await checkRes.then(res => console.log(res));
 
 
+    // 图片下载
+    // await page.goto("https://y.qq.com/n/yqq/song/003LxmX246aRC7.html");
     // const downloadImgRes = await PuppeteerUtil.downloadImg(page, "body > div.main > div.mod_data > span.data__cover > img", __dirname);
+
+
+    // 获取连接
+    // await page.goto("https://y.qq.com/n/yqq/song/003LxmX246aRC7.html");
+    // const hrefs = await PuppeteerUtil.links(page, ["https://y.qq.com/n/yqq/song/.*", "https://y.qq.com/.*"]);
+    // console.log(hrefs);
+
 
 })();

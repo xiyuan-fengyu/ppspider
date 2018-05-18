@@ -6,6 +6,7 @@ import {OnStart} from "../../spider/decorators/OnStart";
 import {AddToQueueData} from "../../spider/data/Types";
 import {FromQueue} from "../../spider/decorators/FromQueue";
 import {JobOverride} from "../../spider/decorators/JobOverride";
+import {PuppeteerUtil} from "../../spider/util/PuppeteerUtil";
 
 const queue_qq = {
     name: "qq"
@@ -66,8 +67,8 @@ export class QqMusicTask {
     async roaming(page: Page, job: Job): AddToQueueData {
         console.log(job.key() + "    " + job.url());
 
-        await page.setRequestInterception(true);
-
+        await PuppeteerUtil.defaultViewPort(page);
+        await PuppeteerUtil.setImgLoad(page, false);
 
         await page.goto(job.url());
         const info = await page.$$eval("a", as => {

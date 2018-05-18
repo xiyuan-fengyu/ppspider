@@ -95,3 +95,5 @@ export type AppInfo = {
     tasks: any[],
     workerFactorys: WorkerFactory<any>[]
 }
+
+export type LinkPredictType = string | RegExp | ((href: string) => boolean);
