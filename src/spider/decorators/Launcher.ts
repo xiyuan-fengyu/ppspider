@@ -4,8 +4,14 @@ import {AppInfo, WorkerFactoryMap} from "../data/Types";
 
 const mainLooper = new Looper();
 
-export function Launcher(appInfo: AppInfo) {
+const taskInstances: any = {};
+export function getTaskInstances(taskClass) {
+    const ins = taskInstances[taskClass.name];
+    if (ins) return ins;
+    else return taskInstances[taskClass.name] = new taskClass();
+}
 
+export function Launcher(appInfo: AppInfo) {
     const workerFactoryMap: WorkerFactoryMap = {};
     for (let workerFactory of appInfo.workerFactorys) {
         workerFactoryMap[(workerFactory as any).constructor.name] = workerFactory;
