@@ -6,20 +6,25 @@
   "main": "./lib/index.js",
   "types": "./lib/index.d.ts",
   "scripts": {
-    "auto build": "tsc"
+    "auto build": "tsc",
+    "copy static fiels": "copyfiles -u 2 src/ui/web/* lib/ui"
   },
   "keywords": [
     "spider"
   ],
   "dependencies": {
+    "express": "^4.16.3",
     "later": "^1.2.0",
     "puppeteer": "^1.2.0",
     "request": "^2.85.0",
+    "socket.io": "^2.1.1",
     "typescript": "^2.7.2"
   },
   "devDependencies": {
+    "@types/jquery": "^3.3.1",
     "@types/node": "^9.4.7",
     "@types/puppeteer": "^1.2.0",
-    "@types/jquery": "^3.3.1"
+    "@types/express": "^4.11.1",
+    "copyfiles": "^2.0.0"
   }
 }

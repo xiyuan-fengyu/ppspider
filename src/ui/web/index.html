@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+    Welcome to ppspider WebUI !
+    <script src="https://cdn.bootcss.com/socket.io/2.1.0/socket.io.slim.js"></script>
+    <script>
+        const socket = io('http://localhost:9090');
+        socket.on('connect', data => {
+            socket.emit('clientMsg', { my: 'data' });
+        });
+        socket.on('SERVER_SHUTDOWN', data => {
+            console.log("SERVER_SHUTDOWN");
+            socket.disconnect();
+            socket.close();
+            socket.destroy();
+            console.log(socket);
+        });
+    </script>
+</body>
+</html>
