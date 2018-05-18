@@ -15,6 +15,4 @@ import {QqMusicTask} from "./QqMusicTask";
 })
 class App {
 
-    static path = __dirname;
-
 }
