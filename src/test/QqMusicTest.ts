@@ -16,7 +16,10 @@ import {FileUtil} from "../common/util/FileUtil";
 
     // 获取连接
     // await page.goto("https://y.qq.com/n/yqq/song/003LxmX246aRC7.html");
-    // const hrefs = await PuppeteerUtil.links(page, ["https://y.qq.com/n/yqq/song/.*", "https://y.qq.com/.*"]);
+    // const hrefs = await PuppeteerUtil.links(page, {
+    //     qq_song: "https://y.qq.com/n/yqq/song/.*",
+    //     qq: "https://y.qq.com/.*"
+    // });
     // console.log(hrefs);
 
 

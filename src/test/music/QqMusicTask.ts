@@ -47,11 +47,10 @@ export class QqMusicTask {
     async index(page: Page, job: Job): AddToQueueData {
         await PuppeteerUtil.setImgLoad(page, false);
         await page.goto(job.url());
-        const hrefs = await PuppeteerUtil.links(page, ["https://y.qq.com/n/yqq/song/.*", "https://y.qq.com/.*"]);
-        return {
-            "qq_song": hrefs[0],
-            "qq": hrefs[1]
-        };
+        return await PuppeteerUtil.links(page, {
+            qq_song: "https://y.qq.com/n/yqq/song/.*",
+            qq: "https://y.qq.com/.*"
+        });
     }
 
 
@@ -135,11 +134,10 @@ export class QqMusicTask {
             }
         }
 
-        const hrefs = await PuppeteerUtil.links(page, ["https://y.qq.com/n/yqq/song/.*", "https://y.qq.com/.*"]);
-        return {
-            "qq_song": hrefs[0],
-            "qq": hrefs[1]
-        };
+        return await PuppeteerUtil.links(page, {
+            qq_song: "https://y.qq.com/n/yqq/song/.*",
+            qq: "https://y.qq.com/.*"
+        });
     }
 
 }

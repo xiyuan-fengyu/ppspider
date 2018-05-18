@@ -338,8 +338,8 @@ export class PuppeteerUtil {
         });
     }
 
-    static async links(page: Page, predicts: LinkPredictType[], addToFirstMatch: boolean = true) {
-        if (predicts == null || predicts.length == 0) return [];
+    static async links(page: Page, predicts: {[groupName: string]: LinkPredictType}, onlyAddToFirstMatch: boolean = true) {
+        if (predicts == null || Object.keys(predicts).length == 0) return {};
         const hrefs = await page.evaluate(() => {
             const hrefs = {};
             document.querySelectorAll("a").forEach(a => {
@@ -347,14 +347,14 @@ export class PuppeteerUtil {
             });
             return hrefs;
         });
-        const matchHrefs = new Array<string[]>(predicts.length);
+        const matchHrefs: any = {};
         for (let href in hrefs) {
             if (hrefs.hasOwnProperty(href)) {
-                for (let i = 0; i < predicts.length; i++) {
-                    let predict = predicts[i];
-                    let predictHrefs = matchHrefs[i];
-                    if (!predictHrefs) matchHrefs[i] = predictHrefs = [];
+                for (let groupName in predicts) {
+                    let predictHrefs = matchHrefs[groupName];
+                    if (!predictHrefs) matchHrefs[groupName] = predictHrefs = [];
                     let match = false;
+                    const predict = predicts[groupName];
                     if (typeof predict == 'function') {
                         if (predict(href)) match = true;
                     }
@@ -363,7 +363,7 @@ export class PuppeteerUtil {
                     }
                     if (match) {
                         predictHrefs.push(href);
-                        if (addToFirstMatch) break;
+                        if (onlyAddToFirstMatch) break;
                     }
                 }
             }
