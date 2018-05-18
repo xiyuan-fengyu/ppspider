@@ -1,6 +1,7 @@
 import {AddToQueueConfig, AddToQueueInfo} from "../data/Types";
 import {instanceofJob, Job} from "../job/Job";
 import {queueManager} from "../manager/QueueManager";
+import {getTaskInstances} from "./Launcher";
 
 function getAddToQueueConfig(queueConfigs: AddToQueueConfig | AddToQueueConfig[], queueName: string): AddToQueueConfig {
     let config: AddToQueueConfig = null;
@@ -45,9 +46,10 @@ function getAddToQueueConfig(queueConfigs: AddToQueueConfig | AddToQueueConfig[]
 
 export function AddToQueue(queueConfigs: AddToQueueConfig | AddToQueueConfig[]) {
     return function (target, key, descriptor) {
+        const targetIns = getTaskInstances(target.constructor);
         const oriFun = descriptor.value;
         descriptor.value = async (...args) => {
-            const res = await oriFun.apply(target, args);
+            const res = await oriFun.apply(targetIns, args);
 
             // 在参数中找到当前job
             let curJob: Job = null;
