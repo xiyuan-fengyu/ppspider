@@ -59,8 +59,10 @@ export function Launcher(appInfo: AppInfo) {
             }
 
             @LooperTask(mainLooper, 1000)
-            sendMsgToUiClients() {
-                mainMessager.emit("push", "info", new Date().getTime())
+            pushToClients() {
+                mainMessager.emit("push", "info", {
+                    queue: queueManager.info()
+                });
             }
         }
 

@@ -1,0 +1,17 @@
+<form class="searchForm">
+  <mat-form-field>
+    <input matInput [(ngModel)]="search" (input)="delaySearch()" type="text" name="search" placeholder="search icon">
+  </mat-form-field>
+</form>
+
+<mat-grid-list cols="5" rowHeight="130">
+  <mat-grid-tile *ngFor="let icon of icons" [colspan]="1" [rowspan]="1">
+    <mat-card class="iconCard">
+      <mat-card-header>
+        <mat-icon mat-card-avatar>{{icon.label}}</mat-icon>
+        <mat-card-title>{{icon.label}}</mat-card-title>
+        <mat-card-subtitle>{{icon.code}}</mat-card-subtitle>
+      </mat-card-header>
+    </mat-card>
+  </mat-grid-tile>
+</mat-grid-list>

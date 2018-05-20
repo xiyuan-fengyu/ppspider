@@ -1,0 +1,14 @@
+.searchForm {
+  margin: 12px;
+}
+
+.searchForm mat-form-field {
+  width: 100%;
+}
+
+.iconCard {
+  display: inline-block;
+  width: 200px;
+  margin-top: 12px ;
+  margin-right: 12px;
+}

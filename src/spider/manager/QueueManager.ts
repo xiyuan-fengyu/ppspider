@@ -24,6 +24,22 @@ export class QueueManager {
 
     private dispatchQueueIndex = 0;
 
+    private successNum = 0;
+
+    private runningNum = 0;
+
+    private failNum = 0;
+
+    info(): any {
+        const res: any = {
+            success: this.successNum,
+            running: this.runningNum,
+            fail: this.failNum
+        };
+
+        return res;
+    }
+
     addJobOverrideConfig(queueName: string, jobOverrideConfig: JobOverrideConfig) {
         this.jobOverrideConfigs[queueName] = jobOverrideConfig;
     }
@@ -229,6 +245,7 @@ export class QueueManager {
                         workerFactory.get().then(async worker => {
                             const target = queue.config["target"];
                             const method = target[queue.config["method"]];
+                            this.runningNum++;
                             job.exeTimes({
                                 start: new Date().getTime()
                             });
@@ -237,6 +254,7 @@ export class QueueManager {
                                 job.tryNum(job.tryNum() + 1);
                                 await method.call(target, worker, job);
                                 job.status(JobStatus.Success);
+                                this.successNum++;
                             }
                             catch (e) {
                                 if (job.tryNum() >= Defaults.maxTry) {
@@ -245,11 +263,13 @@ export class QueueManager {
                                 else {
                                     job.status(JobStatus.Retry);
                                 }
+                                this.failNum++;
                                 console.log(e.stack);
                             }
                             job.exeTimes({
                                 end: new Date().getTime()
                             });
+                            this.runningNum--;
                             return worker;
                         }).then(async worker => {
                             queue.curParallel--;

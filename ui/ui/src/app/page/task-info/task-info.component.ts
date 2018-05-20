@@ -11,18 +11,20 @@ export class TaskInfoComponent implements OnInit, OnDestroy {
 
   private subscription: Subscription = new Subscription();
 
+  private info: any = {};
+
   constructor(
     private socketIOService: SocketIOService
   ) {
     this.subscription.add(socketIOService.pushObserver("info").subscribe(data => {
-      console.log(data);
+      this.info = data;
     }));
-    this.socketIOService.request({
-      key: "test",
-      data: "123"
-    }, res => {
-      console.log(res);
-    });
+    // this.socketIOService.request({
+    //   key: "test",
+    //   data: "123"
+    // }, res => {
+    //   console.log(res);
+    // });
   }
 
   ngOnInit() {
