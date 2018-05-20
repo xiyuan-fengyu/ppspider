@@ -6,5 +6,20 @@ import { Component } from '@angular/core';
   styleUrls: ['./app.component.css']
 })
 export class AppComponent {
-  title = 'app';
+
+  tabs = [
+    {
+      path: "systemInfo",
+      label: "System"
+    },
+    {
+      path: "taskInfo",
+      label: "Task"
+    },
+    {
+      path: "jobInfo",
+      label: "Job"
+    },
+  ];
+
 }

@@ -25,7 +25,9 @@
             "styles": [
               "src/styles.css"
             ],
-            "scripts": []
+            "scripts": [
+              "node_modules/socket.io-client/dist/socket.io.slim.js"
+            ]
           },
           "configurations": {
             "production": {

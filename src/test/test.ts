@@ -6,6 +6,7 @@ import {Job} from "../spider/job/Job";
 import {AddToQueueData} from "../spider/data/Types";
 import {FromQueue} from "../spider/decorators/FromQueue";
 import {Launcher} from "../spider/decorators/Launcher";
+import {PuppeteerUtil} from "../spider/util/PuppeteerUtil";
 
 class TestTask {
 
@@ -36,28 +37,23 @@ class TestTask {
         urls: "http://www.baidu.com",
         workerFactory: PuppeteerWorkerFactory
     })
-    @AddToQueue({
-        name: "test"
-    })
+    // @AddToQueue({
+    //     name: "test"
+    // })
     async index(page: Page, job: Job): AddToQueueData {
         await page.goto(job.url());
-        return await page.$$eval("a", as => {
-            const hrefs = [];
-            as.forEach(a => {
-                const href = (a as any).href;
-                if (href.startsWith("http")) hrefs.push(href);
-            });
-            return hrefs;
+        return PuppeteerUtil.links(page, {
+            "test": ".*"
         });
     }
 
-    @FromQueue({
-        name: "test",
-        workerFactory: PuppeteerWorkerFactory
-    })
-    async printUrl(page: Page, job: Job) {
-        console.log(job.url());
-    }
+    // @FromQueue({
+    //     name: "test",
+    //     workerFactory: PuppeteerWorkerFactory
+    // })
+    // async printUrl(page: Page, job: Job) {
+    //     console.log(job.url());
+    // }
 
 }
 

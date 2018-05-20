@@ -229,6 +229,9 @@ export class QueueManager {
                         workerFactory.get().then(async worker => {
                             const target = queue.config["target"];
                             const method = target[queue.config["method"]];
+                            job.exeTimes({
+                                start: new Date().getTime()
+                            });
                             try {
                                 job.status(JobStatus.Running);
                                 job.tryNum(job.tryNum() + 1);
@@ -244,6 +247,9 @@ export class QueueManager {
                                 }
                                 console.log(e.stack);
                             }
+                            job.exeTimes({
+                                end: new Date().getTime()
+                            });
                             return worker;
                         }).then(async worker => {
                             queue.curParallel--;

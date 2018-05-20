@@ -3,6 +3,11 @@ import {Filter} from "../filter/Filter";
 import {Queue} from "../queue/Queue";
 import {Job} from "../job/Job";
 
+export type JobExeTime = {
+    start?: number;
+    end?: number;
+}
+
 export type QueueClass = new () => Queue;
 
 export type FilterClass = new () => Filter;
@@ -93,7 +98,14 @@ export type WorkerFactoryMap = {
 
 export type AppInfo = {
     tasks: any[],
-    workerFactorys: WorkerFactory<any>[]
+    workerFactorys: WorkerFactory<any>[],
+    webUiPort?: number | 9000;
 }
 
 export type LinkPredictType = string | RegExp | ((href: string) => boolean);
+
+export type ClientRequest = {
+    id: string;
+    key: string;
+    data: any;
+}

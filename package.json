@@ -7,7 +7,7 @@
   "types": "./lib/index.d.ts",
   "scripts": {
     "auto build": "tsc",
-    "copy static fiels": "copyfiles -u 2 src/ui/web/* lib/ui"
+    "copy static fiels": "copyfiles -u 2 src/spider/ui/web/* lib/spider/ui"
   },
   "keywords": [
     "spider"

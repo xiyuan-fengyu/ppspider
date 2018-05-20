@@ -1,5 +1,6 @@
 import {Job, JobStatus} from "./Job";
 import {DateUtil} from "../../common/util/DateUtil";
+import {JobExeTime} from "../data/Types";
 
 export class DefaultJob implements Job {
 
@@ -22,6 +23,8 @@ export class DefaultJob implements Job {
     private _status: JobStatus = JobStatus.Create;
 
     private _tryNum: number = 0;
+
+    private _exeTimes: JobExeTime[] = [];
 
     id(): string {
         return this._id;
@@ -82,6 +85,18 @@ export class DefaultJob implements Job {
             this._tryNum = tryNum;
         }
         return this._tryNum;
+    }
+
+    exeTimes(time: JobExeTime): JobExeTime[] {
+        if (time) {
+            if (time.start != null) {
+                this._exeTimes.push(time);
+            }
+            else if (time.end != null && this._exeTimes.length > 0) {
+                this._exeTimes[this._exeTimes.length - 1].end = time.end;
+            }
+        }
+        return this._exeTimes;
     }
 
     constructor(url: string) {
