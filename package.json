@@ -21,10 +21,11 @@
     "typescript": "^2.7.2"
   },
   "devDependencies": {
+    "@types/express": "^4.11.1",
     "@types/jquery": "^3.3.1",
     "@types/node": "^9.4.7",
     "@types/puppeteer": "^1.2.0",
-    "@types/express": "^4.11.1",
+    "@types/socket.io": "^1.4.33",
     "copyfiles": "^2.0.0"
   }
 }

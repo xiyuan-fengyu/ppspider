@@ -1,6 +1,8 @@
 import * as SocketIO from "socket.io";
-import express = require("express");
 import {Server} from "http";
+import express = require("express");
+import * as readline from "readline";
+import Socket = NodeJS.Socket;
 
 export class WebServer {
 
@@ -8,9 +10,7 @@ export class WebServer {
 
     private httpServer: Server;
 
-    private socketServer: any;
-
-    private readonly socketClients: any[] = [];
+    private socketServer: SocketIO.Server;
 
     private running = true;
 
@@ -24,42 +24,32 @@ export class WebServer {
         console.log("The webUI start at port: " + uiPort);
 
         this.socketServer = SocketIO.listen(apiPort);
-        this.socketServer.on('connection', client => {
-            if (!this.running) {
-                client.disconnect();
-                return;
-            }
+        this.socketServer.on('connection', (client: any) => {
+            // console.log(`client connected: ${client.id}(${client.conn.remoteAddress})`);
 
-            this.socketClients.push(client);
             client.on("clientMsg", data => console.log(data));
-            client.on("close", client => {
-                this.socketClients.splice(this.socketClients.indexOf(client), 1);
+            client.on("disconnect", () => {
+                // console.log(`client disconnected: ${client.id}(${client.conn.remoteAddress})`);
             });
         });
         console.log("The api for webUI server start at port: " + apiPort);
     }
 
     private shutdownSocketServer() {
-        this.socketServer.removeAllListeners();
-        this.socketClients.forEach(client => {
-           client.emit("SERVER_SHUTDOWN", "");
-           client.client.destroy();
-        });
-        this.socketServer.httpServer.close(() => {
-            this.socketServer.close();
-        });
+        this.socketServer.close();
+    }
+
+    private shutdownHttpServer() {
+        this.httpServer.close();
     }
 
     shutdown() {
         this.running = false;
+        this.shutdownHttpServer();
         this.shutdownSocketServer();
-        this.httpServer.close();
         console.log("The webUI stopped");
     }
 
 }
 
 const webServer = new WebServer(9000, 9090);
-setTimeout(() => {
-    webServer.shutdown();
-}, 5000);

@@ -12,13 +12,6 @@
         socket.on('connect', data => {
             socket.emit('clientMsg', { my: 'data' });
         });
-        socket.on('SERVER_SHUTDOWN', data => {
-            console.log("SERVER_SHUTDOWN");
-            socket.disconnect();
-            socket.close();
-            socket.destroy();
-            console.log(socket);
-        });
     </script>
 </body>
 </html>
