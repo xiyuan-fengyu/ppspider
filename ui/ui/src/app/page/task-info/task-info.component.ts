@@ -1,6 +1,7 @@
 import {Component, OnDestroy, OnInit} from '@angular/core';
 import {SocketIOService} from "../../service/socket-io.service";
 import {Subscription} from "rxjs/internal/Subscription";
+import {ObjectUtil} from "../../util/ObjectUtil";
 
 @Component({
   selector: 'app-task-info',
@@ -17,7 +18,7 @@ export class TaskInfoComponent implements OnInit, OnDestroy {
     private socketIOService: SocketIOService
   ) {
     this.subscription.add(socketIOService.pushObserver("info").subscribe(data => {
-      this.info = data;
+      ObjectUtil.copy(data, this.info);
     }));
     // this.socketIOService.request({
     //   key: "test",

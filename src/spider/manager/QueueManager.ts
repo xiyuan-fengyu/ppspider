@@ -34,9 +34,38 @@ export class QueueManager {
         const res: any = {
             success: this.successNum,
             running: this.runningNum,
-            fail: this.failNum
+            fail: this.failNum,
+            queues: []
         };
-
+        for (let queueName in this.queues) {
+            const queue = this.queues[queueName];
+            if (!queue.config || !queue.queue) continue;
+            let queueInfo: any = {
+                name: queueName,
+                target: queue.config.target.constructor.name,
+                method: queue.config.method,
+                type: queue.config.type,
+                workerFactory: queue.config.workerFactory.name,
+                parallel: queue.config.parallel,
+                exeInterval: queue.config.exeInterval,
+                description: queue.config.description,
+                curMaxParallel: queue.curMaxParallel,
+                curParallel: queue.curParallel,
+                success: queue.success,
+                fail: queue.fail,
+                lastExeTime: queue.lastExeTime
+            };
+            if (queue.config.type == "OnStart") {
+                queueInfo.urls = typeof queue.config.urls == "string" ? [queue.config.urls] : queue.config.urls;
+            }
+            else if (queue.config.type == "OnTime") {
+                queueInfo.urls = typeof queue.config.urls == "string" ? [queue.config.urls] : queue.config.urls;
+            }
+            else {
+                queueInfo.from = queue.config.name;
+            }
+            res.queues.push(queueInfo);
+        }
         return res;
     }
 
@@ -273,6 +302,9 @@ export class QueueManager {
                             return worker;
                         }).then(async worker => {
                             queue.curParallel--;
+                            if (job.status() == JobStatus.Success) queue.success = (queue.success || 0) + 1;
+                            else queue.fail = (queue.fail || 0) + 1;
+
                             if (job.status() == JobStatus.Retry) {
                                 QueueManager.addJobToQueue(job, null, job.queue(), this.queues[job.queue()].queue, null);
                             }

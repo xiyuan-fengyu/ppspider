@@ -1,3 +1,98 @@
 .taskNumItem {
   display: inline-block;
+  text-align: center;
+  vertical-align: middle;
+}
+
+.taskNumItem.success {
+  color: #86e276;
+}
+
+.taskNumItem.running {
+  color: #50a5ff;
+}
+
+.taskNumItem.fail {
+  color: #ff623e;
+}
+
+.taskNumItem h4 {
+  display: inline-block;
+  margin: 0 8px;
+  font-size: 32px;
+}
+
+.taskNumItem span {
+  font-style: italic;
+  font-weight: bold;
+}
+
+.queueItem {
+  display: block;
+  margin: 12px;
+}
+
+.queueItem .icon {
+  width: 32px;
+  height: 32px;
+  font-size: 32px;
+}
+
+.queueItem mat-card-title {
+  font-weight: bold;
+}
+
+.OnStart mat-card-header {
+  color: #2ce6ff;
+}
+
+.OnTime mat-card-header {
+  color: #87b7ff;
+}
+
+.FromQueue mat-card-header {
+  color: #ffb082;
+}
+
+.row {
+  display: flex;
+  margin-bottom: 12px;
+}
+
+.grid {
+  display: inline-block;
+  width: 25%;
+}
+
+.key {
+  display: inline-block;
+  width: 130px;
+  margin-right: 24px;
+  color: #353535;
+  font-weight: bold;
+  text-align: right;
+}
+
+.value {
+  display: inline-block;
+  flex-grow: 1;
+}
+
+.url {
+  display: inline-block;
+  margin: 0 24px 8px 0;
+}
+
+.url a {
+  color: #5bbb51;
+  font-weight: bold;
+  font-style: italic;
+  text-decoration: none;
+}
+
+.unit {
+  margin-left: 8px;
+  color: #666666;
+  font-weight: bold;
+  font-style: italic;
 }

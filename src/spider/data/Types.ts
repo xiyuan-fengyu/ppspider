@@ -88,6 +88,8 @@ export type Queues = {
         config?: JobConfig;
         curParallel?: number; // 当前并行数
         curMaxParallel?: number; // 当前最大并行数
+        success?: number; // 成功的数量
+        fail?: number; // 失败的数量
         lastExeTime?: number; // 上一次从该队列pop job的时间戳
     }
 }

@@ -37,9 +37,9 @@ class TestTask {
         urls: "http://www.baidu.com",
         workerFactory: PuppeteerWorkerFactory
     })
-    // @AddToQueue({
-    //     name: "test"
-    // })
+    @AddToQueue({
+        name: "test"
+    })
     async index(page: Page, job: Job): AddToQueueData {
         await page.goto(job.url());
         return PuppeteerUtil.links(page, {
@@ -47,13 +47,15 @@ class TestTask {
         });
     }
 
-    // @FromQueue({
-    //     name: "test",
-    //     workerFactory: PuppeteerWorkerFactory
-    // })
-    // async printUrl(page: Page, job: Job) {
-    //     console.log(job.url());
-    // }
+    @FromQueue({
+        name: "test",
+        workerFactory: PuppeteerWorkerFactory,
+        parallel: 1,
+        exeInterval: 5000
+    })
+    async printUrl(page: Page, job: Job) {
+        console.log(job.url());
+    }
 
 }
 

@@ -19,9 +19,11 @@ import { JobInfoComponent } from './page/job-info/job-info.component';
 import {CommonModule, HashLocationStrategy, LocationStrategy} from "@angular/common";
 import { IconsComponent } from './page/icons/icons.component';
 import {FormsModule} from "@angular/forms";
+import {LongToDateStrPipe} from "./pipe/long-to-date-str.pipe";
 
 @NgModule({
   declarations: [
+    LongToDateStrPipe,
     AppComponent,
     SystemInfoComponent,
     TaskInfoComponent,

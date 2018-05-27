@@ -1,22 +1,111 @@
+
 <mat-grid-list *ngIf="info.queue" cols="3" rowHeight="100px">
   <mat-grid-tile [colspan]="1" [rowspan]="1">
-    <div class="taskNumItem">
+    <div class="taskNumItem success">
       <mat-icon>done</mat-icon>
-      <h4 mat-line>{{info.queue.success}}</h4>
+      <h4>{{info.queue.success}}</h4>
+      <span>success</span>
     </div>
   </mat-grid-tile>
 
   <mat-grid-tile [colspan]="1" [rowspan]="1">
-    <div class="taskNumItem">
+    <div class="taskNumItem running">
       <mat-icon>refresh</mat-icon>
-      <h4 mat-line>{{info.queue.running}}</h4>
+      <h4>{{info.queue.running}}</h4>
+      <span>running</span>
     </div>
   </mat-grid-tile>
 
   <mat-grid-tile [colspan]="1" [rowspan]="1">
-    <div class="taskNumItem">
+    <div class="taskNumItem fail">
       <mat-icon>error</mat-icon>
-      <h4 mat-line>{{info.queue.fail}}</h4>
+      <h4>{{info.queue.fail}}</h4>
+      <span>fail</span>
     </div>
   </mat-grid-tile>
 </mat-grid-list>
+
+<ng-container *ngIf="info.queue && info.queue.queues">
+  <ng-container *ngFor="let queue of info.queue.queues; let queueI = index">
+    <mat-divider></mat-divider>
+    <mat-card [class]="'queueItem ' + queue.type">
+      <ng-container [ngSwitch]="queue.type">
+        <mat-card-header>
+          <mat-icon *ngIf="queue.type == 'OnStart'" mat-card-avatar class="icon">launch</mat-icon>
+          <mat-icon *ngIf="queue.type == 'OnTime'" mat-card-avatar class="icon">timer</mat-icon>
+          <mat-icon *ngIf="queue.type == 'FromQueue'" mat-card-avatar class="icon">queue_play_next</mat-icon>
+          <mat-card-title>{{queue.name}}</mat-card-title>
+          <mat-card-subtitle>{{queue.target + '.' + queue.method}}</mat-card-subtitle>
+          <mat-card-subtitle *ngIf="queue.description">{{queue.description}}</mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          <div *ngIf="queue.type == 'OnStart' || queue.type == 'OnTime'" class="row">
+            <label class="key">urls</label>
+            <div class="value">
+              <div *ngFor="let url of queue.urls" class="url">
+                <a [href]="url" target="_blank">{{url}}</a>
+              </div>
+            </div>
+          </div>
+          <div *ngIf="queue.type == 'FromQueue'" class="row">
+            <label class="key">queue</label>
+            <div class="value">
+              <div class="url">
+                <a>{{queue.from}}</a>
+              </div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="grid">
+              <label class="key">workerFactory</label>
+              <div class="value">{{queue.workerFactory}}</div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="grid">
+              <label class="key">exeInterval</label>
+              <!--@TODO 点击编辑-->
+              <div class="value">
+                {{queue.exeInterval || 0}}
+                <span class="unit">ms</span>
+              </div>
+            </div>
+            <div class="grid">
+              <label class="key">lastExeTime</label>
+              <div class="value">{{queue.lastExeTime | longToDateStr}}</div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="grid">
+              <label class="key">maxParallelConfig</label>
+              <!--@TODO 点击编辑-->
+              <div class="value">{{queue.parallel || 3}}</div>
+            </div>
+            <div class="grid">
+              <label class="key">curMaxParallel</label>
+              <!--@TODO 点击编辑-->
+              <div class="value">{{queue.curMaxParallel}}</div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="grid">
+              <label class="key">success</label>
+              <div class="value">{{queue.success || 0}}</div>
+            </div>
+            <div class="grid">
+              <label class="key">running</label>
+              <div class="value">{{queue.curParallel || 0}}</div>
+            </div>
+            <div class="grid">
+              <label class="key">fail</label>
+              <div class="value">{{queue.fail || 0}}</div>
+            </div>
+          </div>
+          <!--@TODO FromQueue 的队列长度，类型，filter-->
+          <!--@TODO OnTime 的cron，nextExeTime-->
+        </mat-card-content>
+      </ng-container>
+    </mat-card>
+  </ng-container>
+</ng-container>
