@@ -63,6 +63,11 @@
             </div>
           </div>
           <div class="row">
+            <label class="key">maxParallelConfig</label>
+            <!--@TODO 点击编辑-->
+            <div class="value">{{queue.parallel || 3}}</div>
+          </div>
+          <div class="row">
             <div class="grid">
               <label class="key">exeInterval</label>
               <!--@TODO 点击编辑-->
@@ -78,20 +83,13 @@
           </div>
           <div class="row">
             <div class="grid">
-              <label class="key">maxParallelConfig</label>
-              <!--@TODO 点击编辑-->
-              <div class="value">{{queue.parallel || 3}}</div>
+              <label class="key">success</label>
+              <div class="value">{{queue.success || 0}}</div>
             </div>
             <div class="grid">
               <label class="key">curMaxParallel</label>
               <!--@TODO 点击编辑-->
               <div class="value">{{queue.curMaxParallel}}</div>
-            </div>
-          </div>
-          <div class="row">
-            <div class="grid">
-              <label class="key">success</label>
-              <div class="value">{{queue.success || 0}}</div>
             </div>
             <div class="grid">
               <label class="key">running</label>
