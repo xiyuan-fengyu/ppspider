@@ -5,8 +5,7 @@
     "ng": "ng",
     "start": "ng serve",
     "build": "ng build",
-    "build prod": "ng build --prod",
-    "copy to lib": "copyfiles -u 2 dist/ui/* ../../lib/spider/ui/web/",
+    "build prod and pulish": "ng build --prod && copyfiles -u 2 dist/ui/* ../../lib/spider/ui/web/",
     "test": "ng test",
     "lint": "ng lint",
     "e2e": "ng e2e"
