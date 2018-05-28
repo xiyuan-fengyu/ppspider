@@ -54,7 +54,7 @@
             <label class="key">queue</label>
             <div class="value">
               <div class="url">
-                <a>{{queue.from + ': ' + queue.queue.type + '(filters = [' + queue.queue.filters + '], size = ' + queue.queue.size + ')'}}</a>
+                <a>{{queue.from + ' : ' + queue.queue.type + '(filters = [' + queue.queue.filters + '], size = ' + queue.queue.size + ')'}}</a>
               </div>
             </div>
           </div>
@@ -101,14 +101,14 @@
 
           <div class="row">
             <div class="grid">
-              <label class="key">success</label>
-              <div class="value">{{queue.success}}</div>
-            </div>
-            <div class="grid">
               <label class="key">curMaxParallel</label>
               <div class="value">
                 <span (click)="openEditConfig(queue, 'curMaxParallel', queue.curMaxParallel)" class="editable">{{queue.curMaxParallel}}</span>
               </div>
+            </div>
+            <div class="grid">
+              <label class="key">success</label>
+              <div class="value">{{queue.success}}</div>
             </div>
             <div class="grid">
               <label class="key">running</label>

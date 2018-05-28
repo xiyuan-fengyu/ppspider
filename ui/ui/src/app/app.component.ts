@@ -13,8 +13,8 @@ export class AppComponent {
       label: "System"
     },
     {
-      path: "taskInfo",
-      label: "Task"
+      path: "queueInfo",
+      label: "Queue"
     },
     {
       path: "jobInfo",

@@ -6,8 +6,7 @@
   "main": "./lib/index.js",
   "types": "./lib/index.d.ts",
   "scripts": {
-    "auto build": "tsc",
-    "copy static fiels": "copyfiles -u 2 src/spider/ui/web/* lib/spider/ui"
+    "auto build": "tsc"
   },
   "keywords": [
     "spider"
@@ -25,7 +24,6 @@
     "@types/jquery": "^3.3.1",
     "@types/node": "^9.4.7",
     "@types/puppeteer": "^1.2.0",
-    "@types/socket.io": "^1.4.33",
-    "copyfiles": "^2.0.0"
+    "@types/socket.io": "^1.4.33"
   }
 }

@@ -9,15 +9,15 @@ import {ToasterService} from "angular2-toaster";
 declare const CodeMirror: any;
 
 @Component({
-  selector: 'app-task-info',
-  templateUrl: './task-info.component.html',
-  styleUrls: ['./task-info.component.css']
+  selector: 'app-queue-info',
+  templateUrl: './queue-info.component.html',
+  styleUrls: ['./queue-info.component.css']
 })
-export class TaskInfoComponent implements OnInit, OnDestroy {
+export class QueueInfoComponent implements OnInit, OnDestroy {
 
   private subscription: Subscription = new Subscription();
 
-  private info: any = {};
+  info: any = {};
 
   constructor(
     private socketIOService: SocketIOService,
@@ -71,7 +71,7 @@ export class TaskInfoComponent implements OnInit, OnDestroy {
 @Component({
   selector: 'dialog-edit-maxParallelConfig',
   templateUrl: './dialog-edit-maxParallelConfig.html',
-  styleUrls: ['./task-info.component.css']
+  styleUrls: ['./queue-info.component.css']
 })
 export class EditConfigDialog implements OnInit, AfterContentInit {
 

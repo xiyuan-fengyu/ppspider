@@ -16,7 +16,6 @@ import {
   MatTabsModule
 } from "@angular/material";
 import {SystemInfoComponent} from "./page/system-info/system-info.component";
-import {EditConfigDialog, TaskInfoComponent} from "./page/task-info/task-info.component";
 import {SocketIOService} from "./service/socket-io.service";
 import {JobInfoComponent} from './page/job-info/job-info.component';
 import {CommonModule, HashLocationStrategy, LocationStrategy} from "@angular/common";
@@ -25,6 +24,7 @@ import {FormsModule} from "@angular/forms";
 import {LongToDateStrPipe} from "./pipe/long-to-date-str.pipe";
 import { JsonStringifyPipe } from './pipe/json-stringify.pipe';
 import {ToasterModule, ToasterService} from "angular2-toaster";
+import {EditConfigDialog, QueueInfoComponent} from "./page/task-info/queue-info.component";
 
 @NgModule({
   declarations: [
@@ -33,7 +33,7 @@ import {ToasterModule, ToasterService} from "angular2-toaster";
     LongToDateStrPipe,
     AppComponent,
     SystemInfoComponent,
-    TaskInfoComponent,
+    QueueInfoComponent,
     JobInfoComponent,
     IconsComponent,
     JsonStringifyPipe,
