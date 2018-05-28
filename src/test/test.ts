@@ -7,6 +7,7 @@ import {AddToQueueData} from "../spider/data/Types";
 import {FromQueue} from "../spider/decorators/FromQueue";
 import {Launcher} from "../spider/decorators/Launcher";
 import {PuppeteerUtil} from "../spider/util/PuppeteerUtil";
+import {OnTime} from "../spider/decorators/OnTime";
 
 class TestTask {
 
@@ -35,6 +36,15 @@ class TestTask {
 
     @OnStart({
         urls: "http://www.baidu.com",
+        workerFactory: PuppeteerWorkerFactory,
+        parallel: {
+            "0/20 * * * * ?": 1,
+            "10/20 * * * * ?": 2
+        }
+    })
+    @OnTime({
+        urls: "http://www.baidu.com",
+        cron: "*/30 * * * * ?",
         workerFactory: PuppeteerWorkerFactory
     })
     @AddToQueue({
@@ -43,7 +53,7 @@ class TestTask {
     async index(page: Page, job: Job): AddToQueueData {
         await page.goto(job.url());
         return PuppeteerUtil.links(page, {
-            "test": ".*"
+            "test": "http.*"
         });
     }
 
@@ -51,7 +61,7 @@ class TestTask {
         name: "test",
         workerFactory: PuppeteerWorkerFactory,
         parallel: 1,
-        exeInterval: 5000
+        exeInterval: 100000
     })
     async printUrl(page: Page, job: Job) {
         console.log(job.url());

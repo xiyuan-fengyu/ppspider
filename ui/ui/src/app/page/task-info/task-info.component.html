@@ -35,7 +35,10 @@
           <mat-icon *ngIf="queue.type == 'OnTime'" mat-card-avatar class="icon">timer</mat-icon>
           <mat-icon *ngIf="queue.type == 'FromQueue'" mat-card-avatar class="icon">queue_play_next</mat-icon>
           <mat-card-title>{{queue.name}}</mat-card-title>
-          <mat-card-subtitle>{{queue.target + '.' + queue.method}}</mat-card-subtitle>
+          <mat-card-subtitle>
+            <span class="taskType">{{queue.type}}</span>
+            {{queue.target + '.' + queue.method}}
+          </mat-card-subtitle>
           <mat-card-subtitle *ngIf="queue.description">{{queue.description}}</mat-card-subtitle>
         </mat-card-header>
         <mat-card-content>
@@ -51,28 +54,30 @@
             <label class="key">queue</label>
             <div class="value">
               <div class="url">
-                <a>{{queue.from}}</a>
+                <a>{{queue.from + ': ' + queue.queue.type + '(filters = [' + queue.queue.filters + '], size = ' + queue.queue.size + ')'}}</a>
               </div>
             </div>
           </div>
 
           <div class="row">
-            <div class="grid">
-              <label class="key">workerFactory</label>
-              <div class="value">{{queue.workerFactory}}</div>
-            </div>
+            <label class="key">workerFactory</label>
+            <div class="value">{{queue.workerFactory}}</div>
           </div>
+
           <div class="row">
             <label class="key">maxParallelConfig</label>
-            <!--@TODO 点击编辑-->
-            <div class="value">{{queue.parallel || 3}}</div>
+            <div class="value">
+              <span (click)="openEditConfig(queue, 'parallel', queue.parallel)" class="editable">
+                {{stringify(queue.parallel)}}
+              </span>
+            </div>
           </div>
+
           <div class="row">
             <div class="grid">
               <label class="key">exeInterval</label>
-              <!--@TODO 点击编辑-->
               <div class="value">
-                {{queue.exeInterval || 0}}
+                <span (click)="openEditConfig(queue, 'exeInterval', queue.exeInterval)" class="editable">{{queue.exeInterval}}</span>
                 <span class="unit">ms</span>
               </div>
             </div>
@@ -80,30 +85,45 @@
               <label class="key">lastExeTime</label>
               <div class="value">{{queue.lastExeTime | longToDateStr}}</div>
             </div>
+            <ng-container *ngIf="queue.type == 'OnTime'">
+              <div class="grid">
+                <label class="key">cron</label>
+                <div class="value">
+                  <span (click)="openEditConfig(queue, 'cron', queue.cron)" class="editable">{{queue.cron}}</span>
+                </div>
+              </div>
+              <div class="grid">
+                <label class="key">nextExeTime</label>
+                <div class="value">{{queue.nextExeTime | longToDateStr}}</div>
+              </div>
+            </ng-container>
           </div>
+
           <div class="row">
             <div class="grid">
               <label class="key">success</label>
-              <div class="value">{{queue.success || 0}}</div>
+              <div class="value">{{queue.success}}</div>
             </div>
             <div class="grid">
               <label class="key">curMaxParallel</label>
-              <!--@TODO 点击编辑-->
-              <div class="value">{{queue.curMaxParallel}}</div>
+              <div class="value">
+                <span (click)="openEditConfig(queue, 'curMaxParallel', queue.curMaxParallel)" class="editable">{{queue.curMaxParallel}}</span>
+              </div>
             </div>
             <div class="grid">
               <label class="key">running</label>
-              <div class="value">{{queue.curParallel || 0}}</div>
+              <div class="value">{{queue.curParallel}}</div>
             </div>
             <div class="grid">
               <label class="key">fail</label>
-              <div class="value">{{queue.fail || 0}}</div>
+              <div class="value">{{queue.fail}}</div>
             </div>
           </div>
-          <!--@TODO FromQueue 的队列长度，类型，filter-->
-          <!--@TODO OnTime 的cron，nextExeTime-->
+
         </mat-card-content>
       </ng-container>
     </mat-card>
   </ng-container>
 </ng-container>
+
+<div style="padding: 128px 0 0 0"></div>

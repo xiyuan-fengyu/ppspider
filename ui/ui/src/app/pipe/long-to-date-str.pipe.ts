@@ -7,6 +7,7 @@ import {DateUtil} from "../util/DateUtil";
 export class LongToDateStrPipe implements PipeTransform {
 
   transform(value: number, format?: string): string {
+    if (value == null) return "";
     return DateUtil.toStr(new Date(value), format);
   }
 

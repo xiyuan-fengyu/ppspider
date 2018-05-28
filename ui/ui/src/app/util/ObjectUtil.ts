@@ -28,7 +28,7 @@ export class ObjectUtil {
         }
       }
 
-      for (let toKey in Object.keys(to)) {
+      for (let toKey of Object.keys(to)) {
         if (!from.hasOwnProperty(toKey)) {
           delete to[toKey];
         }
@@ -41,7 +41,7 @@ export class ObjectUtil {
       let fromValueI = from[i];
       let toValueI = to[i];
       if (fromValueI == null || toValueI == null || fromValueI.constructor != toValueI.constructor) {
-        toValueI[i] = fromValueI;
+        to[i] = fromValueI;
       }
       else if (fromValueI.constructor == Object) {
         this.copy(fromValueI, toValueI);

@@ -1,9 +1,14 @@
 import {
     AddToQueueInfo,
-    AddToQueueInfos, FromQueueConfig,
-    JobConfig, JobOverrideConfigs, JobOverrideConfig,
-    OnStartConfig, OnTimeConfig,
+    AddToQueueInfos,
+    FromQueueConfig,
+    JobConfig,
+    JobOverrideConfig,
+    JobOverrideConfigs,
+    OnStartConfig,
+    OnTimeConfig,
     Queues,
+    UpdateQueueConfigData,
     WorkerFactoryMap
 } from "../data/Types";
 import {CronUtil} from "../../common/util/CronUtil";
@@ -40,33 +45,116 @@ export class QueueManager {
         for (let queueName in this.queues) {
             const queue = this.queues[queueName];
             if (!queue.config || !queue.queue) continue;
+            const taskType = queue.config['type'];
             let queueInfo: any = {
                 name: queueName,
-                target: queue.config.target.constructor.name,
-                method: queue.config.method,
-                type: queue.config.type,
+                target: queue.config['target'].constructor.name,
+                method: queue.config['method'],
+                type: taskType,
                 workerFactory: queue.config.workerFactory.name,
-                parallel: queue.config.parallel,
-                exeInterval: queue.config.exeInterval,
+                parallel: queue.config.parallel || Defaults.maxParallel,
+                exeInterval: queue.config.exeInterval || 0,
                 description: queue.config.description,
-                curMaxParallel: queue.curMaxParallel,
-                curParallel: queue.curParallel,
-                success: queue.success,
-                fail: queue.fail,
+                curMaxParallel: queue.curMaxParallel || 0,
+                curParallel: queue.curParallel || 0,
+                success: queue.success || 0,
+                fail: queue.fail || 0,
                 lastExeTime: queue.lastExeTime
             };
-            if (queue.config.type == "OnStart") {
-                queueInfo.urls = typeof queue.config.urls == "string" ? [queue.config.urls] : queue.config.urls;
+            if (taskType == "OnStart") {
+                const urls = queue.config['urls'];
+                queueInfo.urls = typeof urls == "string" ? [urls] : urls;
             }
-            else if (queue.config.type == "OnTime") {
-                queueInfo.urls = typeof queue.config.urls == "string" ? [queue.config.urls] : queue.config.urls;
+            else if (taskType == "OnTime") {
+                const urls = queue.config['urls'];
+                queueInfo.urls = typeof urls == "string" ? [urls] : urls;
+                queueInfo.cron = queue.config['cron'];
+                if (queue.queue.size() > 0) {
+                    queueInfo.nextExeTime = queue.queue.peek().datas().other.exeTime;
+                }
             }
             else {
-                queueInfo.from = queue.config.name;
+                queueInfo.from = queue.config['name'];
+                if (queue.queue) {
+                    queueInfo.queue = {
+                        type: queue.queue.constructor.name,
+                        filters: queue.queue.getFilters().map(item => item.constructor.name).join(", "),
+                        size: queue.queue.size()
+                    };
+                }
             }
             res.queues.push(queueInfo);
         }
         return res;
+    }
+
+    updateConfig(data: UpdateQueueConfigData): any {
+        const queueInfo = this.queues[data.queue];
+        if (!queueInfo) return {
+            success: false,
+            message: "queue not existed: " + data.queue
+        };
+
+        if (data.field == "parallel") {
+            queueInfo.config.parallel = data.value;
+            this.resetQueueParallel(queueInfo);
+        }
+        else if (data.field == "cron") {
+            queueInfo.config['cron'] = data.value;
+            while (!queueInfo.queue.isEmpty()) queueInfo.queue.pop();
+            this.addOnTimeJob(data.queue);
+        }
+        else if (data.field == "exeInterval") {
+            queueInfo.config.exeInterval = data.value;
+        }
+        else if (data.field == "curMaxParallel") {
+            queueInfo.curMaxParallel = data.value;
+        }
+
+        return {
+            success: true,
+            message: "update success: " + data.field
+        };
+    }
+
+    private resetQueueParallel(queueInfo: any) {
+        // 清除旧的 intervals
+        if (queueInfo && queueInfo.parallelIntervals) {
+            for (let interval of queueInfo.parallelIntervals) {
+                interval.clear();
+            }
+            queueInfo.parallelIntervals = null;
+        }
+
+        // 设置 curMaxParallel
+        if (queueInfo && queueInfo.config && queueInfo.config.parallel != null) {
+            const parallelType = queueInfo.config.parallel.constructor;
+            if (parallelType == Number) {
+                // 静态设置
+                queueInfo.curMaxParallel = queueInfo.config.parallel as number;
+            }
+            else if (parallelType == Object) {
+                // 根据cron动态更新
+                queueInfo.parallelIntervals = [];
+                for (let cron of Object.keys(queueInfo.config.parallel)) {
+                    const para = queueInfo.config.parallel[cron];
+                    if (typeof para == "number") {
+                        const interval = CronUtil.setInterval(cron, () => {
+                            queueInfo.curMaxParallel = para as number;
+                        });
+                        if (interval) queueInfo.parallelIntervals.push(interval);
+                    }
+                }
+            }
+        }
+
+        if (!queueInfo.curMaxParallel) {
+            queueInfo.curMaxParallel = Defaults.maxParallel;
+        }
+        else if (queueInfo.config && typeof queueInfo.config.parallel == "number"
+            && queueInfo.curMaxParallel > queueInfo.config.parallel) {
+            queueInfo.curMaxParallel = queueInfo.config.parallel;
+        }
     }
 
     addJobOverrideConfig(queueName: string, jobOverrideConfig: JobOverrideConfig) {
@@ -85,29 +173,7 @@ export class QueueManager {
             };
         }
         queueInfo.config = config;
-
-        // 设置 curMaxParallel
-        if (config.parallel) {
-            const parallelType = config.parallel.constructor;
-            if (parallelType == Number) {
-                // 静态设置
-                queueInfo.curMaxParallel = config.parallel as number;
-            }
-            else if (parallelType == Object) {
-                // 根据cron动态更新
-                for (let cron in Object.keys(config.parallel)) {
-                    const para = config.parallel[cron];
-                    if (typeof para == "number") {
-                        CronUtil.setInterval(cron, () => {
-                            queueInfo.curMaxParallel = para as number;
-                        });
-                    }
-                }
-            }
-        }
-        if (!queueInfo.curMaxParallel) {
-            queueInfo.curMaxParallel = Defaults.maxParallel;
-        }
+        this.resetQueueParallel(queueInfo);
 
         return queueName;
     }

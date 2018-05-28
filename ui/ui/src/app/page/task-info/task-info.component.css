@@ -54,6 +54,11 @@
   color: #ffb082;
 }
 
+.taskType {
+  margin-right: 12px;
+  font-weight: bold;
+}
+
 .row {
   display: flex;
   margin-bottom: 12px;
@@ -95,4 +100,15 @@
   color: #666666;
   font-weight: bold;
   font-style: italic;
+}
+
+.editable {
+  color: #228aff;
+  font-size: 1.1em;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.flexRowReverse {
+  flex-direction: row-reverse;
 }

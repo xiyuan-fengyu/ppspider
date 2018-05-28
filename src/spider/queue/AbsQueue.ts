@@ -12,7 +12,15 @@ export abstract class AbsQueue implements Queue {
     }
 
     getFilter(filterType: FilterClass): Filter {
-        return this.filters[filterType.name]
+        return this.filters[filterType.name];
+    }
+
+    getFilters(): Filter[] {
+        const filters = [];
+        for (let key of Object.keys(this.filters)) {
+            filters.push(this.filters[key]);
+        }
+        return filters;
     }
 
     abstract isEmpty(): boolean;

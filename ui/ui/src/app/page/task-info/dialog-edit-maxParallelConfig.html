@@ -1,0 +1,8 @@
+<h2 mat-dialog-title>Edit {{data.field}}</h2>
+<mat-dialog-content>
+  <textarea id="valueInput">{{data.valueFormat || data.value}}</textarea>
+</mat-dialog-content>
+<mat-dialog-actions class="flexRowReverse">
+  <button mat-button [mat-dialog-close]="result">Save</button>
+  <button mat-button mat-dialog-close>Cancle</button>
+</mat-dialog-actions>

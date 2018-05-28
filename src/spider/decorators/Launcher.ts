@@ -26,8 +26,8 @@ export function Launcher(appInfo: AppInfo) {
         {
             class ClientRequestHandler {
 
-                test(request: ClientRequest): any {
-                    return "test success " + request.data.toString();
+                updateQueueConfig(request: ClientRequest): any {
+                    return queueManager.updateConfig(request.data)
                 }
 
             }
@@ -58,7 +58,7 @@ export function Launcher(appInfo: AppInfo) {
                 queueManager.dispatch(workerFactoryMap);
             }
 
-            @LooperTask(mainLooper, 1000)
+            @LooperTask(mainLooper, 750)
             pushToClients() {
                 mainMessager.emit("push", "info", {
                     queue: queueManager.info()

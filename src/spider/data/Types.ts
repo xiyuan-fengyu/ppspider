@@ -111,3 +111,9 @@ export type ClientRequest = {
     key: string;
     data: any;
 }
+
+export type UpdateQueueConfigData = {
+    queue: string;
+    field: string;
+    value: any;
+}

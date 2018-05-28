@@ -16,6 +16,8 @@ export interface Queue {
 
     getFilter(filterType: FilterClass): Filter;
 
+    getFilters(): Filter[];
+
     addFilter(filter: Filter);
 
 }

@@ -26,7 +26,11 @@
               "src/styles.css"
             ],
             "scripts": [
-              "node_modules/socket.io-client/dist/socket.io.slim.js"
+              "node_modules/codemirror/lib/codemirror.js",
+              "node_modules/codemirror/addon/edit/matchbrackets.js",
+              "node_modules/codemirror/addon/comment/continuecomment.js",
+              "node_modules/codemirror/addon/comment/comment.js",
+              "node_modules/codemirror/mode/javascript/javascript.js"
             ]
           },
           "configurations": {
