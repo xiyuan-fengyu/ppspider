@@ -1,7 +1,9 @@
 import {Job, JobStatus} from "./Job";
 import {DateUtil} from "../../common/util/DateUtil";
 import {JobExeTime} from "../data/Types";
+import {Serialize} from "../../common/serialize/Serialize";
 
+@Serialize()
 export class DefaultJob implements Job {
 
     private _id: string;

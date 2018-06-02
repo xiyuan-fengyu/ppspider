@@ -70,6 +70,7 @@ class TestTask {
 }
 
 @Launcher({
+    workplace: __dirname + "/workplace",
     tasks: [
         TestTask
     ],

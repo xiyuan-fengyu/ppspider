@@ -1,0 +1,15 @@
+<h2 mat-dialog-title>Warning</h2>
+<mat-dialog-content>
+  <p>Shutdown the ppspider system ?</p>
+  <mat-progress-bar
+    *ngIf="shutdownProgressValue > 0"
+    color="primary"
+    mode="determinate"
+    [value]="shutdownProgressValue">
+  </mat-progress-bar>
+</mat-dialog-content>
+<mat-dialog-actions class="flexRowReverse">
+  <button mat-button (click)="shutdown(true)">Save And Shutdown</button>
+  <button mat-button (click)="shutdown(false)">Shutdown</button>
+  <button mat-button [mat-dialog-close]="null">Cancle</button>
+</mat-dialog-actions>

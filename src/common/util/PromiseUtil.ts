@@ -13,6 +13,19 @@ export class PromiseUtil {
             setTimeout(() => resolve(), timeout);
         });
     }
+    static wait(predict: () => boolean, interval: number = 100, timeout: number = -1): Promise<boolean> {
+        return new Promise<boolean>(resolve => {
+            const start = new Date().getTime();
+            const check = () => {
+                if (predict()) resolve(true);
+                else if (timeout > -1 && new Date().getTime() - start >= timeout) {
+                    resolve(false);
+                }
+                else setTimeout(check, interval);
+            };
+            check();
+        });
+    }
 
     static waitPromises(promises: Promise<any>[], timeout: number = 30000): Promise<WaitPromiseResult> {
         return new Promise<WaitPromiseResult>(resolve => {

@@ -1,7 +1,9 @@
 import {AbsQueue} from "./AbsQueue";
 import {Job} from "../job/Job";
 import {PriorityQueue} from "../../common/util/PriorityQueue";
+import {Serialize} from "../../common/serialize/Serialize";
 
+@Serialize()
 export class DefaultPriorityQueue extends AbsQueue{
 
     private readonly queue = new PriorityQueue<Job>((j1, j2) => j1.priority() - j2.priority());

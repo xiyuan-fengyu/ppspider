@@ -5,6 +5,7 @@ import {ObjectUtil} from "../../util/ObjectUtil";
 import {MAT_DIALOG_DATA, MatDialog, MatDialogRef} from "@angular/material";
 import {PromiseUtil} from "../../util/PromiseUtil";
 import {ToasterService} from "angular2-toaster";
+import {CommonService} from "../../service/common.service";
 
 declare const CodeMirror: any;
 
@@ -13,27 +14,20 @@ declare const CodeMirror: any;
   templateUrl: './queue-info.component.html',
   styleUrls: ['./queue-info.component.css']
 })
-export class QueueInfoComponent implements OnInit, OnDestroy {
+export class QueueInfoComponent implements OnInit {
 
-  private subscription: Subscription = new Subscription();
-
-  info: any = {};
+  info: any;
 
   constructor(
     private socketIOService: SocketIOService,
+    private commonService: CommonService,
     public dialog: MatDialog,
     private toasterService: ToasterService
   ) {
-    this.subscription.add(socketIOService.pushObserver("info").subscribe(data => {
-      ObjectUtil.copy(data, this.info);
-    }));
   }
 
   ngOnInit() {
-  }
-
-  ngOnDestroy(): void {
-    this.subscription.unsubscribe();
+    this.info = this.commonService.info;
   }
 
   stringify(obj) {

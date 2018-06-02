@@ -1,5 +1,5 @@
 
-<mat-grid-list *ngIf="info.queue" cols="3" rowHeight="100px">
+<mat-grid-list *ngIf="info?.queue" cols="3" rowHeight="100px">
   <mat-grid-tile [colspan]="1" [rowspan]="1">
     <div class="taskNumItem success">
       <mat-icon>done</mat-icon>
@@ -25,7 +25,7 @@
   </mat-grid-tile>
 </mat-grid-list>
 
-<ng-container *ngIf="info.queue && info.queue.queues">
+<ng-container *ngIf="info?.queue && info.queue.queues">
   <ng-container *ngFor="let queue of info.queue.queues; let queueI = index">
     <mat-divider></mat-divider>
     <mat-card [class]="'queueItem ' + queue.type">
@@ -33,7 +33,7 @@
         <mat-card-header>
           <mat-icon *ngIf="queue.type == 'OnStart'" mat-card-avatar class="icon">launch</mat-icon>
           <mat-icon *ngIf="queue.type == 'OnTime'" mat-card-avatar class="icon">timer</mat-icon>
-          <mat-icon *ngIf="queue.type == 'FromQueue'" mat-card-avatar class="icon">queue_play_next</mat-icon>
+          <mat-icon *ngIf="queue.type == 'FromQueue'" mat-card-avatar class="icon">queue_music</mat-icon>
           <mat-card-title>{{queue.name}}</mat-card-title>
           <mat-card-subtitle>
             <span class="taskType">{{queue.type}}</span>

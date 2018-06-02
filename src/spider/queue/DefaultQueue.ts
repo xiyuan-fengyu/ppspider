@@ -1,6 +1,8 @@
 import {AbsQueue} from "./AbsQueue";
 import {Job} from "../job/Job";
+import {Serialize} from "../../common/serialize/Serialize";
 
+@Serialize()
 export class DefaultQueue extends AbsQueue {
 
     private queue: Job[] = [];

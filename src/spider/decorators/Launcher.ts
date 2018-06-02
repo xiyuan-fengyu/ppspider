@@ -4,6 +4,7 @@ import {AppInfo, ClientRequest, WorkerFactoryMap} from "../data/Types";
 import {WebServer} from "../ui/WebServer";
 import {Defaults} from "../data/Defaults";
 import {EventEmitter} from "events";
+import {FileUtil} from "../../common/util/FileUtil";
 
 const taskInstances: any = {};
 export function getTaskInstances(taskClass) {
@@ -12,7 +13,14 @@ export function getTaskInstances(taskClass) {
     else return taskInstances[taskClass.name] = new taskClass();
 }
 
-export function Launcher(appInfo: AppInfo) {
+export let appInfo: AppInfo = null;
+
+export function Launcher(theAppInfo: AppInfo) {
+    appInfo = theAppInfo;
+    FileUtil.mkdirs(appInfo.workplace);
+
+    queueManager.loadFromCache();
+
     return function (target) {
         const mainLooper = new Looper();
         const mainMessager = new EventEmitter();
@@ -26,18 +34,33 @@ export function Launcher(appInfo: AppInfo) {
         {
             class ClientRequestHandler {
 
-                updateQueueConfig(request: ClientRequest): any {
+                static updateQueueConfig(request: ClientRequest): any {
                     return queueManager.updateConfig(request.data)
                 }
 
+                static resetQueueManagerPause(request: ClientRequest): any {
+                    queueManager.resetPause(request.data);
+                    return true;
+                }
+
+                static async stopSystem(request: ClientRequest): any {
+                    await queueManager.waitRunning();
+                    if (request.data.saveState) {
+                        queueManager.stopAndSaveToCache();
+                    }
+                    setTimeout(() => {
+                        mainLooper.shutdown();
+                    }, 1000);
+                    return true;
+                }
+
             }
-            const clientRequestHandler = new ClientRequestHandler();
             mainMessager.on("request", async (request: ClientRequest) => {
-                const method = clientRequestHandler[request.key];
+                const method = ClientRequestHandler[request.key];
                 let success = false;
                 if (typeof method == "function") {
                     try {
-                        const res = await method.call(clientRequestHandler, request);
+                        const res = await method.call(ClientRequestHandler, request);
                         mainMessager.emit("response_" + request.id, res);
                         success = true;
                     }
@@ -70,11 +93,7 @@ export function Launcher(appInfo: AppInfo) {
             for (let workerFactory of appInfo.workerFactorys) {
                 workerFactory.shutdown();
             }
-
             webServer.shutdown();
-
-            // @TODO 存储信息
-
             process.exit(0);
         });
     };

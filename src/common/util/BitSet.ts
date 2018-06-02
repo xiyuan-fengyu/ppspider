@@ -1,12 +1,38 @@
-export class BitSet {
+import {Serializable, Serialize} from "../serialize/Serialize";
+
+@Serialize()
+export class BitSet extends Serializable {
 
     private bytes: Uint8Array;
 
     private readonly _size: number;
 
-    constructor(bitSize: number) {
-        this._size = bitSize;
-        this.newBytes();
+    constructor(arg: any) {
+        super(arg);
+        const argType = typeof arg;
+        if (argType == "number") {
+            this._size = arg;
+            this.newBytes();
+        }
+        else if (argType == "object") {
+            this._size = arg._size;
+            this.newBytes();
+            for (let index of Object.keys(arg.bytes)) {
+                this.bytes[parseInt(index)] = arg.bytes[index];
+            }
+        }
+    }
+
+    serialize() {
+        const ser = {
+            _size: this._size,
+            bytes: {}
+        };
+        for (let i = 0, len = this.bytes.length; i < len; i++) {
+            const v = this.bytes[i];
+            if (v != 0) ser.bytes[i] = this.bytes[i];
+        }
+        return ser;
     }
 
     get size(): number {

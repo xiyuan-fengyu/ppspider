@@ -1,0 +1,9 @@
+.buttons {
+  display: flex;
+  align-items: left;
+  padding: 8px;
+}
+
+.flexRowReverse {
+  flex-direction: row-reverse;
+}

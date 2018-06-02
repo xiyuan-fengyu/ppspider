@@ -2,7 +2,7 @@ import {RouterModule} from "@angular/router";
 import {SystemInfoComponent} from "./page/system-info/system-info.component";
 import {JobInfoComponent} from "./page/job-info/job-info.component";
 import {IconsComponent} from "./page/icons/icons.component";
-import {QueueInfoComponent} from "./page/task-info/queue-info.component";
+import {QueueInfoComponent} from "./page/queue-info/queue-info.component";
 
 export const rootRouter = RouterModule.forRoot([
   {

@@ -1,6 +1,8 @@
 import {Filter} from "./Filter";
 import {Job} from "../job/Job";
+import {Serialize} from "../../common/serialize/Serialize";
 
+@Serialize()
 export class NoFilter implements Filter {
 
     clear(): void {

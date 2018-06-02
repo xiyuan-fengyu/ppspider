@@ -1,3 +1,27 @@
-<p>
-  system-info works!
-</p>
+<ng-container *ngIf="info?.running != false">
+  <div class="buttons">
+    <ng-container *ngIf="info?.queue?.pause == false">
+      <button (click)="resetQueueManagerPause(true)" mat-icon-button>
+        <mat-icon
+          matTooltip="Pause QueueManager"
+          style="color: #ffb670">pause</mat-icon>
+      </button>
+    </ng-container>
+    <ng-container *ngIf="info?.queue?.pause">
+      <button (click)="resetQueueManagerPause(false)" mat-icon-button>
+        <mat-icon
+          matTooltip="Resume QueueManager"
+          style="color: #2c8aff">play_arrow</mat-icon>
+      </button>
+    </ng-container>
+    <ng-container *ngIf="info?.queue">
+      <button (click)="showShutdownConfirm()" mat-icon-button>
+        <mat-icon
+          matTooltip="Shutdown the system"
+          style="color: #ff4384">stop</mat-icon>
+      </button>
+    </ng-container>
+  </div>
+
+</ng-container>
+<h4 *ngIf="info?.running == false">ppspider system has been shutdown</h4>

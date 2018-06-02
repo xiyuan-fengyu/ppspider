@@ -1,7 +1,9 @@
 import {Filter} from "./Filter";
 import {Job} from "../job/Job";
 import {BitSet} from "../../common/util/BitSet";
+import {Serialize} from "../../common/serialize/Serialize";
 
+@Serialize()
 export class BloonFilter implements Filter {
 
     private static readonly size = 2 << 24;

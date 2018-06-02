@@ -20,7 +20,12 @@ import {DefaultQueue} from "../queue/DefaultQueue";
 import {Filter} from "../filter/Filter";
 import {DefaultJob} from "../job/DefaultJob";
 import {NoFilter} from "../filter/NoFilter";
+import {SerializableUtil, Serialize} from "../../common/serialize/Serialize";
+import * as fs from "fs";
+import {appInfo} from "../decorators/Launcher";
+import {PromiseUtil} from "../../common/util/PromiseUtil";
 
+@Serialize()
 export class QueueManager {
 
     private readonly queues: Queues = {};
@@ -35,8 +40,77 @@ export class QueueManager {
 
     private failNum = 0;
 
+    private pause = false;
+
+    resetPause(value: boolean) {
+        this.pause = value;
+    }
+
+    async waitRunning() {
+        this.pause = true;
+        await PromiseUtil.wait(() => this.runningNum <= 0, 500, 30000);
+    }
+
+    stopAndSaveToCache(): any {
+        try {
+            const data = JSON.stringify(SerializableUtil.serialize(this));
+            fs.writeFileSync(appInfo.workplace + "/queueCache.json", data);
+        }
+        catch (e) {
+            return e;
+        }
+        return true;
+    }
+
+    loadFromCache() {
+        try {
+            const cacheFile = appInfo.workplace + "/queueCache.json";
+            if (fs.existsSync(cacheFile)) {
+                const data = JSON.parse(fs.readFileSync(cacheFile, "utf-8"));
+                const tempQueueManager = SerializableUtil.deserialize(data) as QueueManager;
+
+                this.successNum = tempQueueManager.successNum;
+                this.runningNum = tempQueueManager.runningNum;
+                this.failNum = tempQueueManager.failNum;
+
+                for (let queueName of Object.keys(tempQueueManager.queues)) {
+                    const queueInfo = tempQueueManager.queues[queueName];
+                    const thisQueueInfo = this.queues[queueName];
+                    if (thisQueueInfo) {
+                        thisQueueInfo.success = queueInfo.success;
+                        thisQueueInfo.fail = queueInfo.fail;
+                        thisQueueInfo.curMaxParallel = queueInfo.curMaxParallel;
+
+                        thisQueueInfo.config.exeInterval = queueInfo.config.exeInterval;
+                        this.updateConfig({
+                            queue: queueName,
+                            field: "parallel",
+                            value: queueInfo.config.parallel
+                        });
+
+                        const taskType = queueInfo.config["type"];
+                        if (taskType == "OnTime") {
+                            this.updateConfig({
+                                queue: queueName,
+                                field: "cron",
+                                value: queueInfo.config["cron"]
+                            });
+                        }
+                        else if (taskType == "FromQueue") {
+                            thisQueueInfo.queue = queueInfo.queue;
+                        }
+                    }
+                }
+            }
+        }
+        catch (e) {
+            console.warn(e.stack);
+        }
+    }
+
     info(): any {
         const res: any = {
+            pause: this.pause,
             success: this.successNum,
             running: this.runningNum,
             fail: this.failNum,
@@ -96,13 +170,17 @@ export class QueueManager {
         };
 
         if (data.field == "parallel") {
-            queueInfo.config.parallel = data.value;
-            this.resetQueueParallel(queueInfo);
+            if (queueInfo.config.parallel != data.value) {
+                queueInfo.config.parallel = data.value;
+                this.resetQueueParallel(queueInfo);
+            }
         }
         else if (data.field == "cron") {
-            queueInfo.config['cron'] = data.value;
-            while (!queueInfo.queue.isEmpty()) queueInfo.queue.pop();
-            this.addOnTimeJob(data.queue);
+            if (queueInfo.config['cron'] != data.value) {
+                queueInfo.config['cron'] = data.value;
+                while (!queueInfo.queue.isEmpty()) queueInfo.queue.pop();
+                this.addOnTimeJob(data.queue);
+            }
         }
         else if (data.field == "exeInterval") {
             queueInfo.config.exeInterval = data.value;
@@ -299,6 +377,8 @@ export class QueueManager {
     }
 
     dispatch(workerFactoryMap: WorkerFactoryMap) {
+        if (this.pause) return;
+
         const queueNames = Object.keys(this.queues);
         if (queueNames.length == 0) return;
 

@@ -12,10 +12,10 @@ import {
   MatGridListModule,
   MatIconModule,
   MatInputModule,
-  MatListModule,
-  MatTabsModule
+  MatListModule, MatProgressBarModule,
+  MatTabsModule, MatTooltipModule
 } from "@angular/material";
-import {SystemInfoComponent} from "./page/system-info/system-info.component";
+import {ShutdownConfirmDialog, SystemInfoComponent} from "./page/system-info/system-info.component";
 import {SocketIOService} from "./service/socket-io.service";
 import {JobInfoComponent} from './page/job-info/job-info.component';
 import {CommonModule, HashLocationStrategy, LocationStrategy} from "@angular/common";
@@ -24,11 +24,13 @@ import {FormsModule} from "@angular/forms";
 import {LongToDateStrPipe} from "./pipe/long-to-date-str.pipe";
 import { JsonStringifyPipe } from './pipe/json-stringify.pipe';
 import {ToasterModule, ToasterService} from "angular2-toaster";
-import {EditConfigDialog, QueueInfoComponent} from "./page/task-info/queue-info.component";
+import {EditConfigDialog, QueueInfoComponent} from "./page/queue-info/queue-info.component";
+import {CommonService} from "./service/common.service";
 
 @NgModule({
   declarations: [
     EditConfigDialog,
+    ShutdownConfirmDialog,
 
     LongToDateStrPipe,
     AppComponent,
@@ -40,11 +42,11 @@ import {EditConfigDialog, QueueInfoComponent} from "./page/task-info/queue-info.
   ],
   imports: [
     rootRouter,
+    ToasterModule.forRoot(),
     CommonModule,
     BrowserModule,
     BrowserAnimationsModule,
     FormsModule,
-    ToasterModule.forRoot(),
     MatIconModule,
     MatButtonModule,
     MatTabsModule,
@@ -54,13 +56,16 @@ import {EditConfigDialog, QueueInfoComponent} from "./page/task-info/queue-info.
     MatFormFieldModule,
     MatInputModule,
     MatDialogModule,
-
+    MatTooltipModule,
+    MatProgressBarModule,
   ],
   entryComponents: [
     EditConfigDialog,
+    ShutdownConfirmDialog,
   ],
   providers: [
     SocketIOService,
+    CommonService,
     {
       provide: LocationStrategy,
       useClass: HashLocationStrategy
