@@ -16,10 +16,10 @@ export class AppComponent {
       path: "jobInfo",
       label: "Job"
     },
-    {
-      path: "icons",
-      label: "Icons"
-    },
+    // {
+    //   path: "icons",
+    //   label: "Icons"
+    // },
   ];
 
 }

@@ -163,7 +163,7 @@ export class JobInfoComponent implements OnInit {
 
   jobDetail(_id: string) {
     this.dialog.open(JobDetailDialog, {
-      width: "640px",
+      width: "700px",
       data: {
         _id: _id
       }

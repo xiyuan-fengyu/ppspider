@@ -9,6 +9,7 @@ import {JobOverride} from "../../spider/decorators/JobOverride";
 import {PuppeteerUtil} from "../../spider/util/PuppeteerUtil";
 import {FileUtil} from "../../common/util/FileUtil";
 import {PromiseUtil} from "../../common/util/PromiseUtil";
+import {appInfo} from "../../spider/decorators/Launcher";
 
 const queue_qq = {
     name: "qq"
@@ -19,8 +20,6 @@ const queue_qq_song = {
 };
 
 export class QqMusicTask {
-
-    dataPath = __dirname + "/qq";
 
     @JobOverride("qq_song")
     @JobOverride("OnStart_QqMusicTask_index")
@@ -77,19 +76,19 @@ export class QqMusicTask {
         const songRes = PuppeteerUtil.onceResponse(page,
             "https://c.y.qq.com/v8/fcg-bin/fcg_play_single_song.fcg\\?.*", async response => {
                 const text = await response.text();
-                FileUtil.write(this.dataPath + "/" + songId + "/song.json", JSON.stringify(PuppeteerUtil.jsonp(text)));
+                FileUtil.write(appInfo.workplace + "/qq/" + songId + "/song.json", JSON.stringify(PuppeteerUtil.jsonp(text)));
             });
 
         const albumRes = PuppeteerUtil.onceResponse(page,
             "https://c.y.qq.com/v8/fcg-bin/fcg_v8_album_info_cp.fcg\\?.*", async response => {
                 const text = await response.text();
-                FileUtil.write(this.dataPath + "/" + songId + "/album.json", JSON.stringify(PuppeteerUtil.jsonp(text)));
+                FileUtil.write(appInfo.workplace + "/qq/" + songId + "/album.json", JSON.stringify(PuppeteerUtil.jsonp(text)));
             });
 
         const lyricRes = PuppeteerUtil.onceResponse(page,
             "https://c.y.qq.com/lyric/fcgi-bin/fcg_query_lyric.fcg\\?.*", async response => {
                 const text = await response.text();
-                FileUtil.write(this.dataPath + "/" + songId + "/lyric.json", JSON.stringify(PuppeteerUtil.jsonp(text)));
+                FileUtil.write(appInfo.workplace + "/qq/" + songId + "/lyric.json", JSON.stringify(PuppeteerUtil.jsonp(text)));
             });
 
         const commentRes = PuppeteerUtil.onResponse(page,
@@ -97,10 +96,10 @@ export class QqMusicTask {
                 const text = await response.text();
                 const json = PuppeteerUtil.jsonp(text);
                 if (json.hasOwnProperty("commenttotal")) {
-                    FileUtil.write(this.dataPath + "/" + songId + "/comment_total.json", JSON.stringify(json));
+                    FileUtil.write(appInfo.workplace + "/qq/" + songId + "/comment_total.json", JSON.stringify(json));
                 }
                 else {
-                    FileUtil.write(this.dataPath + "/" + songId + "/comment_0.json", JSON.stringify(json));
+                    FileUtil.write(appInfo.workplace + "/qq/" + songId + "/comment_0.json", JSON.stringify(json));
                 }
             }, 2);
 
@@ -124,7 +123,7 @@ export class QqMusicTask {
                         "https://c.y.qq.com/base/fcgi-bin/fcg_global_comment_h5.fcg\\?.*", async response => {
                             const text = await response.text();
                             const pageNum = response.url().match(".*&pagenum=(\\d+).*")[1];
-                            FileUtil.write(this.dataPath + "/" + songId + "/comment_" + pageNum + ".json", JSON.stringify(PuppeteerUtil.jsonp(text)));
+                            FileUtil.write(appInfo.workplace + "/qq/" + songId + "/comment_" + pageNum + ".json", JSON.stringify(PuppeteerUtil.jsonp(text)));
                         });
                     page.tap(selector);
                     await nextCommentPageRes;
