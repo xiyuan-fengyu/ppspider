@@ -109,6 +109,11 @@
   cursor: pointer;
 }
 
+.buttons {
+  display: flex;
+  padding: 4px;
+}
+
 .flexRowReverse {
   flex-direction: row-reverse;
 }

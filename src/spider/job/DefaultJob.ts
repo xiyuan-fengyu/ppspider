@@ -26,6 +26,8 @@ export class DefaultJob implements Job {
 
     private _tryNum: number = 0;
 
+    private _createTime: number;
+
     private _exeTimes: JobExeTime[] = [];
 
     id(): string {
@@ -33,14 +35,14 @@ export class DefaultJob implements Job {
     }
 
     parentId(parentId?: string): string {
-        if (parentId) {
+        if (parentId != null) {
             this._parentId = parentId;
         }
         return this._parentId;
     }
 
     queue(queue?: string): string {
-        if (queue) {
+        if (queue != null) {
             this._queue = queue;
         }
         return this._queue;
@@ -51,7 +53,7 @@ export class DefaultJob implements Job {
     }
 
     key(key?: string): string {
-        if (key) {
+        if (key != null) {
             this._key = key;
         }
         return this._key || this._url;
@@ -62,31 +64,35 @@ export class DefaultJob implements Job {
     }
 
     priority(priority?: number): number {
-        if (priority !== undefined) {
+        if (priority != null) {
             this._priority = priority;
         }
         return this._priority;
     }
 
     depth(depth?: number): number {
-        if (depth !== undefined) {
+        if (depth != null) {
             this._depth = depth;
         }
         return this._depth;
     }
 
     status(status?: JobStatus): JobStatus {
-        if (status !== undefined) {
+        if (status != null) {
             this._status = status;
         }
         return this._status;
     }
 
     tryNum(tryNum?: number): number {
-        if (tryNum !== undefined) {
+        if (tryNum != null) {
             this._tryNum = tryNum;
         }
         return this._tryNum;
+    }
+
+    createTime(): number {
+        return this._createTime;
     }
 
     exeTimes(time: JobExeTime): JobExeTime[] {
@@ -102,7 +108,9 @@ export class DefaultJob implements Job {
     }
 
     constructor(url: string) {
-        this._id = DateUtil.toStr(new Date(), "yyyyMMdd_HHmmss_SSS_") + (Math.random() * 10000).toFixed();
+        const date = new Date();
+        this._id = DateUtil.toStr(date, "yyyyMMdd_HHmmss_SSS_") + (Math.random() * 10000).toFixed();
+        this._createTime = date.getTime();
         this._url = url;
     }
 

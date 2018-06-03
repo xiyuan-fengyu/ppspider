@@ -5,6 +5,7 @@ import {WebServer} from "../ui/WebServer";
 import {Defaults} from "../data/Defaults";
 import {EventEmitter} from "events";
 import {FileUtil} from "../../common/util/FileUtil";
+import {jobManager} from "../manager/JobManager";
 
 const taskInstances: any = {};
 export function getTaskInstances(taskClass) {
@@ -19,7 +20,8 @@ export function Launcher(theAppInfo: AppInfo) {
     appInfo = theAppInfo;
     FileUtil.mkdirs(appInfo.workplace);
 
-    queueManager.loadFromCache();
+    jobManager.init();
+    queueManager.loadFromCache(appInfo.workplace + "/queueCache.json");
 
     return function (target) {
         const mainLooper = new Looper();
@@ -33,6 +35,10 @@ export function Launcher(theAppInfo: AppInfo) {
 
         {
             class ClientRequestHandler {
+
+                static deleteQueueCache(request: ClientRequest): any {
+                    return queueManager.deleteQueueCache();
+                }
 
                 static updateQueueConfig(request: ClientRequest): any {
                     return queueManager.updateConfig(request.data)
@@ -54,23 +60,39 @@ export function Launcher(theAppInfo: AppInfo) {
                     return true;
                 }
 
+                static async jobs(request: ClientRequest): any {
+                    return await jobManager.jobs(request.data);
+                }
+
+                static async deleteJobs(request: ClientRequest): any {
+                    return await jobManager.deleteJobs(request.data);
+                }
+
+                static async jobDetail(request: ClientRequest): any {
+                    return await jobManager.jobDetail(request.data);
+                }
+
             }
             mainMessager.on("request", async (request: ClientRequest) => {
                 const method = ClientRequestHandler[request.key];
-                let success = false;
                 if (typeof method == "function") {
                     try {
                         const res = await method.call(ClientRequestHandler, request);
                         mainMessager.emit("response_" + request.id, res);
-                        success = true;
                     }
                     catch (e) {
                         console.warn(e.stack);
+                        mainMessager.emit("response_" + request.id, {
+                            success: false,
+                            message: e.message
+                        });
                     }
                 }
-
-                if (!success) {
-                    mainMessager.emit("response_" + request.id, "");
+                else {
+                    mainMessager.emit("response_" + request.id, {
+                        success: false,
+                        message: "method not found"
+                    });
                 }
             });
         }
@@ -84,6 +106,7 @@ export function Launcher(theAppInfo: AppInfo) {
             @LooperTask(mainLooper, 750)
             pushToClients() {
                 mainMessager.emit("push", "info", {
+                    running: true,
                     queue: queueManager.info()
                 });
             }

@@ -10,7 +10,20 @@ export class SocketIOService implements OnDestroy{
 
   private observers: {[pushLey: string]: Observable<any>} = {};
 
+  private reconnectNum = 0;
+
+  private reconnectMax = 60;
+
   constructor() {
+    this.client.on("connect", data => {
+      this.reconnectNum = 0;
+    });
+    this.client.on("reconnect_error", data => {
+      this.reconnectNum++;
+      if (this.reconnectNum >= this.reconnectMax) {
+        this.client.close();
+      }
+    });
   }
 
   pushObserver(key: string): Observable<any> {

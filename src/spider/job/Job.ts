@@ -32,6 +32,7 @@ export function instanceofJob(obj: any): obj is Job {
         && typeof cast.depth == "function"
         && typeof cast.status == "function"
         && typeof cast.tryNum == "function"
+        && typeof cast.createTime == "function"
         && typeof cast.exeTimes == "function";
 }
 
@@ -66,6 +67,9 @@ export interface Job {
 
     // 重试次数
     tryNum(tryNum?: number): number;
+
+    // 创建时间
+    createTime(): number;
 
     // 插入执行时间 或 查询执行时间的记录
     exeTimes(time: JobExeTime): JobExeTime[];

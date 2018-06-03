@@ -1,0 +1,59 @@
+.mt12 {
+  margin-top: 12px;
+}
+
+.pt12 {
+  padding-top: 12px;
+}
+
+.conditions {
+  width: 100%;
+}
+
+.conditionsForm {
+  display: flex;
+  width: 100%;
+}
+
+.conditionsForm .remove {
+  margin: 12px 12px 0 8px;
+}
+
+.conditionsForm .add {
+  margin: 0 8px 0 8px;
+}
+
+.conditionsForm .textBtnWrapper {
+  margin: 2px 0 0 0;
+}
+
+.conditionsForm mat-form-field {
+  margin-right: 24px;
+}
+
+.conditionsForm mat-form-field.value {
+  width: 100%;
+}
+
+table {
+  width: 100%;
+}
+
+.mat-cell {
+  padding-right: 24px;
+}
+
+.mat-cell .url {
+  display: block;
+  max-width: 300px;
+  padding: 8px 0;
+  color: #5bbb51;
+  font-weight: bold;
+  text-decoration: none;
+  word-break: break-word;
+  cursor: pointer;
+}
+
+.flexRowReverse {
+  flex-direction: row-reverse;
+}

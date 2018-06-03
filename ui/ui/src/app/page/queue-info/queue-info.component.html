@@ -1,5 +1,40 @@
 
-<mat-grid-list *ngIf="info?.queue" cols="3" rowHeight="100px">
+<p *ngIf="!info || !info.running">ppspider is not working !</p>
+
+<ng-container *ngIf="info?.running">
+  <div class="buttons">
+    <ng-container *ngIf="info?.queue?.pause == false">
+      <button (click)="resetQueueManagerPause(true)" mat-icon-button>
+        <mat-icon
+          matTooltip="Pause QueueManager"
+          style="color: #ffb670">pause</mat-icon>
+      </button>
+    </ng-container>
+    <ng-container *ngIf="info?.queue?.pause">
+      <button (click)="resetQueueManagerPause(false)" mat-icon-button>
+        <mat-icon
+          matTooltip="Resume QueueManager"
+          style="color: #2c8aff">play_arrow</mat-icon>
+      </button>
+    </ng-container>
+    <ng-container *ngIf="info?.queue?.cacheExist">
+      <button (click)="deleteQueueCache()" mat-icon-button>
+        <mat-icon
+          matTooltip="Delete queue cache"
+          style="color: #ff4d44">delete_forever</mat-icon>
+      </button>
+    </ng-container>
+    <ng-container *ngIf="info?.queue">
+      <button (click)="showShutdownConfirm()" mat-icon-button>
+        <mat-icon
+          matTooltip="Shutdown the system"
+          style="color: #ff4384">stop</mat-icon>
+      </button>
+    </ng-container>
+  </div>
+</ng-container>
+
+<mat-grid-list *ngIf="info?.running" cols="3" rowHeight="100px">
   <mat-grid-tile [colspan]="1" [rowspan]="1">
     <div class="taskNumItem success">
       <mat-icon>done</mat-icon>

@@ -2,7 +2,31 @@
 @import "~@angular/material/prebuilt-themes/indigo-pink.css";
 @import "~codemirror/lib/codemirror.css";
 @import '~angular2-toaster/toaster.min.css';
+@import "~jquery.json-viewer/json-viewer/jquery.json-viewer.css";
 
 .CodeMirror {
   border: 1px solid #e6e6e6;
+}
+
+#jsonViewer {
+  font-size: 14px;
+  line-height: 24px;
+}
+
+.json-string {
+  color: #3ab54a;
+  font-weight: bold;
+}
+
+.json-literal {
+  color: #158dff;
+  font-weight: bold;
+}
+
+a.json-toggle:before {
+  content: "-";
+}
+
+a.json-toggle.collapsed:before {
+  content: "+";
 }

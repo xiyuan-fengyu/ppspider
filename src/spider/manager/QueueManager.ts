@@ -24,9 +24,12 @@ import {SerializableUtil, Serialize} from "../../common/serialize/Serialize";
 import * as fs from "fs";
 import {appInfo} from "../decorators/Launcher";
 import {PromiseUtil} from "../../common/util/PromiseUtil";
+import {jobManager} from "./JobManager";
 
 @Serialize()
 export class QueueManager {
+
+    private cachePath: string;
 
     private readonly queues: Queues = {};
 
@@ -51,10 +54,26 @@ export class QueueManager {
         await PromiseUtil.wait(() => this.runningNum <= 0, 500, 30000);
     }
 
+    deleteQueueCache(): any {
+        try {
+            fs.unlinkSync(this.cachePath);
+        }
+        catch (e) {
+            return {
+                success: false,
+                message: e.message
+            };
+        }
+        return {
+            success: true,
+            message: "Delete queue cache successfully"
+        };
+    }
+
     stopAndSaveToCache(): any {
         try {
             const data = JSON.stringify(SerializableUtil.serialize(this));
-            fs.writeFileSync(appInfo.workplace + "/queueCache.json", data);
+            fs.writeFileSync(this.cachePath, data);
         }
         catch (e) {
             return e;
@@ -62,9 +81,9 @@ export class QueueManager {
         return true;
     }
 
-    loadFromCache() {
+    loadFromCache(cachePath: string) {
         try {
-            const cacheFile = appInfo.workplace + "/queueCache.json";
+            const cacheFile = this.cachePath = cachePath;
             if (fs.existsSync(cacheFile)) {
                 const data = JSON.parse(fs.readFileSync(cacheFile, "utf-8"));
                 const tempQueueManager = SerializableUtil.deserialize(data) as QueueManager;
@@ -110,6 +129,7 @@ export class QueueManager {
 
     info(): any {
         const res: any = {
+            cacheExist: fs.existsSync(this.cachePath),
             pause: this.pause,
             success: this.successNum,
             running: this.runningNum,
@@ -365,6 +385,10 @@ export class QueueManager {
             if (!job.parentId()) job.parentId(parent.id());
             if (job.depth() == 0) job.depth(parent.depth() + 1);
         }
+        else {
+            job.parentId("");
+            job.depth(0);
+        }
 
         if (!filter || !filter.isExisted(job)) {
             if (filter) filter.setExisted(job);
@@ -374,6 +398,7 @@ export class QueueManager {
         else {
             job.status(JobStatus.Filtered);
         }
+        jobManager.save(job);
     }
 
     dispatch(workerFactoryMap: WorkerFactoryMap) {
@@ -427,6 +452,7 @@ export class QueueManager {
                             try {
                                 job.status(JobStatus.Running);
                                 job.tryNum(job.tryNum() + 1);
+                                jobManager.save(job);
                                 await method.call(target, worker, job);
                                 job.status(JobStatus.Success);
                                 this.successNum++;
@@ -454,6 +480,9 @@ export class QueueManager {
                             if (job.status() == JobStatus.Retry) {
                                 QueueManager.addJobToQueue(job, null, job.queue(), this.queues[job.queue()].queue, null);
                             }
+
+                            jobManager.save(job);
+
                             await workerFactory.release(worker);
                         });
                     }

@@ -14,6 +14,7 @@
   "dependencies": {
     "express": "^4.16.3",
     "later": "^1.2.0",
+    "nedb": "^1.8.0",
     "puppeteer": "^1.2.0",
     "request": "^2.85.0",
     "socket.io": "^2.1.1",
@@ -24,6 +25,7 @@
     "@types/jquery": "^3.3.1",
     "@types/node": "^9.4.7",
     "@types/puppeteer": "^1.2.0",
+    "@types/nedb": "^1.8.5",
     "@types/socket.io": "^1.4.33"
   }
 }

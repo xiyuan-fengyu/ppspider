@@ -23,11 +23,11 @@ export class WebServer {
 
         this.io.on("connection", socket => {
             socket.on("request", (request: ClientRequest) => {
-               messager.emit("request", request);
-               const responseId = "response_" + request.id;
-               messager.once(responseId, res => {
-                  socket.emit(responseId, res);
-               });
+                const responseId = "response_" + request.id;
+                messager.once(responseId, res => {
+                    socket.emit(responseId, res);
+                });
+                messager.emit("request", request);
             });
         });
 

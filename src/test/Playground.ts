@@ -1,5 +1,8 @@
 import {Serialize, SerializableUtil} from "../common/serialize/Serialize";
 import {queueManager} from "../spider/manager/QueueManager";
+import {appInfo} from "../spider/decorators/Launcher";
+import Nedb = require("nedb");
+import {JobStatus} from "../spider/job/Job";
 
 // @Serialize()
 // class B {
@@ -28,15 +31,38 @@ import {queueManager} from "../spider/manager/QueueManager";
 // const aDeser = SerializableUtil.deserialize(aSer);
 // console.log(aDeser);
 
-class A {
 
-}
 
-class B extends A {
+const db = new Nedb({
+    filename: __dirname + "/workplace/db/test.db",
+    autoload: true,
+    onload: err => {
+        db.persistence.compactDatafile();
+    }
+});
 
-}
+db.insert({
+    _id: "test",
+    "name": "2"
+}, (err, doc) => {
+    if (err) {
+        db.update({_id: "test"}, {
+            _id: "test",
+            "name": "3"
+        });
+    }
+});
 
-const bCons = B;
-console.log(bCons.prototype);
+db.find({age: null}, (err, docs) => {
+   console.log(err, docs);
+});
 
-console.log(__dirname);
+
+// const temp = Object.keys(JobStatus).map(key => {
+//     const v = JobStatus[key];
+//     return v.constructor == Number ? {
+//         key: key,
+//         value: v
+//     } : null
+// }).filter(item => item != null);
+// console.log(temp);

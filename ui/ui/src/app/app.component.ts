@@ -9,10 +9,6 @@ export class AppComponent {
 
   tabs = [
     {
-      path: "systemInfo",
-      label: "System"
-    },
-    {
       path: "queueInfo",
       label: "Queue"
     },
