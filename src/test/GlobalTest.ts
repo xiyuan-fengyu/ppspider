@@ -1,6 +1,4 @@
-import {QqMusicTask} from "./music/QqMusicTask";
+import {DefaultJob} from "../spider/job/DefaultJob";
 
-let b = eval("new QqMusicTask()");
-console.log(b);
-
-// @TODO 通过自定义 注解实现， 仿Java
+const job = new DefaultJob("");
+console.log(job);

@@ -49,27 +49,28 @@ export function Launcher(theAppInfo: AppInfo) {
                     return true;
                 }
 
-                static async stopSystem(request: ClientRequest): any {
-                    await queueManager.waitRunning();
-                    if (request.data.saveState) {
-                        queueManager.stopAndSaveToCache();
-                    }
-                    setTimeout(() => {
-                        mainLooper.shutdown();
-                    }, 1000);
-                    return true;
+                static stopSystem(request: ClientRequest): Promise<any> {
+                    return queueManager.waitRunning().then(res => {
+                        if (request.data.saveState) {
+                            queueManager.stopAndSaveToCache();
+                        }
+                        setTimeout(() => {
+                            mainLooper.shutdown();
+                        }, 1000);
+                        return true;
+                    });
                 }
 
-                static async jobs(request: ClientRequest): any {
-                    return await jobManager.jobs(request.data);
+                static jobs(request: ClientRequest): Promise<any> {
+                    return jobManager.jobs(request.data);
                 }
 
-                static async deleteJobs(request: ClientRequest): any {
-                    return await jobManager.deleteJobs(request.data);
+                static deleteJobs(request: ClientRequest): Promise<any> {
+                    return jobManager.deleteJobs(request.data);
                 }
 
-                static async jobDetail(request: ClientRequest): any {
-                    return await jobManager.jobDetail(request.data);
+                static jobDetail(request: ClientRequest): Promise<any> {
+                    return jobManager.jobDetail(request.data);
                 }
 
             }

@@ -101,7 +101,7 @@ export class JobManager {
         }
     }
 
-    async jobs(pager: any): any {
+    jobs(pager: any): Promise<any> {
         this.searching = true;
         return new Promise<any>(async resolve => {
             const query = this.castRegexInMatch(pager.match || {});
@@ -115,7 +115,7 @@ export class JobManager {
                 }
             };
 
-            const count = await new Promise<number>(resolve1 => {
+            const count = await new Promise<any>(resolve1 => {
                 this.jobsDb.count(query, (err, n) => {
                     resolve1(err || n);
                 });
@@ -123,8 +123,8 @@ export class JobManager {
             ifErrorResponse(count);
 
             const pageSize = pager.pageSize || 10;
-            const pageIndex = Math.min(pager.pageIndex || 0, parseInt((count - 1) / 10));
-            const jobs = await new Promise<any[]>(resolve1 => {
+            const pageIndex = Math.min(pager.pageIndex || 0, parseInt("" + (count - 1) / 10));
+            const jobs = await new Promise<any>(resolve1 => {
                 this.jobsDb.find(query, {serialize: 0})
                     .sort({ createTime: -1 })
                     .skip(pageIndex * pageSize)
@@ -137,7 +137,7 @@ export class JobManager {
 
             let queues = null;
             if (pager.requires && pager.requires.queues) {
-                queues = await new Promise<number>(resolve1 => {
+                queues = await new Promise<any>(resolve1 => {
                     this.jobsDb.find({}, {queue: 1}, ((err, documents) => {
                         if (err) resolve1(err);
                         else {
@@ -172,7 +172,7 @@ export class JobManager {
         });
     }
 
-    async deleteJobs(pager: any): any {
+    deleteJobs(pager: any): Promise<any> {
         return new Promise<any>(async resolve => {
             const query = this.castRegexInMatch(pager.match || {});
             this.jobsDb.remove(query, { multi: true }, ((err, n) => {
@@ -193,9 +193,9 @@ export class JobManager {
         });
     }
 
-    async jobDetail(data: any): any {
+    jobDetail(data: any): Promise<any> {
         return new Promise<any>(async resolve => {
-            this.jobsDb.findOne({_id: data._id}, ((err, doc) => {
+            this.jobsDb.findOne({_id: data._id}, ((err, doc: any) => {
                 if (err) {
                     resolve({
                         success: false,
@@ -214,7 +214,7 @@ export class JobManager {
 
     private transformToJob(obj: any) {
         const job = SerializableUtil.deserialize(obj) as Job;
-        job.status(JobStatus[job.status()]);
+        job.status(JobStatus[job.status()] as any);
         return ObjectUtil.transform(job, value => {
             if (value.constructor == Number && ("" + value).length == 13) {
                 return DateUtil.toStr(new Date(value), "yyyy-MM-dd HH:mm:ss");

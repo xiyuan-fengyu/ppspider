@@ -12,7 +12,7 @@ export enum JobStatus {
     // 任务成功
     Success,
     // 等待重试
-    Retry,
+    RetryWaiting,
     // 超过最大重试次数，任务失败
     Fail
 }
@@ -54,7 +54,7 @@ export interface Job {
     key(key?: string): string;
 
     // 任务携带的额外数据
-    datas(): any;
+    datas(newDatas?: any): any;
 
     // 优先级；用于优先级排序，越小越靠前
     priority(priority?: number): number;

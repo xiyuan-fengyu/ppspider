@@ -16,19 +16,19 @@ export class DefaultJob implements Job {
 
     private _key: string;
 
-    private _datas: any = {};
+    private _datas: any;
 
-    private _priority: number = 0;
+    private _priority: number;
 
-    private _depth: number = 0;
+    private _depth: number;
 
-    private _status: JobStatus = JobStatus.Create;
+    private _status: JobStatus;
 
-    private _tryNum: number = 0;
+    private _tryNum: number;
 
     private _createTime: number;
 
-    private _exeTimes: JobExeTime[] = [];
+    private _exeTimes: JobExeTime[];
 
     id(): string {
         return this._id;
@@ -59,7 +59,10 @@ export class DefaultJob implements Job {
         return this._key || this._url;
     }
 
-    datas(): any {
+    datas(newDatas: any): any {
+        if (newDatas != null) {
+            this._datas = newDatas;
+        }
         return this._datas;
     }
 
@@ -96,6 +99,7 @@ export class DefaultJob implements Job {
     }
 
     exeTimes(time: JobExeTime): JobExeTime[] {
+        if (!this._exeTimes) this._exeTimes = [];
         if (time) {
             if (time.start != null) {
                 this._exeTimes.push(time);

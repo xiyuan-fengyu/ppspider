@@ -365,6 +365,12 @@ export class QueueManager {
     private static addJobToQueue(jobOrUrl: any, parent: Job, queueName: string, queue: Queue, filter: Filter, other?: any, jobOverrideConfig?: JobOverrideConfig) {
         const job = instanceofJob(jobOrUrl) ? jobOrUrl as Job : new DefaultJob(jobOrUrl);
 
+        // 设置一些默认参数
+        job.parentId(job.parentId() || "");
+        job.datas(job.datas() || {});
+        job.depth(job.depth() || 0);
+        job.status(job.status() || JobStatus.Create);
+
         // 重写 job 的一些信息
         if (jobOverrideConfig) jobOverrideConfig.method.call(jobOverrideConfig.target, job);
 
@@ -385,15 +391,11 @@ export class QueueManager {
             if (!job.parentId()) job.parentId(parent.id());
             if (job.depth() == 0) job.depth(parent.depth() + 1);
         }
-        else {
-            job.parentId("");
-            job.depth(0);
-        }
 
         if (!filter || !filter.isExisted(job)) {
             if (filter) filter.setExisted(job);
             queue.push(job);
-            job.status(JobStatus.Waiting);
+            if (job.status() != JobStatus.RetryWaiting)job.status(JobStatus.Waiting);
         }
         else {
             job.status(JobStatus.Filtered);
@@ -462,7 +464,7 @@ export class QueueManager {
                                     job.status(JobStatus.Fail);
                                 }
                                 else {
-                                    job.status(JobStatus.Retry);
+                                    job.status(JobStatus.RetryWaiting);
                                 }
                                 this.failNum++;
                                 console.log(e.stack);
@@ -477,7 +479,7 @@ export class QueueManager {
                             if (job.status() == JobStatus.Success) queue.success = (queue.success || 0) + 1;
                             else queue.fail = (queue.fail || 0) + 1;
 
-                            if (job.status() == JobStatus.Retry) {
+                            if (job.status() == JobStatus.RetryWaiting) {
                                 QueueManager.addJobToQueue(job, null, job.queue(), this.queues[job.queue()].queue, null);
                             }
 
