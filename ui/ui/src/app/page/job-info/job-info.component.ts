@@ -28,11 +28,11 @@ type Pager = {
   total: number;
   pageIndex: number;
   pageSize: number;
-  match: any;
-  requires: {
-    status?: 1;
-    queues?: 1;
-    jobs?: 1;
+  match?: any;
+  requires?: {
+    status?: 1 | null;
+    queues?: 1 | null;
+    jobs?: 1 | null;
   }
 }
 
@@ -104,14 +104,13 @@ export class JobInfoComponent implements OnInit {
 
   jobsStatus: any[];
 
-  curPageInfo = {
+  curPageInfo: Pager = {
     total: 0,
     pageIndex: 0,
     pageSize: 10,
     match: {},
-    require: {
-    }
-  } as Pager;
+    requires: {}
+  };
 
   constructor(
     private socketIOService: SocketIOService,
@@ -120,13 +119,14 @@ export class JobInfoComponent implements OnInit {
     private toasterService: ToasterService
   ) {
     this.pagenation({
+      total: 0,
       pageSize: 10,
       pageIndex: 0,
       requires: {
         status: 1,
         queues: 1
       }
-    } as Pager);
+    });
   }
 
   ngOnInit() {
@@ -151,7 +151,7 @@ export class JobInfoComponent implements OnInit {
   loadSearchState() {
     const searchState = JSON.parse(localStorage.getItem("jobSearchState") || "{}");
     if (searchState.conditions) {
-      const cons = searchState.conditions as Array;
+      const cons = searchState.conditions as Array<any>;
       const conditions = [];
       cons.forEach(con => {
         const condition: any = {};
