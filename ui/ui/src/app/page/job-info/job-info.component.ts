@@ -3,9 +3,7 @@ import {CommonService} from "../../service/common.service";
 import {MAT_DIALOG_DATA, MatDialog, MatDialogRef, MatTableDataSource} from "@angular/material";
 import {ToasterService} from "angular2-toaster";
 import {SocketIOService} from "../../service/socket-io.service";
-import {ConfirmDialog, ConfirmDialogData} from "../../widget/confirm-dialog/confirm.dialog";
-import {ObjectUtil} from "../../util/ObjectUtil";
-import {DateUtil} from "../../util/DateUtil";
+import {ConfirmDialog} from "../../widget/confirm-dialog/confirm.dialog";
 
 declare const $: any;
 
@@ -27,12 +25,14 @@ type SearchCondition = {
 
 
 type Pager = {
-  pageIndex: number,
-  pageSize: number,
-  match?: any;
-  requires?: {
-    status?: 1
-    queues?: 1
+  total: number;
+  pageIndex: number;
+  pageSize: number;
+  match: any;
+  requires: {
+    status?: 1;
+    queues?: 1;
+    jobs?: 1;
   }
 }
 
@@ -108,8 +108,10 @@ export class JobInfoComponent implements OnInit {
     total: 0,
     pageIndex: 0,
     pageSize: 10,
-    match: {}
-  };
+    match: {},
+    require: {
+    }
+  } as Pager;
 
   constructor(
     private socketIOService: SocketIOService,
@@ -124,13 +126,13 @@ export class JobInfoComponent implements OnInit {
         status: 1,
         queues: 1
       }
-    });
+    } as Pager);
   }
 
   ngOnInit() {
   }
 
-  saveConditionState() {
+  saveSearchState() {
     const cons = [];
     this.searchConditions.forEach(condition => {
       const con: any = {};
@@ -139,24 +141,34 @@ export class JobInfoComponent implements OnInit {
       if (condition.value) con.value = typeof condition.value == "object" ? condition.value["value"] : condition.value;
       cons.push(con);
     });
-    localStorage.setItem("jobSearchConditions", JSON.stringify(cons));
+    localStorage.setItem("jobSearchState", JSON.stringify({
+      conditions: cons,
+      pageIndex: this.curPageInfo.pageIndex,
+      pageSize: this.curPageInfo.pageSize
+    }));
   }
 
-  loadConditionState() {
-    const cons = JSON.parse(localStorage.getItem("jobSearchConditions")) as Array;
-    const conditions = [];
-    cons.forEach(con => {
-      const condition: any = {};
-      if (con.fieldKey) condition.field = this.searchFields.find(item => item.key == con.fieldKey);
-      if (con.operatorKey) condition.operator = this.operators.find(item => item.key == con.operatorKey);
-      if (condition.field && condition.field.type == "select" && con.value != null) {
-        condition.value = condition.field.options.find(item => item == con.value || item.value == con.value);
-      }
-      else condition.value = con.value;
-      conditions.push(condition);
-    });
-    this.searchConditions = conditions;
-    if (conditions.length > 0) this.search();
+  loadSearchState() {
+    const searchState = JSON.parse(localStorage.getItem("jobSearchState") || "{}");
+    if (searchState.conditions) {
+      const cons = searchState.conditions as Array;
+      const conditions = [];
+      cons.forEach(con => {
+        const condition: any = {};
+        if (con.fieldKey) condition.field = this.searchFields.find(item => item.key == con.fieldKey);
+        if (con.operatorKey) condition.operator = this.operators.find(item => item.key == con.operatorKey);
+        if (condition.field && condition.field.type == "select" && con.value != null) {
+          condition.value = condition.field.options.find(item => item == con.value || item.value == con.value);
+        }
+        else condition.value = con.value;
+        conditions.push(condition);
+      });
+      this.searchConditions = conditions;
+    }
+    this.curPageInfo.pageIndex = searchState.pageIndex || 0;
+    this.curPageInfo.pageSize = searchState.pageSize || 0;
+    this.curPageInfo.requires = {jobs: 1};
+    this.search();
   }
 
   conditionFieldChanged(condition) {
@@ -253,7 +265,6 @@ export class JobInfoComponent implements OnInit {
     }, res => {
       if (res.success) {
         // console.log(res);
-        let loadConditionStateRequire = false;
         if (res.data.status) {
           this.jobsStatus = res.data.status;
           this.searchFields.find(item => {
@@ -262,7 +273,6 @@ export class JobInfoComponent implements OnInit {
               return true;
             }
           });
-          loadConditionStateRequire = true;
         }
 
         if (res.data.queues) {
@@ -272,11 +282,9 @@ export class JobInfoComponent implements OnInit {
               return true;
             }
           });
-          loadConditionStateRequire = true;
         }
 
-        if (loadConditionStateRequire) this.loadConditionState();
-        else {
+        if (pager.requires && pager.requires.jobs) {
           this.jobs.data = res.data.jobs.map(item => {
             item.status = this.jobsStatus.find(s => s.value == item.status).key;
             return item;
@@ -285,6 +293,7 @@ export class JobInfoComponent implements OnInit {
           this.curPageInfo.pageIndex = res.data.pageIndex;
           this.curPageInfo.pageSize = res.data.pageSize;
         }
+        else this.loadSearchState();
       }
       else this.toasterService.pop("warning", "Message", res.message);
     });

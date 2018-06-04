@@ -115,26 +115,6 @@ export class JobManager {
                 }
             };
 
-            const count = await new Promise<any>(resolve1 => {
-                this.jobsDb.count(query, (err, n) => {
-                    resolve1(err || n);
-                });
-            });
-            ifErrorResponse(count);
-
-            const pageSize = pager.pageSize || 10;
-            const pageIndex = Math.min(pager.pageIndex || 0, parseInt("" + (count - 1) / 10));
-            const jobs = await new Promise<any>(resolve1 => {
-                this.jobsDb.find(query, {serialize: 0})
-                    .sort({ createTime: -1 })
-                    .skip(pageIndex * pageSize)
-                    .limit(pageSize)
-                    .exec( (err, docs) => {
-                        resolve1(err || docs);
-                    });
-            });
-            ifErrorResponse(jobs);
-
             let queues = null;
             if (pager.requires && pager.requires.queues) {
                 queues = await new Promise<any>(resolve1 => {
@@ -153,6 +133,33 @@ export class JobManager {
             let status = null;
             if (pager.requires && pager.requires.status) {
                 status = this.jobStatus();
+            }
+
+
+            let count = 0;
+            let pageSize = 10;
+            let pageIndex = 0;
+            let jobs = null;
+            if (pager.requires && pager.requires.jobs) {
+                count = await new Promise<any>(resolve1 => {
+                    this.jobsDb.count(query, (err, n) => {
+                        resolve1(err || n);
+                    });
+                });
+                ifErrorResponse(count);
+
+                pageSize = pager.pageSize || 10;
+                pageIndex = Math.min(pager.pageIndex || 0, parseInt("" + (count - 1) / 10));
+                jobs = await new Promise<any>(resolve1 => {
+                    this.jobsDb.find(query, {serialize: 0})
+                        .sort({ createTime: -1 })
+                        .skip(pageIndex * pageSize)
+                        .limit(pageSize)
+                        .exec( (err, docs) => {
+                            resolve1(err || docs);
+                        });
+                });
+                ifErrorResponse(jobs);
             }
 
             resolve({

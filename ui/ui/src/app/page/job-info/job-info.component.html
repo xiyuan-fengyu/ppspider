@@ -5,7 +5,7 @@
         *ngIf="searchConditions.length > 0"
         class="remove">
         <button
-          (click)="searchConditions.splice(conditionI, 1); saveConditionState()"
+          (click)="searchConditions.splice(conditionI, 1); saveSearchState()"
           mat-icon-button color="warn">
           <mat-icon>delete_forever</mat-icon>
         </button>
@@ -17,7 +17,7 @@
         <mat-select
           [name]="'field'"
           [(ngModel)]="condition.field"
-          (selectionChange)="conditionFieldChanged(condition); saveConditionState()"
+          (selectionChange)="conditionFieldChanged(condition); saveSearchState()"
           placeholder="search field">
           <mat-option *ngFor="let field of searchFields" [value]="field">{{field.key}}</mat-option>
         </mat-select>
@@ -30,7 +30,7 @@
           <mat-select
             [name]="'value'"
             [(ngModel)]="condition.value" placeholder="value"
-            (selectionChange)="saveConditionState()">
+            (selectionChange)="saveSearchState()">
             <mat-option *ngFor="let option of condition.field.options" [value]="option">{{option.key || option}}</mat-option>
           </mat-select>
         </mat-form-field>
@@ -42,7 +42,7 @@
           <mat-select
             [name]="'operator'"
             [(ngModel)]="condition.operator"
-            (selectionChange)="saveConditionState()"
+            (selectionChange)="saveSearchState()"
             placeholder="operator">
             <ng-container *ngFor="let operator of operators">
               <mat-option *ngIf="operator.types.indexOf(condition.field?.type) > -1" [value]="operator">{{operator.label}}</mat-option>
@@ -58,7 +58,7 @@
           <input
             name="value"
             [(ngModel)]="condition.value"
-            (change)="saveConditionState()"
+            (change)="saveSearchState()"
             matInput [matDatepicker]="picker" class="date" placeholder="choose a date">
           <mat-datepicker #picker></mat-datepicker>
         </mat-form-field>
@@ -69,7 +69,7 @@
           <input
             name="value"
             [(ngModel)]="condition.value"
-            (change)="saveConditionState()"
+            (change)="saveSearchState()"
             matInput [type]="condition.field?.type" placeholder="value">
         </mat-form-field>
 
@@ -79,7 +79,7 @@
       <div
         class="add">
         <button
-          (click)="searchConditions.push({}); saveConditionState()"
+          (click)="searchConditions.push({}); saveSearchState()"
           mat-icon-button color="primary">
           <mat-icon>add_box</mat-icon>
         </button>
@@ -121,7 +121,7 @@
     [length]="curPageInfo.total"
     [pageIndex]="curPageInfo.pageIndex"
     [pageSize]="curPageInfo.pageSize"
-    (page)="curPageInfo.pageIndex = $event.pageIndex; curPageInfo.pageSize = $event.pageSize; search()"
+    (page)="curPageInfo.pageIndex = $event.pageIndex; curPageInfo.pageSize = $event.pageSize; saveSearchState(); search()"
     [showFirstLastButtons]="true"
   ></mat-paginator>
 </div>

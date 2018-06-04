@@ -39,6 +39,10 @@ table {
   width: 100%;
 }
 
+.mat-header-cell {
+  padding-right: 24px;
+}
+
 .mat-cell {
   padding-right: 24px;
 }
