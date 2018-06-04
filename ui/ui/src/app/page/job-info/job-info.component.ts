@@ -130,6 +130,35 @@ export class JobInfoComponent implements OnInit {
   ngOnInit() {
   }
 
+  saveConditionState() {
+    const cons = [];
+    this.searchConditions.forEach(condition => {
+      const con: any = {};
+      if (condition.field) con.fieldKey = condition.field.key;
+      if (condition.operator) con.operatorKey = condition.operator.key;
+      if (condition.value) con.value = typeof condition.value == "object" ? condition.value["value"] : condition.value;
+      cons.push(con);
+    });
+    localStorage.setItem("jobSearchConditions", JSON.stringify(cons));
+  }
+
+  loadConditionState() {
+    const cons = JSON.parse(localStorage.getItem("jobSearchConditions")) as Array;
+    const conditions = [];
+    cons.forEach(con => {
+      const condition: any = {};
+      if (con.fieldKey) condition.field = this.searchFields.find(item => item.key == con.fieldKey);
+      if (con.operatorKey) condition.operator = this.operators.find(item => item.key == con.operatorKey);
+      if (condition.field && condition.field.type == "select" && con.value != null) {
+        condition.value = condition.field.options.find(item => item == con.value || item.value == con.value);
+      }
+      else condition.value = con.value;
+      conditions.push(condition);
+    });
+    this.searchConditions = conditions;
+    if (conditions.length > 0) this.search();
+  }
+
   conditionFieldChanged(condition) {
     condition.value = null;
     if (condition.field && condition.field.type == "select") condition.operator = this.operators.find(item => item.key == "eq");
@@ -224,6 +253,7 @@ export class JobInfoComponent implements OnInit {
     }, res => {
       if (res.success) {
         // console.log(res);
+        let loadConditionStateRequire = false;
         if (res.data.status) {
           this.jobsStatus = res.data.status;
           this.searchFields.find(item => {
@@ -232,7 +262,9 @@ export class JobInfoComponent implements OnInit {
               return true;
             }
           });
+          loadConditionStateRequire = true;
         }
+
         if (res.data.queues) {
           this.searchFields.find(item => {
             if (item.key == "queue") {
@@ -240,15 +272,19 @@ export class JobInfoComponent implements OnInit {
               return true;
             }
           });
+          loadConditionStateRequire = true;
         }
 
-        this.jobs.data = res.data.jobs.map(item => {
-          item.status = this.jobsStatus.find(s => s.value == item.status).key;
-          return item;
-        });
-        this.curPageInfo.total = res.data.total;
-        this.curPageInfo.pageIndex = res.data.pageIndex;
-        this.curPageInfo.pageSize = res.data.pageSize;
+        if (loadConditionStateRequire) this.loadConditionState();
+        else {
+          this.jobs.data = res.data.jobs.map(item => {
+            item.status = this.jobsStatus.find(s => s.value == item.status).key;
+            return item;
+          });
+          this.curPageInfo.total = res.data.total;
+          this.curPageInfo.pageIndex = res.data.pageIndex;
+          this.curPageInfo.pageSize = res.data.pageSize;
+        }
       }
       else this.toasterService.pop("warning", "Message", res.message);
     });
