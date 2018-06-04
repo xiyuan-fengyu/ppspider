@@ -369,6 +369,7 @@ export class QueueManager {
         job.parentId(job.parentId() || "");
         job.datas(job.datas() || {});
         job.depth(job.depth() || 0);
+        job.tryNum(job.tryNum() || 0);
         job.status(job.status() || JobStatus.Create);
 
         // 重写 job 的一些信息
