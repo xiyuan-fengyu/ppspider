@@ -4,7 +4,7 @@ import {Page, Request, Response} from "puppeteer";
 import {FileUtil} from "../../common/util/FileUtil";
 import * as fs from "fs";
 import {Defaults} from "../data/Defaults";
-import {LinkPredictType} from "../data/Types";
+import {LinkPredictMap} from "../data/Types";
 
 export type ResponseListener = (response: Response) => any;
 
@@ -246,7 +246,7 @@ export class PuppeteerUtil {
             const imgId = "img_" + time + parseInt("" + Math.random() * 10000);
             const imgSrc = await page.evaluate((selector, imgId) => {
                 try {
-                    const img = document.querySelector(selector);
+                    const img = document.querySelector(selector) as any;
                     if (img) {
                         window[imgId] = img;
                         return img.src;
@@ -338,37 +338,69 @@ export class PuppeteerUtil {
         });
     }
 
-    static async links(page: Page, predicts: {[groupName: string]: LinkPredictType}, onlyAddToFirstMatch: boolean = true) {
+    static async links(page: Page, predicts: LinkPredictMap, onlyAddToFirstMatch: boolean = true) {
         if (predicts == null || Object.keys(predicts).length == 0) return {};
-        const hrefs = await page.evaluate(() => {
+
+        const predictStrMap: any = {};
+        for (let groupName of Object.keys(predicts)) {
+            const predict = predicts[groupName];
+            if (predict.constructor == Array) {
+                predictStrMap[groupName] = [
+                    predict[0],
+                    (typeof predict[1] === "function" ? "function" : "string") + " " + (predict[1] || "").toString()
+                ];
+            }
+            else predictStrMap[groupName] = (typeof predict === "function" ? "function" : "string") + " " + predict.toString();
+        }
+        return await page.evaluate((predictStrMap, onlyAddToFirstMatch) => {
             const hrefs = {};
-            document.querySelectorAll("a").forEach(a => {
-                hrefs[a.href] = true;
-            });
-            return hrefs;
-        });
-        const matchHrefs: any = {};
-        for (let href in hrefs) {
-            if (hrefs.hasOwnProperty(href)) {
-                for (let groupName in predicts) {
-                    let predictHrefs = matchHrefs[groupName];
-                    if (!predictHrefs) matchHrefs[groupName] = predictHrefs = [];
-                    let match = false;
-                    const predict = predicts[groupName];
-                    if (typeof predict == 'function') {
-                        if (predict(href)) match = true;
-                    }
-                    else {
-                        if (href.match(predict.toString())) match = true;
-                    }
-                    if (match) {
-                        predictHrefs.push(href);
-                        if (onlyAddToFirstMatch) break;
+            const existed = {};
+            const all = document.querySelectorAll("a") || [];
+            for (let groupName of Object.keys(predictStrMap)) {
+                const predict = predictStrMap[groupName];
+                let selector = null;
+                let predictStr = null;
+                let predictRegOrFun = null;
+                if (predict.constructor == Array) {
+                    selector = predict[0];
+                    predictStr = predict[1];
+                }
+                else predictStr = predict;
+
+                const spaceI = predictStr.indexOf(' ');
+                const predictType = predictStr.substring(0, spaceI);
+                const predictRegPrFunStr = predictStr.substring(spaceI + 1);
+                if (predictType == "function") {
+                    eval("predictRegOrFun = " + predictRegPrFunStr);
+                }
+                else predictRegOrFun = predictRegPrFunStr;
+
+                const aArr = selector ? (document.querySelectorAll(selector) || []) : all;
+                const matchHrefs = {};
+                for (let a of aArr) {
+                    let href = (a as any).href;
+                    if (!onlyAddToFirstMatch || !existed[href]) {
+                        let match = false;
+                        if (typeof predictRegOrFun == 'function') {
+                            if (href = predictRegOrFun(a)) {
+                                match = true;
+                            }
+                        }
+                        else {
+                            if (href.match(predictRegOrFun)) match = true;
+                        }
+                        if (match) {
+                            matchHrefs[href] = true;
+                            if (onlyAddToFirstMatch) {
+                                existed[href] = true;
+                            }
+                        }
                     }
                 }
+                hrefs[groupName] = Object.keys(matchHrefs);
             }
-        }
-        return matchHrefs;
+            return hrefs;
+        }, predictStrMap, onlyAddToFirstMatch);
     }
 
     static async count(page: Page, selector: string): Promise<number> {

@@ -78,7 +78,7 @@ export type AddToQueueInfo = {
     queueType: QueueClass;
     filterType: FilterClass;
     other?: any;
-};
+}
 
 export type AddToQueueInfos = AddToQueueInfo | AddToQueueInfo[];
 
@@ -105,7 +105,15 @@ export type AppInfo = {
     webUiPort?: number | 9000;
 }
 
-export type LinkPredictType = string | RegExp | ((href: string) => boolean);
+export type Selector = string;
+export type Href = string;
+export type HrefRegex = string | RegExp;
+export type ElementTransformer = (ele: Element) => Href | void;
+export type LinkPredict = HrefRegex | ElementTransformer | [Selector, HrefRegex | ElementTransformer];
+export type LinkPredictMap = {
+    [groupName: string]: LinkPredict
+}
+
 
 export type ClientRequest = {
     id: string;
