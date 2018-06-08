@@ -15,6 +15,6 @@
     "./src/**/*"
   ],
   "exclude":[
-//    "./src/initJobsDb/*"
+//    "./src/test/*"
   ]
 }

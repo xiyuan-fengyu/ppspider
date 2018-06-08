@@ -17,8 +17,6 @@ export enum JobStatus {
     Fail
 }
 
-export const defaultMaxTryNum = 3;
-
 export function instanceofJob(obj: any): obj is Job {
     const cast = obj as Job;
     return cast

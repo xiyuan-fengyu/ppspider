@@ -39,7 +39,7 @@ export type ResponseCheckUrlResult = {
     error?: Error;
 }
 
-export type ResponseCheckUrlInfo = {
+type ResponseCheckUrlInfo = {
     url: string | RegExp,
     listener: ResponseListener;
     resolve: (checkResult: ResponseCheckUrlResult) => any;

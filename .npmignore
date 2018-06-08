@@ -1,4 +1,7 @@
 .idea/
+lib/test
 node_modules/
+playground/
+ui/
 package-lock.json
 *.iml
