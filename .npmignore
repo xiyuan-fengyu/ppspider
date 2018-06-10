@@ -2,6 +2,7 @@
 lib/test
 node_modules/
 playground/
+src/test/
 ui/
 package-lock.json
 *.iml

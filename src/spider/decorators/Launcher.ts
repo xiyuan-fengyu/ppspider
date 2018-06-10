@@ -14,10 +14,14 @@ export function getTaskInstances(taskClass) {
     else return taskInstances[taskClass.name] = new taskClass();
 }
 
-export let appInfo: AppInfo = null;
+export const appInfo: AppInfo = {} as any;
 
 export function Launcher(theAppInfo: AppInfo) {
-    appInfo = theAppInfo;
+    for (let key of Object.keys(theAppInfo)) {
+        Object.defineProperty(appInfo, key, {
+            get: () => theAppInfo[key]
+        });
+    }
     FileUtil.mkdirs(appInfo.workplace);
 
     jobManager.init();
