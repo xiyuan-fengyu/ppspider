@@ -99,9 +99,9 @@ export type WorkerFactoryMap = {
 }
 
 export type AppInfo = {
-    workplace: string,
-    tasks: any[],
-    workerFactorys: WorkerFactory<any>[],
+    workplace: string;
+    tasks: any[];
+    workerFactorys: WorkerFactory<any>[];
     webUiPort?: number | 9000;
 }
 
