@@ -225,7 +225,7 @@ export class PuppeteerUtil {
         return this.onResponse(page, url, listener, 1, timeout);
     }
 
-    static removeResponseListener(page: Page, url: string | RegExp) {
+    private static removeResponseListener(page: Page, url: string | RegExp) {
         if (page == null || url == null) return;
 
         let responseCheckUrls = page[kResponseCheckUrls];

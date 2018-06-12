@@ -44,18 +44,20 @@ export class QueueInfoComponent implements OnInit {
       }
     });
     dialogRef.afterClosed().subscribe(res => {
-      if (res && res.value != null) {
-        this.socketIOService.request({
-          key: "updateQueueConfig",
-          data: {
-            queue: queue.name,
-            field: field,
-            value: res.value
-          }
-        }, res => {
-          this.toasterService.pop(res.success ? "success" : "warning", "Message", res.message);
-        });
+      if (res && res.value != null) this.updateQueueConfig(queue.name, field, res.value);
+    });
+  }
+
+  updateQueueConfig(queueName: string, field: string, newValue: any) {
+    this.socketIOService.request({
+      key: "updateQueueConfig",
+      data: {
+        queue: queueName,
+        field: field,
+        value: newValue
       }
+    }, res => {
+      this.toasterService.pop(res.success ? "success" : "warning", "Message", res.message);
     });
   }
 

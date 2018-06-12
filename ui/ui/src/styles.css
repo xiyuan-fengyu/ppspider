@@ -4,9 +4,39 @@
 @import '~angular2-toaster/toaster.min.css';
 @import "~jquery.json-viewer/json-viewer/jquery.json-viewer.css";
 
+
+
+@font-face {
+  font-family: 'Material Icons';
+  font-style: normal;
+  font-weight: 400;
+  src: url(/assets/font/flUhRq6tzZclQEJ-Vdg-IuiaDsNc.woff2) format('woff2');
+}
+
+.material-icons {
+  font-family: 'Material Icons';
+  font-weight: normal;
+  font-style: normal;
+  font-size: 24px;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  -webkit-font-feature-settings: 'liga';
+  -webkit-font-smoothing: antialiased;
+}
+
+
+
+
 .CodeMirror {
   border: 1px solid #e6e6e6;
 }
+
+
 
 #jsonViewer {
   font-size: 14px;

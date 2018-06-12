@@ -189,7 +189,12 @@ export class QueueManager {
             message: "queue not existed: " + data.queue
         };
 
-        if (data.field == "parallel") {
+        if (data.field == "execute") {
+            if (queueInfo.config['type'] == 'OnStart') {
+                this.addOnStartJob(data.queue);
+            }
+        }
+        else if (data.field == "parallel") {
             if (queueInfo.config.parallel != data.value) {
                 queueInfo.config.parallel = data.value;
                 this.resetQueueParallel(queueInfo);
