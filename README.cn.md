@@ -27,6 +27,7 @@
     + [PuppeteerUtil.downloadImg](#puppeteerutildownloadimg)
     + [PuppeteerUtil.links](#puppeteerutillinks)
     + [PuppeteerUtil.count](#puppeteerutilcount)
+    + [PuppeteerUtil.scrollToBottom](#puppeteerutilscrolltobottom)
     + [PuppeteerUtil 例子](#puppeteerutil-%E4%BE%8B%E5%AD%90)
 - [调试](#%E8%B0%83%E8%AF%95)
 - [控制界面](#%E6%8E%A7%E5%88%B6%E7%95%8C%E9%9D%A2)
@@ -356,6 +357,9 @@ export class TestTask {
 
 ### PuppeteerUtil.count
 获取满足 selector 的元素个数
+
+### PuppeteerUtil.scrollToBottom
+页面滚动到最底部  
 
 ### PuppeteerUtil 例子
 [PuppeteerUtil example](https://github.com/xiyuan-fengyu/ppspider_example/tree/master/src/puppeteerUtil)

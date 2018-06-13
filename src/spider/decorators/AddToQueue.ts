@@ -50,44 +50,45 @@ export function AddToQueue(queueConfigs: AddToQueueConfig | AddToQueueConfig[]) 
         const oriFun = descriptor.value;
         descriptor.value = async (...args) => {
             const res = await oriFun.apply(targetIns, args);
-
-            // 在参数中找到当前job
-            let curJob: Job = null;
-            for (let arg of args) {
-                if (instanceofJob(arg)) {
-                    curJob = arg as Job;
-                    break;
+            if (res != null) {
+                // 在参数中找到当前job
+                let curJob: Job = null;
+                for (let arg of args) {
+                    if (instanceofJob(arg)) {
+                        curJob = arg as Job;
+                        break;
+                    }
                 }
-            }
 
-            const addToQueueDatas: AddToQueueInfo[] = [];
-            if (res && res.constructor == Object) {
-                // 多个队列
-                for (let queueName in res) {
-                    const queueConfig = getAddToQueueConfig(queueConfigs, queueName);
+                const addToQueueDatas: AddToQueueInfo[] = [];
+                if (res.constructor == Object) {
+                    // 多个队列
+                    for (let queueName in res) {
+                        const queueConfig = getAddToQueueConfig(queueConfigs, queueName);
+                        if (queueConfig) {
+                            addToQueueDatas.push({
+                                queueName: queueConfig.name,
+                                jobs: res[queueName],
+                                queueType: queueConfig.queueType,
+                                filterType: queueConfig.filterType
+                            });
+                        }
+                    }
+                }
+                else {
+                    // 单个队列
+                    const queueConfig = getAddToQueueConfig(queueConfigs, null);
                     if (queueConfig) {
                         addToQueueDatas.push({
                             queueName: queueConfig.name,
-                            jobs: res[queueName],
+                            jobs: res,
                             queueType: queueConfig.queueType,
                             filterType: queueConfig.filterType
                         });
                     }
                 }
+                queueManager.addToQueue(curJob, addToQueueDatas);
             }
-            else {
-                // 单个队列
-                const queueConfig = getAddToQueueConfig(queueConfigs, null);
-                if (queueConfig) {
-                    addToQueueDatas.push({
-                        queueName: queueConfig.name,
-                        jobs: res,
-                        queueType: queueConfig.queueType,
-                        filterType: queueConfig.filterType
-                    });
-                }
-            }
-            queueManager.addToQueue(curJob, addToQueueDatas);
             return res;
         };
         return descriptor;

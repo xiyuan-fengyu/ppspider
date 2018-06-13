@@ -294,6 +294,11 @@ export class QueueManager {
                 const queueName = jobInfo.queueName;
 
                 let queueInfo = this.queues[queueName];
+                if (!queueInfo || !queueInfo.config) {
+                    // 仅当没有与AddToQueue队列配置对应的FromQueue时，会导致这种情况，这时候直接忽略这些job
+                    continue;
+                }
+
                 if (!queueInfo) {
                     this.queues[queueName] = queueInfo = {
                         queue: null
@@ -423,7 +428,7 @@ export class QueueManager {
         while (this.dispatchQueueIndex < queueNames.length) {
             const queueName = queueNames[this.dispatchQueueIndex];
             const queue = this.queues[queueName];
-            if (queue && queue.queue) {
+            if (queue && queue.queue && queue.config) {
                 if (queue.queue.isEmpty()
                     && queue.config["type"] == "OnTime") {
                     this.addOnTimeJob(queueName);

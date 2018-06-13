@@ -411,4 +411,37 @@ export class PuppeteerUtil {
         }, selector);
     }
 
+    async scrollToBottom(page: Page, scrollTimeout: number = 30000, scrollInterval: number = 250, scrollYDelta: number = 500) {
+        return new Promise<boolean>( resolve => {
+            if (scrollTimeout > 0) {
+                setTimeout(() => {
+                    resolve(false);
+                }, scrollTimeout);
+            }
+
+            let lastScrollY;
+            let scrollYEqualNum = 0;
+            const scrollAndCheck = () => {
+                page.evaluate((scrollYDelta) => {
+                    window.scrollBy(0, scrollYDelta);
+                    return window.scrollY;
+                }, scrollYDelta).then(scrollY => {
+                    if (lastScrollY == scrollY) {
+                        scrollYEqualNum++;
+                        if (scrollYEqualNum >= 4) {
+                            resolve(true);
+                        }
+                        else setTimeout(scrollAndCheck, 250);
+                    }
+                    else {
+                        scrollYEqualNum = 0;
+                        lastScrollY = scrollY;
+                        setTimeout(scrollAndCheck, scrollInterval);
+                    }
+                });
+            };
+            scrollAndCheck();
+        });
+    }
+
 }

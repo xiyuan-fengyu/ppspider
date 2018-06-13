@@ -28,6 +28,7 @@
     + [PuppeteerUtil.downloadImg](#puppeteerutildownloadimg)
     + [PuppeteerUtil.links](#puppeteerutillinks)
     + [PuppeteerUtil.count](#puppeteerutilcount)
+    + [PuppeteerUtil.scrollToBottom](#puppeteerutilscrolltobottom)
     + [PuppeteerUtil example](#puppeteerutil-example)
 - [Debug](#debug)
 - [WebUI](#webui)
@@ -348,6 +349,9 @@ get all expected urls
 
 ### PuppeteerUtil.count
 count doms with special css selector
+
+### PuppeteerUtil.scrollToBottom
+scroll to bottom  
 
 ### PuppeteerUtil example
 [PuppeteerUtil example](https://github.com/xiyuan-fengyu/ppspider_example/tree/master/src/puppeteerUtil)
