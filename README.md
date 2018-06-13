@@ -2,7 +2,7 @@
 
 <!-- toc -->
 
-- [Other languages](#other-languages)
+- [Documentation in other languages](#documentation-in-other-languages)
 - [Quick Start](#quick-start)
   * [Install NodeJs](#install-nodejs)
   * [Install TypeScript](#install-typescript)
@@ -34,7 +34,7 @@
 
 <!-- tocstop -->
 
-# Other languages
+# Documentation in other languages
 [中文文档](https://github.com/xiyuan-fengyu/ppspider/blob/master/README.cn.md)  
 
 # Quick Start
