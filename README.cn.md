@@ -1,4 +1,37 @@
-[TOC]
+
+
+<!-- toc -->
+
+- [快速起步](#%E5%BF%AB%E9%80%9F%E8%B5%B7%E6%AD%A5)
+  * [安装nodejs](#%E5%AE%89%E8%A3%85nodejs)
+  * [安装typescript](#%E5%AE%89%E8%A3%85typescript)
+  * [准备开发环境](#%E5%87%86%E5%A4%87%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83)
+  * [下载运行 ppspider_example](#%E4%B8%8B%E8%BD%BD%E8%BF%90%E8%A1%8C-ppspider_example)
+    + [在IDEA中clone ppspider_example](#%E5%9C%A8idea%E4%B8%ADclone-ppspider_example)
+    + [安装项目的npm依赖](#%E5%AE%89%E8%A3%85%E9%A1%B9%E7%9B%AE%E7%9A%84npm%E4%BE%9D%E8%B5%96)
+    + [运行 tsc](#%E8%BF%90%E8%A1%8C-tsc)
+    + [启动爬虫](#%E5%90%AF%E5%8A%A8%E7%88%AC%E8%99%AB)
+- [系统介绍](#%E7%B3%BB%E7%BB%9F%E4%BB%8B%E7%BB%8D)
+  * [装饰器](#%E8%A3%85%E9%A5%B0%E5%99%A8)
+    + [@Launcher](#launcher)
+    + [@OnStart](#onstart)
+    + [@OnTime](#ontime)
+    + [@AddToQueue @FromQueue](#addtoqueue-fromqueue)
+  * [工具类 PuppeteerUtil](#%E5%B7%A5%E5%85%B7%E7%B1%BB-puppeteerutil)
+    + [PuppeteerUtil.defaultViewPort](#puppeteerutildefaultviewport)
+    + [PuppeteerUtil.addJquery](#puppeteerutiladdjquery)
+    + [PuppeteerUtil.jsonp](#puppeteerutiljsonp)
+    + [PuppeteerUtil.setImgLoad](#puppeteerutilsetimgload)
+    + [PuppeteerUtil.onResponse](#puppeteerutilonresponse)
+    + [PuppeteerUtil.onceResponse](#puppeteerutilonceresponse)
+    + [PuppeteerUtil.downloadImg](#puppeteerutildownloadimg)
+    + [PuppeteerUtil.links](#puppeteerutillinks)
+    + [PuppeteerUtil.count](#puppeteerutilcount)
+    + [PuppeteerUtil 例子](#puppeteerutil-%E4%BE%8B%E5%AD%90)
+- [调试](#%E8%B0%83%E8%AF%95)
+- [控制界面](#%E6%8E%A7%E5%88%B6%E7%95%8C%E9%9D%A2)
+
+<!-- tocstop -->
 
 # 快速起步
 ## 安装nodejs
@@ -12,11 +45,11 @@ npm install -g typescript
 ## 准备开发环境
 推荐使用 IDEA + nodejs 插件  
 IDEA一定要下载 Ultimate 版本，否则有很多功能无法使用  
-![Ultimate 版本截图](https://note.youdao.com/yws/public/resource/c7a20ae60fd0215c029fe082be576f9b/xmlnote/2645E6924AAB49CE81AEA8DD0BA9BACC/29899)  
+![Ultimate 版本截图](https://s1.ax1x.com/2018/06/13/CO6qRf.png)  
 下载nodejs插件的时候，需根据IDEA的版本下载可用的 nodejs 版本，IDEA的版本可通过菜单栏点击 Help -> About 看到  
 例如我正在使用的IDEA和nodejs插件版本  
-![IDEA 版本](https://note.youdao.com/yws/public/resource/c7a20ae60fd0215c029fe082be576f9b/xmlnote/847497163D484C0F87CFB80A517ED436/29912)  
-![nodejs 插件版本](https://note.youdao.com/yws/public/resource/c7a20ae60fd0215c029fe082be576f9b/xmlnote/43282D3DDCCE4402910AA80659EA005C/29922)
+![IDEA 版本](https://s1.ax1x.com/2018/06/13/COcdYt.png)  
+![nodejs 插件版本](https://s1.ax1x.com/2018/06/13/COcBSf.png)
 
 [IDEA 下载地址](https://www.jetbrains.com/idea/download/)  
 [nodejs 插件下载地址](http://plugins.jetbrains.com/plugin/6098-nodejs)
@@ -26,10 +59,10 @@ ppspider_example github 地址
 https://github.com/xiyuan-fengyu/ppspider_example  
 ### 在IDEA中clone ppspider_example 
 需要先安装git，并在IDEA中配置git的可执行文件的路径  
-![IDEA git 配置](https://note.youdao.com/yws/public/resource/c7a20ae60fd0215c029fe082be576f9b/xmlnote/44CF944819DB4071897180564AAA4878/30017)
+![IDEA git 配置](https://s1.ax1x.com/2018/06/13/COcr6S.png)
 
-![IDEA clone from git](https://note.youdao.com/yws/public/resource/c7a20ae60fd0215c029fe082be576f9b/xmlnote/006D2463C1AF49DFA0678BEF5592D027/29931)  
-![IDEA clone from git](https://note.youdao.com/yws/public/resource/c7a20ae60fd0215c029fe082be576f9b/xmlnote/1411AD2613404095AABC7389A99FC941/29937)
+![IDEA clone from git](https://s1.ax1x.com/2018/06/13/COc6mQ.png)  
+![IDEA clone from git](https://s1.ax1x.com/2018/06/13/COccwj.png)
 
 ### 安装项目的npm依赖
 鼠标右键 package.json ，点击 Run 'npm install'  
@@ -426,7 +459,7 @@ export class TestTask {
 # 控制界面
 使用浏览器打开 http://localhost:9000  
 Queue 面板可以查看和管理整个系统中子任务的运行情况  
-![Queue Help](https://note.youdao.com/yws/public/resource/c7a20ae60fd0215c029fe082be576f9b/xmlnote/68396A0B5A38486192C12676445F95EB/30521)  
+![Queue Help](https://s1.ax1x.com/2018/06/13/COc4pV.png)  
 
 Job 面板可以对所有子任务实例进行搜索，查看任务详情  
-![Job Help](https://note.youdao.com/yws/public/resource/c7a20ae60fd0215c029fe082be576f9b/xmlnote/8FE2974151F84B8EAB76105EB58531E3/30534)  
+![Job Help](https://s1.ax1x.com/2018/06/13/COcRkn.png)

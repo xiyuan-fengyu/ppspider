@@ -7,7 +7,8 @@
   "main": "./lib/index.js",
   "types": "./lib/index.d.ts",
   "scripts": {
-    "auto build": "tsc"
+    "auto build": "tsc",
+    "generate README toc": "markdown-toc -i ./README.cn.md && markdown-toc -i ./README.md"
   },
   "keywords": [
     "spider"
@@ -29,6 +30,7 @@
     "@types/node": "^9.4.7",
     "@types/puppeteer": "^1.2.0",
     "@types/request": "^2.47.0",
-    "@types/socket.io": "^1.4.33"
+    "@types/socket.io": "^1.4.33",
+    "markdown-toc": "^1.2.0"
   }
 }
