@@ -411,7 +411,7 @@ export class PuppeteerUtil {
         }, selector);
     }
 
-    async scrollToBottom(page: Page, scrollTimeout: number = 30000, scrollInterval: number = 250, scrollYDelta: number = 500) {
+    static async scrollToBottom(page: Page, scrollTimeout: number = 30000, scrollInterval: number = 250, scrollYDelta: number = 500) {
         return new Promise<boolean>( resolve => {
             if (scrollTimeout > 0) {
                 setTimeout(() => {
