@@ -68,13 +68,19 @@ export class PuppeteerUtil {
         page: Page,
         url: string = "https://cdn.bootcss.com/jquery/3.3.1/jquery.min.js",
         savePath = os.tmpdir() + "/jquery.min.js") {
-        await DownloadUtil.download(url, savePath).then(async res => {
-            if (res > 0) {
-                await page.addScriptTag({
-                    path: savePath
-                });
-            }
+        const jQueryExisted = await page.evaluate(() => {
+           return jQuery != undefined;
         });
+
+        if (!jQueryExisted) {
+            await DownloadUtil.download(url, savePath).then(async res => {
+                if (res > 0) {
+                    await page.addScriptTag({
+                        path: savePath
+                    });
+                }
+            });
+        }
     }
 
     // noinspection JSUnusedGlobalSymbols
@@ -403,10 +409,12 @@ export class PuppeteerUtil {
         }, predictStrMap, onlyAddToFirstMatch);
     }
 
-    static async count(page: Page, selector: string): Promise<number> {
+    static async count(page: Page, selector: string, loadJquery: boolean = true): Promise<number> {
+        if (loadJquery) await this.addJquery(page);
         return await page.evaluate(selector => {
-            const doms = document.querySelectorAll(selector);
-            if (doms) return doms.length;
+            debugger;
+            const arr = jQuery ? jQuery(selector) : document.querySelectorAll(selector);
+            if (arr) return arr.length;
             else return 0;
         }, selector);
     }
