@@ -18,6 +18,7 @@
     + [@OnStart](#onstart)
     + [@OnTime](#ontime)
     + [@AddToQueue @FromQueue](#addtoqueue-fromqueue)
+    + [JobOverride](#joboverride)
   * [PuppeteerUtil](#puppeteerutil)
     + [PuppeteerUtil.defaultViewPort](#puppeteerutildefaultviewport)
     + [PuppeteerUtil.addJquery](#puppeteerutiladdjquery)
@@ -321,6 +322,22 @@ export class TestTask {
 
 }
 ```
+
+### JobOverride
+```
+export function JobOverride(queueName: string) { ... }
+```
+Modify job info before inserted into the queue.  
+You can set a JobOverride just once for a queue.  
+
+A usage scenario is: when some urls with special suffix or parameters navigate to the same page,
+you can modify the job key to some special and unique id taken from the url with a JobOverride. After 
+that, jobs with duplicate keys will be filtered out.  
+
+Actually, sub task type OnStart/OnTime is also managed by queue whose name just likes OnStart_ClassName_MethodName 
+or OnTime_ClassName_MethodName, so you can set a JobOverride to it.   
+[JobOverride example](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/bilibili/tasks/BilibiliTask.ts)
+
 
 ## PuppeteerUtil
 ### PuppeteerUtil.defaultViewPort

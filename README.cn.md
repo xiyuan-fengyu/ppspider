@@ -17,6 +17,7 @@
     + [@OnStart](#onstart)
     + [@OnTime](#ontime)
     + [@AddToQueue @FromQueue](#addtoqueue-fromqueue)
+    + [JobOverride](#joboverride)
   * [工具类 PuppeteerUtil](#%E5%B7%A5%E5%85%B7%E7%B1%BB-puppeteerutil)
     + [PuppeteerUtil.defaultViewPort](#puppeteerutildefaultviewport)
     + [PuppeteerUtil.addJquery](#puppeteerutiladdjquery)
@@ -329,6 +330,20 @@ export class TestTask {
 
 }
 ```
+
+### JobOverride
+```
+export function JobOverride(queueName: string) { ... }
+```
+在将 job 添加到队列之前对 job 的信息进行重写修改  
+同一个队列只能设置一个 JobOverride   
+
+最常用的使用场景：很多时候多个带有额外参数或尾缀的url实际指向同一个页面， 这个时候可以提取出url中的唯一性标识，
+并将其作为 job 的 key，用于重复性校验，避免重复抓取  
+实际上 OnStart, OnTime 两种类型的任务也是通过队列管理的，采用 DefaultQueue(NoFilter) 队列，队列的命名方式为
+OnStart_ClassName_MethodName，所以也可以通过 JobOverride 对 job 进行修改  
+[JobOverride example](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/bilibili/tasks/BilibiliTask.ts)  
+
 
 ## 工具类 PuppeteerUtil
 ### PuppeteerUtil.defaultViewPort
