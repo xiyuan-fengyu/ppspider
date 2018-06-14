@@ -17,7 +17,7 @@
     + [@OnStart](#onstart)
     + [@OnTime](#ontime)
     + [@AddToQueue @FromQueue](#addtoqueue-fromqueue)
-    + [JobOverride](#joboverride)
+    + [@JobOverride](#joboverride)
   * [工具类 PuppeteerUtil](#%E5%B7%A5%E5%85%B7%E7%B1%BB-puppeteerutil)
     + [PuppeteerUtil.defaultViewPort](#puppeteerutildefaultviewport)
     + [PuppeteerUtil.addJquery](#puppeteerutiladdjquery)
@@ -331,7 +331,7 @@ export class TestTask {
 }
 ```
 
-### JobOverride
+### @JobOverride
 ```
 export function JobOverride(queueName: string) { ... }
 ```
