@@ -412,7 +412,7 @@ export class PuppeteerUtil {
     static async count(page: Page, selector: string, loadJquery: boolean = true): Promise<number> {
         if (loadJquery) await this.addJquery(page);
         return await page.evaluate(selector => {
-            debugger;
+            // debugger;
             const arr = jQuery ? jQuery(selector) : document.querySelectorAll(selector);
             if (arr) return arr.length;
             else return 0;

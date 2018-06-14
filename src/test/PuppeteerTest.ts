@@ -30,6 +30,12 @@ import {PuppeteerUtil} from "../spider/util/PuppeteerUtil";
     await PuppeteerUtil.defaultViewPort(page);
     await PuppeteerUtil.setImgLoad(page, false);
     await page.goto("https://www.bilibili.com/video/av24749339/?spm_id_from=333.334.chief_recommend.16");
+    const replyResWait = PuppeteerUtil.onceResponse(page, "api.bilibili.com/x/v2/reply.*", async response => {
+        console.log("response");
+    });
+    await PuppeteerUtil.scrollToBottom(page, 10000, 100, 1000);
+    await replyResWait;
+    await page.waitForSelector("#comment .comment .comment-list .list-item.reply-wrap", {timeout: 5000});
     const count = await PuppeteerUtil.count(page, "#comment .bottom-page.paging-box-big a:contains('2')");
     console.log(count);
 
