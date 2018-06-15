@@ -143,10 +143,13 @@ export class PuppeteerUtil {
         let responseListener: ResponseListener = page[kResponseListener];
         if (!responseListener) {
             page[kResponseListener] = responseListener = async (response: Response) => {
+                const responseUrl = response.url();
                 let responseCheckUrls: ResponseCheckUrlInfo[] = page[kResponseCheckUrls] || [];
                 const removes = [];
                 for (let responseCheckUrl of responseCheckUrls) {
-                    if (response.url().match(responseCheckUrl.url) || response.url() === responseCheckUrl.url) {
+                    let checkUrl = responseCheckUrl.url.toString();
+                    if (checkUrl.startsWith("//")) checkUrl = responseUrl.split("//")[0] + checkUrl;
+                    if (responseUrl === checkUrl || responseUrl.match(checkUrl)) {
                         try {
                             await responseCheckUrl.listener(response);
                         }
@@ -246,26 +249,37 @@ export class PuppeteerUtil {
         }
     }
 
-    static downloadImg(page: Page, imgSelector: string, saveDir: string, timeout: number = Defaults.responseTimeout): Promise<DownloadImgResult> {
+    static downloadImg(page: Page, selectorOrSrc: string, saveDir: string, timeout: number = Defaults.responseTimeout): Promise<DownloadImgResult> {
         const time = new Date().getTime();
         return new Promise<DownloadImgResult>(async resolve => {
             const imgId = "img_" + time + parseInt("" + Math.random() * 10000);
-            const imgSrc = await page.evaluate((selector, imgId) => {
+            const imgSrc = await page.evaluate((selectorOrSrc, imgId) => {
                 try {
-                    const img = document.querySelector(selector) as any;
-                    if (img) {
+                    const isSrc = selectorOrSrc.startsWith("http") || selectorOrSrc.startsWith("//");
+                    if (isSrc) {
+                        const img = document.createElement("img");
+                        img.id = imgId;
+                        img.style.display = "none";
+                        document.body.appendChild(img);
                         window[imgId] = img;
-                        return img.src;
+                        return selectorOrSrc;
+                    }
+                    else {
+                        const img = document.querySelector(selectorOrSrc) as any;
+                        if (img) {
+                            window[imgId] = img;
+                            return img.src;
+                        }
                     }
                 }
                 catch (e) {
                     console.warn(e.stack);
                 }
                 return false;
-            }, imgSelector, imgId);
+            }, selectorOrSrc, imgId);
 
             if (imgSrc) {
-                const newImgSrc = imgSrc + (imgSrc.indexOf("?") == -1 ? "?" : "&");
+                const newImgSrc = imgSrc + (imgSrc.indexOf("?") == -1 ? "?" : "&") + new Date().getTime() + "_" + (Math.random() * 10000).toFixed(0);
                 const waitRespnse = this.onceResponse(page, newImgSrc, async (response: Response) => {
                     if (response.ok()) {
                         let saveName = null;
@@ -409,13 +423,35 @@ export class PuppeteerUtil {
         }, predictStrMap, onlyAddToFirstMatch);
     }
 
-    static async count(page: Page, selector: string, loadJquery: boolean = true): Promise<number> {
-        if (loadJquery) await this.addJquery(page);
+    static async count(page: Page, selector: string): Promise<number> {
         return await page.evaluate(selector => {
-            // debugger;
-            const arr = jQuery ? jQuery(selector) : document.querySelectorAll(selector);
-            if (arr) return arr.length;
+            const doms = document.querySelectorAll(selector);
+            if (doms) return doms.length;
             else return 0;
+        }, selector);
+    }
+
+    static async specifyIdByJquery(page: Page, selector: string): Promise<string[]> {
+        await this.addJquery(page);
+        return await page.evaluate(selector => {
+           const $items = jQuery(selector);
+           if ($items.length) {
+               const ids = [];
+               for (let i = 0; i < $items.length; i++) {
+                   const $item = $($items[i]);
+                   const id = $item.attr("id");
+                   if (id) {
+                       ids.push(id);
+                   }
+                   else {
+                       const specialId = "special_" + new Date().getTime() + "_" + (Math.random() * 99999).toFixed(0) + "_" + i;
+                       $item.attr("id", specialId);
+                       ids.push(specialId);
+                   }
+               }
+               return ids;
+           }
+           else return null;
         }, selector);
     }
 

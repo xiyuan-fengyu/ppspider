@@ -373,6 +373,16 @@ OnStart_ClassName_MethodName，所以也可以通过 JobOverride 对 job 进行�
 ### PuppeteerUtil.count
 获取满足 selector 的元素个数
 
+### PuppeteerUtil.specifyIdByJquery
+使用 jQuery(selector) 查找节点， 并为其中没有 id 的节点添加随机 id，
+最后返回一个所有节点 id 的数组  
+使用场景：  
+Page 中所有涉及到使用selector查找节点的方法都是使用 document.querySelector / document.querySelectorAll  
+但是有些 css selector， document.querySelector / document.querySelectorAll 不支持， jQuery 支持  
+例如  "#someId a:eq(0)", "#someId a:contains('next')"  
+可以通过这个方法为这些元素添加特殊的id，然后在通过 #specialId 去操作对应的节点   
+
+
 ### PuppeteerUtil.scrollToBottom
 页面滚动到最底部  
 
@@ -401,6 +411,8 @@ export class TestTask {
         });
 
         await page.goto("http://www.baidu.com");
+        await PuppeteerUtil.scrollToBottom(page, 5000, 100, 1000);
+
         await PuppeteerUtil.addJquery(page);
         console.log(await hisResWait);
 
@@ -419,6 +431,12 @@ export class TestTask {
 
         const count = await PuppeteerUtil.count(page, "#result_logo");
         console.log(count);
+
+        const ids = await PuppeteerUtil.specifyIdByJquery(page, "a:visible:contains('登录')");
+        if (ids) {
+            console.log(ids);
+            await page.tap("#" + ids[0]);
+        }
     }
 
 }
