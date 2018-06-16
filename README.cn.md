@@ -28,6 +28,7 @@
     + [PuppeteerUtil.downloadImg](#puppeteerutildownloadimg)
     + [PuppeteerUtil.links](#puppeteerutillinks)
     + [PuppeteerUtil.count](#puppeteerutilcount)
+    + [PuppeteerUtil.specifyIdByJquery](#puppeteerutilspecifyidbyjquery)
     + [PuppeteerUtil.scrollToBottom](#puppeteerutilscrolltobottom)
     + [PuppeteerUtil 例子](#puppeteerutil-%E4%BE%8B%E5%AD%90)
 - [调试](#%E8%B0%83%E8%AF%95)
