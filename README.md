@@ -406,6 +406,8 @@ export class TestTask {
         });
 
         await page.goto("http://www.baidu.com");
+        await PuppeteerUtil.scrollToBottom(page, 5000, 100, 1000);
+
         await PuppeteerUtil.addJquery(page);
         console.log(await hisResWait);
 
@@ -424,6 +426,12 @@ export class TestTask {
 
         const count = await PuppeteerUtil.count(page, "#result_logo");
         console.log(count);
+
+        const ids = await PuppeteerUtil.specifyIdByJquery(page, "a:visible:contains('登录')");
+        if (ids) {
+            console.log(ids);
+            await page.tap("#" + ids[0]);
+        }
     }
 
 }

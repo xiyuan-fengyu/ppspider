@@ -383,7 +383,6 @@ Page 中所有涉及到使用selector查找节点的方法都是使用 document.
 例如  "#someId a:eq(0)", "#someId a:contains('next')"  
 可以通过这个方法为这些元素添加特殊的id，然后在通过 #specialId 去操作对应的节点   
 
-
 ### PuppeteerUtil.scrollToBottom
 页面滚动到最底部  
 
