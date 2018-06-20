@@ -28,6 +28,7 @@
     + [PuppeteerUtil.downloadImg](#puppeteerutildownloadimg)
     + [PuppeteerUtil.links](#puppeteerutillinks)
     + [PuppeteerUtil.count](#puppeteerutilcount)
+    + [PuppeteerUtil.specifyIdByJquery](#puppeteerutilspecifyidbyjquery)
     + [PuppeteerUtil.scrollToBottom](#puppeteerutilscrolltobottom)
     + [PuppeteerUtil 例子](#puppeteerutil-%E4%BE%8B%E5%AD%90)
 - [调试](#%E8%B0%83%E8%AF%95)
@@ -381,7 +382,6 @@ Page 中所有涉及到使用selector查找节点的方法都是使用 document.
 但是有些 css selector， document.querySelector / document.querySelectorAll 不支持， jQuery 支持  
 例如  "#someId a:eq(0)", "#someId a:contains('next')"  
 可以通过这个方法为这些元素添加特殊的id，然后在通过 #specialId 去操作对应的节点   
-
 
 ### PuppeteerUtil.scrollToBottom
 页面滚动到最底部  

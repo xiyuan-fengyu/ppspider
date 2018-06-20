@@ -29,6 +29,7 @@
     + [PuppeteerUtil.downloadImg](#puppeteerutildownloadimg)
     + [PuppeteerUtil.links](#puppeteerutillinks)
     + [PuppeteerUtil.count](#puppeteerutilcount)
+    + [PuppeteerUtil.specifyIdByJquery](#puppeteerutilspecifyidbyjquery)
     + [PuppeteerUtil.scrollToBottom](#puppeteerutilscrolltobottom)
     + [PuppeteerUtil example](#puppeteerutil-example)
 - [Debug](#debug)
@@ -367,6 +368,16 @@ get all expected urls
 ### PuppeteerUtil.count
 count doms with special css selector
 
+### PuppeteerUtil.specifyIdByJquery
+Find dom nodes by jQuery(selector) and specify random id if not existed，
+finally return the id array.    
+A usage scenario is:   
+In puppeteer, all methods of Page to find doms by css selector finally call 
+document.querySelector / document.querySelectorAll which not support some 
+special css selectors, howerver jQuery supports. Such as: "#someId a:eq(0)", "#someId a:contains('next')".   
+So we can call specifyIdByJquery to specify id to the dom node and keep the special id returned, 
+then call Page's method with the special id.  
+
 ### PuppeteerUtil.scrollToBottom
 scroll to bottom  
 
@@ -395,6 +406,8 @@ export class TestTask {
         });
 
         await page.goto("http://www.baidu.com");
+        await PuppeteerUtil.scrollToBottom(page, 5000, 100, 1000);
+
         await PuppeteerUtil.addJquery(page);
         console.log(await hisResWait);
 
@@ -413,6 +426,12 @@ export class TestTask {
 
         const count = await PuppeteerUtil.count(page, "#result_logo");
         console.log(count);
+
+        const ids = await PuppeteerUtil.specifyIdByJquery(page, "a:visible:contains('登录')");
+        if (ids) {
+            console.log(ids);
+            await page.tap("#" + ids[0]);
+        }
     }
 
 }
