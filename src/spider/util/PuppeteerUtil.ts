@@ -69,7 +69,7 @@ export class PuppeteerUtil {
         url: string = "https://cdn.bootcss.com/jquery/3.3.1/jquery.min.js",
         savePath = os.tmpdir() + "/jquery.min.js") {
         const jQueryExisted = await page.evaluate(() => {
-           return jQuery != undefined;
+           return typeof jQuery !== "undefined";
         });
 
         if (!jQueryExisted) {
