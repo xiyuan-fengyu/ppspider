@@ -2,6 +2,7 @@
 
 <!-- toc -->
 
+- [Puppeteer Doc](#puppeteer-doc)
 - [快速起步](#%E5%BF%AB%E9%80%9F%E8%B5%B7%E6%AD%A5)
   * [安装nodejs](#%E5%AE%89%E8%A3%85nodejs)
   * [安装typescript](#%E5%AE%89%E8%A3%85typescript)
@@ -35,6 +36,9 @@
 - [控制界面](#%E6%8E%A7%E5%88%B6%E7%95%8C%E9%9D%A2)
 
 <!-- tocstop -->
+
+# Puppeteer Doc
+https://github.com/GoogleChrome/puppeteer/blob/master/docs/api.md     
 
 # 快速起步
 ## 安装nodejs

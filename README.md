@@ -3,6 +3,7 @@
 <!-- toc -->
 
 - [Documentation in other languages](#documentation-in-other-languages)
+- [Puppeteer Doc](#puppeteer-doc)
 - [Quick Start](#quick-start)
   * [Install NodeJs](#install-nodejs)
   * [Install TypeScript](#install-typescript)
@@ -39,6 +40,9 @@
 
 # Documentation in other languages
 [中文文档](https://github.com/xiyuan-fengyu/ppspider/blob/master/README.cn.md)  
+
+# Puppeteer Doc
+https://github.com/GoogleChrome/puppeteer/blob/master/docs/api.md   
 
 # Quick Start
 ## Install NodeJs
@@ -80,7 +84,7 @@ All npm dependencies will be saved to node_modules folder in the project
 Run 'tsc' in terminal  
 Or  
 ContextMenu on package.json -> Show npm Scripts -> Double click 'auto build'   
-tsc is a TypeScript compiler which can auto compile the ts file to js file after any js file change  
+tsc is a TypeScript compiler which can auto compile the ts file to js file after any ts file change  
 
 
 ### Startup ppspider App
