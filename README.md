@@ -2,7 +2,7 @@
 
 <!-- toc -->
 
-- [Documentation in other languages](#documentation-in-other-languages)
+- [Translations](#translations)
 - [Puppeteer Doc](#puppeteer-doc)
 - [Quick Start](#quick-start)
   * [Install NodeJs](#install-nodejs)
@@ -38,7 +38,7 @@
 
 <!-- tocstop -->
 
-# Documentation in other languages
+# Translations
 [中文文档](https://github.com/xiyuan-fengyu/ppspider/blob/master/README.cn.md)  
 
 # Puppeteer Doc
