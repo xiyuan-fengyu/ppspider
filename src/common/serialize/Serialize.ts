@@ -46,7 +46,7 @@ export class SerializableUtil {
         let res;
         const objConstructor = obj.constructor;
         if (objType == "function" || !objConstructor) {
-            res = {};
+            res = obj;
         }
         else if (objConstructor == Array) {
             res = [];
@@ -98,7 +98,7 @@ export class SerializableUtil {
         }
         else if (objType == "string") {
             const str = obj as string;
-            if (str.startsWith("ref(") && str.endsWith(")")) {
+            if (str.startsWith("ref($") && str.endsWith(")")) {
                 const refPath = str.substring(4, str.length - 1);
                 let deserializedCache = deserializedCaches[refPath];
                 if (deserializedCache === undefined) {

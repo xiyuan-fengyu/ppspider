@@ -1,5 +1,5 @@
 import {BitSet} from "../common/util/BitSet";
-import {SerializableUtil} from "../common/serialize/Serialize";
+import {SerializableUtil, Serialize} from "../common/serialize/Serialize";
 
 class A {
     paraA = "aaa";
@@ -13,6 +13,7 @@ class B {
     a: A;
 }
 
+@Serialize()
 class C {
     private a: A;
     private b: B;
@@ -31,6 +32,12 @@ class C {
         false
     ];
 
+    private testLambda = () => true;
+
+    testFun() {
+        return "test";
+    }
+
     constructor() {
         this.a = new A();
         this.b = new B();
@@ -46,10 +53,14 @@ class C {
         this.paramArray.push(this.b);
         this.paramArray.push(this.bitSet);
     }
+
 }
 
 const c = new C();
 const serC = SerializableUtil.serialize(c);
-console.log(JSON.stringify(serC, null, 4));
-const deserC = SerializableUtil.deserialize(serC);
-console.log(deserC);
+const serCJsonStr = JSON.stringify(serC, null, 4);
+console.log(serCJsonStr);
+const serCJson = JSON.parse(serCJsonStr);
+const deserC = SerializableUtil.deserialize(serCJson);
+console.log(deserC.testLambda());
+console.log(deserC.testFun());
