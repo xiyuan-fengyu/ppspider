@@ -118,8 +118,13 @@ export class PuppeteerUtil {
                     const interceptionHandled = request["_interceptionHandled"];
                     if (!interceptionHandled) {
                         if (request.resourceType() == "image") {
+                            const requestUrl = request.url();
                             let responseCheckUrls: ResponseCheckUrlInfo[] = page[kResponseCheckUrls] || [];
-                            if (responseCheckUrls.find(item => request.url().match(item.url) != null || item.url === request.url())) {
+                            if (responseCheckUrls.find(item => {
+                                let checkUrl = item.url.toString();
+                                if (checkUrl.startsWith("//")) checkUrl = requestUrl.split("//")[0] + checkUrl;
+                                return requestUrl.match(checkUrl) != null || checkUrl === requestUrl;
+                            })) {
                                 // 下载图片
                                 request.continue();
                             }
