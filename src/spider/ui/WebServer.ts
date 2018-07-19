@@ -29,6 +29,9 @@ export class WebServer {
                 });
                 messager.emit("request", request);
             });
+            socket.on("error", (error: Error) => {
+                if (error) console.warn("socket error: " + (error.message || "") + "\n" + (error.stack || ""));
+            });
         });
 
         this.http.listen(port, () => {
