@@ -308,31 +308,13 @@ export class PuppeteerUtil {
                                     });
                                 }
                                 else {
-                                    const cost = new Date().getTime() - time;
-                                    let checkNum = 5;
-                                    const checkFile = () => {
-                                        if (fs.existsSync(savePath)) {
-                                            resolve({
-                                                success: true,
-                                                cost: cost,
-                                                src: imgSrc,
-                                                size: buffer.length,
-                                                savePath: savePath
-                                            });
-                                        }
-                                        else if (checkNum-- > 0) {
-                                            setTimeout(checkFile, 30);
-                                        }
-                                        else {
-                                            // 几种情况基本不会发生
-                                            resolve({
-                                                success: false,
-                                                cost: cost,
-                                                error: DownloadImgError.WriteFileFail
-                                            });
-                                        }
-                                    };
-                                    checkFile();
+                                    resolve({
+                                        success: true,
+                                        cost: new Date().getTime() - time,
+                                        src: imgSrc,
+                                        size: buffer.length,
+                                        savePath: savePath
+                                    });
                                 }
                             });
                         }
