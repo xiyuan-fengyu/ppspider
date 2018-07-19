@@ -52,6 +52,8 @@ export class QueueManager {
     async waitRunning() {
         this.pause = true;
         await PromiseUtil.wait(() => this.runningNum <= 0, 500, 120000);
+        if (this.runningNum > 0) this.failNum += this.runningNum;
+        this.runningNum = 0;
     }
 
     deleteQueueCache(): any {
