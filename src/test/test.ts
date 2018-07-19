@@ -34,36 +34,49 @@ class TestTask {
 
 
 
+    // @OnStart({
+    //     urls: "http://www.baidu.com",
+    //     workerFactory: PuppeteerWorkerFactory,
+    //     parallel: {
+    //         "0/20 * * * * ?": 1,
+    //         "10/20 * * * * ?": 2
+    //     }
+    // })
+    // @OnTime({
+    //     urls: "http://www.baidu.com",
+    //     cron: "*/30 * * * * ?",
+    //     workerFactory: PuppeteerWorkerFactory
+    // })
+    // @AddToQueue({
+    //     name: "test"
+    // })
+    // async index(page: Page, job: Job): AddToQueueData {
+    //     await page.goto(job.url());
+    //     return PuppeteerUtil.links(page, {
+    //         "test": "http.*"
+    //     });
+    // }
+    //
+    // @FromQueue({
+    //     name: "test",
+    //     workerFactory: PuppeteerWorkerFactory,
+    //     parallel: 1,
+    //     exeInterval: 100000
+    // })
+    // async printUrl(page: Page, job: Job) {
+    //     console.log(job.url());
+    // }
+
+
     @OnStart({
         urls: "http://www.baidu.com",
         workerFactory: PuppeteerWorkerFactory,
-        parallel: {
-            "0/20 * * * * ?": 1,
-            "10/20 * * * * ?": 2
-        }
+        parallel: 1
     })
-    @OnTime({
-        urls: "http://www.baidu.com",
-        cron: "*/30 * * * * ?",
-        workerFactory: PuppeteerWorkerFactory
-    })
-    @AddToQueue({
-        name: "test"
-    })
-    async index(page: Page, job: Job): AddToQueueData {
-        await page.goto(job.url());
-        return PuppeteerUtil.links(page, {
-            "test": "http.*"
+    async index(page: Page, job: Job) {
+        await new Promise<any>(resolve => {
+            setTimeout(() => resolve(true), 30000);
         });
-    }
-
-    @FromQueue({
-        name: "test",
-        workerFactory: PuppeteerWorkerFactory,
-        parallel: 1,
-        exeInterval: 100000
-    })
-    async printUrl(page: Page, job: Job) {
         console.log(job.url());
     }
 

@@ -91,7 +91,9 @@ export class QueueInfoComponent implements OnInit {
   showShutdownConfirm() {
     this.dialog.open(ShutdownConfirmDialog, {
       width: "500px",
-      data: {}
+      data: {
+        shutdownWaitTimeout: (this.info.queue || {} as any).shutdownWaitTimeout || 60000
+      }
     }).afterClosed().subscribe(res => {
       if (res != null) {
         this.info.running = false;
@@ -196,7 +198,7 @@ export class ShutdownConfirmDialog implements OnInit {
 
   private showShutdownProgress() {
     const interval = 100;
-    const waitDdelta = 60 * interval / 30000.0;
+    const waitDdelta = 60 * interval / this.data.shutdownWaitTimeout;
     let successDelta = 0;
     const update = () => {
       if (this.shutdownSuccess) {

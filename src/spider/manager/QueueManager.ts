@@ -22,9 +22,14 @@ import {DefaultJob} from "../job/DefaultJob";
 import {NoFilter} from "../filter/NoFilter";
 import {SerializableUtil, Serialize} from "../../common/serialize/Serialize";
 import * as fs from "fs";
-import {appInfo} from "../decorators/Launcher";
 import {PromiseUtil} from "../../common/util/PromiseUtil";
 import {jobManager} from "./JobManager";
+import {EventEmitter} from "events";
+
+const shutdownWaitTimeout = 60000;
+
+const SIGNAL_FORCE_STOP = "SIGNAL_FORCE_STOP";
+const signals = new EventEmitter();
 
 @Serialize()
 export class QueueManager {
@@ -51,7 +56,12 @@ export class QueueManager {
 
     async waitRunning() {
         this.pause = true;
-        await PromiseUtil.wait(() => this.runningNum <= 0, 500, 120000);
+        await PromiseUtil.wait(() => this.runningNum <= 0, 500, shutdownWaitTimeout);
+        if (this.runningNum > 0) {
+            // 发出终止任务的信号
+            signals.emit(SIGNAL_FORCE_STOP);
+            await PromiseUtil.wait(() => this.runningNum <= 0, 500);
+        }
         if (this.runningNum > 0) this.failNum += this.runningNum;
         this.runningNum = 0;
     }
@@ -136,7 +146,8 @@ export class QueueManager {
             success: this.successNum,
             running: this.runningNum,
             fail: this.failNum,
-            queues: []
+            queues: [],
+            shutdownWaitTimeout: shutdownWaitTimeout
         };
         for (let queueName in this.queues) {
             const queue = this.queues[queueName];
@@ -464,15 +475,31 @@ export class QueueManager {
                             job.exeTimes({
                                 start: new Date().getTime()
                             });
-                            try {
-                                job.status(JobStatus.Running);
-                                job.tryNum(job.tryNum() + 1);
-                                jobManager.save(job);
-                                await method.call(target, worker, job);
+
+                            job.status(JobStatus.Running);
+                            job.tryNum(job.tryNum() + 1);
+                            jobManager.save(job);
+
+                            const successOrError = await new Promise<any>(async resolve => {
+                                try {
+                                    const listener = () => {
+                                        resolve(new Error(SIGNAL_FORCE_STOP));
+                                    };
+                                    signals.once(SIGNAL_FORCE_STOP, listener);
+                                    await method.call(target, worker, job);
+                                    signals.removeListener(SIGNAL_FORCE_STOP, listener);
+                                    resolve(true);
+                                }
+                                catch (e) {
+                                    resolve(e);
+                                }
+                            });
+
+                            if (successOrError === true) {
                                 job.status(JobStatus.Success);
                                 this.successNum++;
                             }
-                            catch (e) {
+                            else {
                                 if (job.tryNum() >= Defaults.maxTry) {
                                     job.status(JobStatus.Fail);
                                 }
@@ -480,8 +507,9 @@ export class QueueManager {
                                     job.status(JobStatus.RetryWaiting);
                                 }
                                 this.failNum++;
-                                console.log(e.stack);
+                                console.log(successOrError.stack);
                             }
+
                             job.exeTimes({
                                 end: new Date().getTime()
                             });
