@@ -1,6 +1,6 @@
 import {ResponseCheckUrlResult} from "./spider/util/PuppeteerUtil";
 
-export {Serializable} from "./common/serialize/Serialize";
+export {Serialize, Transient, Serializable} from "./common/serialize/Serialize";
 export {DateUtil} from "./common/util/DateUtil";
 export {DownloadResult, DownloadUtil} from "./common/util/DownloadUtil";
 export {FileUtil} from "./common/util/FileUtil";

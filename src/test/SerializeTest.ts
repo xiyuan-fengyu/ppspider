@@ -1,5 +1,5 @@
 import {BitSet} from "../common/util/BitSet";
-import {SerializableUtil, Serialize} from "../common/serialize/Serialize";
+import {SerializableUtil, Serialize, Transient} from "../common/serialize/Serialize";
 
 class A {
     paraA = "aaa";
@@ -15,6 +15,10 @@ class B {
 
 @Serialize()
 class C {
+
+    @Transient()
+    private transientF = "test transient";
+
     private a: A;
     private b: B;
     bitSet: BitSet;

@@ -20,7 +20,7 @@ import {DefaultQueue} from "../queue/DefaultQueue";
 import {Filter} from "../filter/Filter";
 import {DefaultJob} from "../job/DefaultJob";
 import {NoFilter} from "../filter/NoFilter";
-import {SerializableUtil, Serialize} from "../../common/serialize/Serialize";
+import {SerializableUtil, Serialize, Transient} from "../../common/serialize/Serialize";
 import * as fs from "fs";
 import {PromiseUtil} from "../../common/util/PromiseUtil";
 import {jobManager} from "./JobManager";
@@ -34,10 +34,12 @@ const signals = new EventEmitter();
 @Serialize()
 export class QueueManager {
 
+    @Transient()
     private cachePath: string;
 
     private readonly queues: Queues = {};
 
+    @Transient()
     private jobOverrideConfigs: JobOverrideConfigs = {};
 
     private dispatchQueueIndex = 0;
@@ -48,6 +50,7 @@ export class QueueManager {
 
     private failNum = 0;
 
+    @Transient()
     private pause = false;
 
     resetPause(value: boolean) {

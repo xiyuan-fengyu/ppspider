@@ -1,4 +1,27 @@
 
+interface ClassInfo {
+
+    id?: string;
+
+    type: any;
+
+    serializable?: boolean;
+
+    transients?: {[field: string]: boolean};
+
+}
+
+const classInfos = new Map<any, ClassInfo>();
+
+const getClassInfoById = (id: string) => {
+    const it = classInfos.values();
+    for (let classInfo of it) {
+        if (classInfo.id == id) {
+            return classInfo;
+        }
+    }
+};
+
 export class Serializable {
 
     constructor(from: any) {
@@ -12,18 +35,12 @@ export class Serializable {
 
 export class SerializableUtil {
 
-    static readonly serializables: any = {};
-
-    private static isSerialize(constructor: any): boolean {
-        return constructor.serializeClassId != null && constructor == this.serializables[constructor.serializeClassId];
-    }
-
     static serialize(obj: any) {
-        const serializedCaches = [];
+        const serializedCaches = new Map<any, string>();
         return this._serialize(obj, serializedCaches, "$");
     }
 
-    private static _serialize(obj: any, serializedCaches: any[], path: string) {
+    private static _serialize(obj: any, serializedCaches: Map<any, string>, path: string) {
         // console.log(path);
         if (obj == null || obj == undefined) return obj;
 
@@ -32,43 +49,42 @@ export class SerializableUtil {
             return obj;
         }
 
-        for (let serializedCache of serializedCaches) {
-            if (serializedCache.instance == obj) {
-                return "ref(" + serializedCache.path + ")";
-            }
+        const serializedCache = serializedCaches.get(obj);
+        if (serializedCache !== undefined) {
+            return "ref(" + serializedCache + ")";
         }
 
-        serializedCaches.push({
-            instance: obj,
-            path: path
-        });
+        serializedCaches.set(obj, path);
 
         let res;
         const objConstructor = obj.constructor;
         if (objType == "function" || !objConstructor) {
             res = obj;
         }
-        else if (objConstructor == Array) {
+        else if (obj instanceof Array) {
             res = [];
             (obj as Array<any>).forEach((value, index) => {
                 res.push(this._serialize(value, serializedCaches, path + "[" + index + "]"));
             });
         }
         else {
-            let flag = this.isSerialize(objConstructor);
-            if (flag) {
+            let classInfo = classInfos.get(objConstructor);
+            if (classInfo && classInfo.serializable) {
                 if (obj instanceof Serializable) {
                     res = obj.serialize();
-                    res.serializeClassId = objConstructor.serializeClassId;
+                    res.serializeClassId = classInfo.id;
                 }
             }
 
             if (res == null) {
                 res = {};
                 for (let field of Object.keys(obj)) {
-                    res[field] = this._serialize(obj[field], serializedCaches, path + "[" + JSON.stringify(field) + "]");
+                    if (classInfo && classInfo.transients && classInfo.transients[field]) {
+                        // ignore
+                    }
+                    else res[field] = this._serialize(obj[field], serializedCaches, path + "[" + JSON.stringify(field) + "]");
                 }
-                if (flag) res.serializeClassId = objConstructor.serializeClassId;
+                if (classInfo && classInfo.id) res.serializeClassId = classInfo.id;
             }
         }
         return res || {};
@@ -119,8 +135,9 @@ export class SerializableUtil {
         }
         else {
             const serializeClassId = obj.serializeClassId;
-            const serializeClass = serializeClassId ? this.serializables[serializeClassId] : null;
-            if (serializeClass) {
+            const serializeClassInfo = serializeClassId ? getClassInfoById(serializeClassId) : null;
+            if (serializeClassInfo) {
+                const serializeClass = serializeClassInfo.type;
                 if (this.isExtendsFromSerializable(serializeClass)) {
                     res = deserializedCaches[path] = new serializeClass(obj);
                 }
@@ -146,13 +163,33 @@ export class SerializableUtil {
 
 export function Serialize(classId?: string) {
     return function (target) {
-        const targetClassId = classId || target.name;
-        if (SerializableUtil.serializables.hasOwnProperty(targetClassId)) {
-            throw new Error("serializable class id existed: " + targetClassId);
+        let existed = classInfos.get(target);
+        if (!existed) {
+            existed = {
+                type: target
+            } as ClassInfo;
+            classInfos.set(target, existed);
         }
-        else {
-            target.serializeClassId = targetClassId;
-            SerializableUtil.serializables[targetClassId] = target;
-        }
+        existed.id = classId || target.name;
+        existed.serializable = true;
     }
+}
+
+export function Transient() {
+    return function (target: any, field: string) {
+        const isStatic = target.constructor.name === "Function";
+        if (isStatic) throw new Error("cannot decorate static field with Transient");
+
+        const type = target.constructor;
+        let existed = classInfos.get(type);
+        if (!existed) {
+            existed = {
+                type: type
+            } as ClassInfo;
+            classInfos.set(type, existed);
+        }
+
+        if (!existed.transients) existed.transients = {};
+        existed.transients[field] = true;
+    };
 }
