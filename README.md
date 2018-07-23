@@ -4,6 +4,7 @@
 
 - [Translations](#translations)
 - [Puppeteer Doc](#puppeteer-doc)
+  * [Questions about puppeteer](#questions-about-puppeteer)
 - [Quick Start](#quick-start)
   * [Install NodeJs](#install-nodejs)
   * [Install TypeScript](#install-typescript)
@@ -20,6 +21,7 @@
     + [@OnTime](#ontime)
     + [@AddToQueue @FromQueue](#addtoqueue-fromqueue)
     + [@JobOverride](#joboverride)
+    + [@Serialize Serializable @Transient](#serialize-serializable-transient)
   * [PuppeteerUtil](#puppeteerutil)
     + [PuppeteerUtil.defaultViewPort](#puppeteerutildefaultviewport)
     + [PuppeteerUtil.addJquery](#puppeteerutiladdjquery)
@@ -43,6 +45,34 @@
 
 # Puppeteer Doc
 https://github.com/GoogleChrome/puppeteer/blob/master/docs/api.md   
+## Questions about puppeteer
+1. When installing puppeteer, it will download chromium by default. If download is fail, you 
+    can set temp environment variable by terminal before executing 'npm install'  
+    ```
+    # win
+    set PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=1
+    # unix
+    export PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=1
+    ```
+    Then you can download chromium at this page (https://download-chromium.appspot.com/) or
+    use the local chrome installed.  
+    Finally, init the PuppeteerWorkerFactory with parameter named 'executablePath'.  
+    ```
+    @Launcher({
+        workplace: __dirname + "/workplace",
+        tasks: [
+            TestTask
+        ],
+        workerFactorys: [
+            new PuppeteerWorkerFactory({
+                headless: false,
+                executablePath: "YOU_CHROMIUM_OR_CHROME_EXECUTE_PATH"
+            })
+        ]
+    })
+    class App {}
+    ```
+
 
 # Quick Start
 ## Install NodeJs
@@ -342,6 +372,23 @@ that, jobs with duplicate keys will be filtered out.
 Actually, sub task type OnStart/OnTime is also managed by queue whose name just likes OnStart_ClassName_MethodName 
 or OnTime_ClassName_MethodName, so you can set a JobOverride to it.   
 [JobOverride example](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/bilibili/tasks/BilibiliTask.ts)
+
+### @Serialize Serializable @Transient
+```
+export function Serialize(classId?: string) { ... }
+export class Serializable { ... }
+export function Transient() { ... }
+```
+@Serialize is used to mark a class, then the class info will keep during serializing and deserializing.
+Otherwise, the class info will lose when serializing.   
+a class which extends from Serializable supports customized serialize / deserialize， for example: [BitSet](https://github.com/xiyuan-fengyu/ppspider/blob/master/src/common/util/BitSet.ts)    
+@Transient is used to mark a field which will be ignored when serializing and deserializing.
+Warn: static field will not be serialized.   
+These three are mainly used to save running status. You can use @Transient to ignore fields which are not 
+related with running status, then the output file will be smaller in size 
+and the possible error caused by deep nested object during deserializing will be avoid.  
+[example](https://github.com/xiyuan-fengyu/ppspider/blob/master/src/test/SerializeTest.ts)
+
 
 
 ## PuppeteerUtil
