@@ -35,6 +35,7 @@
     + [PuppeteerUtil.specifyIdByJquery](#puppeteerutilspecifyidbyjquery)
     + [PuppeteerUtil.scrollToBottom](#puppeteerutilscrolltobottom)
     + [PuppeteerUtil example](#puppeteerutil-example)
+  * [logger](#logger)
 - [Debug](#debug)
 - [WebUI](#webui)
 
@@ -486,6 +487,22 @@ export class TestTask {
     }
 
 }
+```
+
+## logger
+Use logger.debug, logger.info, logger.warn or logger.error to print log.  
+Those functions are defined in src/common/util/logger.ts.  
+The output logs contain extra info: timestamp, log level, source file position.  
+```
+// example
+// set format, the default format is as follows
+// logger.format = "yyyy-MM-dd HH:mm:ss.SSS [level] position message"
+// set log level, must be "debug", "info", "warn" or "error"
+// logger.level = "info";
+logger.debug("test debug");
+logger.info("test info");
+logger.warn("test warn");
+logger.error("test error");
 ```
 
 # Debug

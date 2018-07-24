@@ -25,6 +25,7 @@ import * as fs from "fs";
 import {PromiseUtil} from "../../common/util/PromiseUtil";
 import {jobManager} from "./JobManager";
 import {EventEmitter} from "events";
+import {logger} from "../../common/util/logger";
 
 const shutdownWaitTimeout = 60000;
 
@@ -510,7 +511,7 @@ export class QueueManager {
                                     job.status(JobStatus.RetryWaiting);
                                 }
                                 this.failNum++;
-                                console.log(successOrError.stack);
+                                logger.error(successOrError.stack);
                             }
 
                             job.exeTimes({

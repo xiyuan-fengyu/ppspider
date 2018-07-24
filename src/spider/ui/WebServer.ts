@@ -2,6 +2,7 @@ import {Server as HttpServer} from "http";
 import {Server as ScoketIOServer} from "socket.io";
 import {EventEmitter} from "events";
 import {ClientRequest} from "../data/Types";
+import {logger} from "../../common/util/logger";
 
 export class WebServer {
 
@@ -30,12 +31,12 @@ export class WebServer {
                 messager.emit("request", request);
             });
             socket.on("error", (error: Error) => {
-                if (error) console.warn("socket error: " + (error.message || "") + "\n" + (error.stack || ""));
+                if (error) logger.warn("socket error: " + (error.message || "") + "\n" + (error.stack || ""));
             });
         });
 
         this.http.listen(port, () => {
-            console.log("The web ui server start at port: " + port);
+            logger.info("The web ui server start at port: " + port);
         });
 
         messager.on("push", (key: string, data: any) => {
@@ -46,7 +47,7 @@ export class WebServer {
     shutdown() {
         this.http.close();
         this.io.close();
-        console.log("The webUI stopped");
+        logger.info("The web ui server stopped");
     }
 
 }

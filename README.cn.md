@@ -34,6 +34,7 @@
     + [PuppeteerUtil.specifyIdByJquery](#puppeteerutilspecifyidbyjquery)
     + [PuppeteerUtil.scrollToBottom](#puppeteerutilscrolltobottom)
     + [PuppeteerUtil 例子](#puppeteerutil-%E4%BE%8B%E5%AD%90)
+  * [日志](#%E6%97%A5%E5%BF%97)
 - [调试](#%E8%B0%83%E8%AF%95)
 - [控制界面](#%E6%8E%A7%E5%88%B6%E7%95%8C%E9%9D%A2)
 
@@ -490,6 +491,21 @@ export class TestTask {
     }
 
 }
+```
+
+## 日志
+通过 src/common/util/logger.ts 中定义的 logger.debug, logger.info, logger.warn, logger.error 方法输出日志  
+输出的日志中包含时间，等级，源文件位置这些额外信息      
+```
+// 示例
+// 设置输出格式
+// logger.format = "yyyy-MM-dd HH:mm:ss.SSS [level] position message"
+// 设置最低输出等级, 必须是 "debug", "info", "warn", "error" 中的一个
+// logger.level = "info";
+logger.debug("test debug");
+logger.info("test info");
+logger.warn("test warn");
+logger.error("test error");
 ```
 
 # 调试

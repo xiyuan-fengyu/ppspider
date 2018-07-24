@@ -1,9 +1,8 @@
-import {ResponseCheckUrlResult} from "./spider/util/PuppeteerUtil";
-
 export {Serialize, Transient, Serializable} from "./common/serialize/Serialize";
 export {DateUtil} from "./common/util/DateUtil";
 export {DownloadResult, DownloadUtil} from "./common/util/DownloadUtil";
 export {FileUtil} from "./common/util/FileUtil";
+export {logger} from "./common/util/logger";
 export {WaitPromiseResult, PromiseUtil} from "./common/util/PromiseUtil";
 export {
     OnStartConfig,

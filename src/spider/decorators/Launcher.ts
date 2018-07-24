@@ -1,3 +1,4 @@
+import "source-map-support/register";
 import {Looper, LooperTask} from "./LooperTask";
 import {queueManager} from "../manager/QueueManager";
 import {AppInfo, ClientRequest, WorkerFactoryMap} from "../data/Types";

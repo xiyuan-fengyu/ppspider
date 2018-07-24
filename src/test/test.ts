@@ -8,6 +8,7 @@ import {FromQueue} from "../spider/decorators/FromQueue";
 import {Launcher} from "../spider/decorators/Launcher";
 import {PuppeteerUtil} from "../spider/util/PuppeteerUtil";
 import {OnTime} from "../spider/decorators/OnTime";
+import {logger} from "../common/util/logger";
 
 class TestTask {
 
@@ -64,7 +65,7 @@ class TestTask {
         exeInterval: 100000
     })
     async printUrl(page: Page, job: Job) {
-        console.log(job.url());
+        logger.debug(job.url());
     }
 
 
