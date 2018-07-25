@@ -53,7 +53,7 @@ export class logger {
         if (value) this._format = value;
     }
 
-    static set level(value: "debug" | "info" | "warn" | "error") {
+    static set level(value: "debug" | "info" | "warn" | "error" | string) {
         switch (value) {
             case "debug":
                 this._level = 0;
