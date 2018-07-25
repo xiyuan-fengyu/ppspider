@@ -72,6 +72,22 @@ export class logger {
         }
     }
 
+    static get debugValid() {
+        return this._level <= 0;
+    }
+
+    static get infoValid() {
+        return this._level <= 1;
+    }
+
+    static get warnValid() {
+        return this._level <= 2;
+    }
+
+    static get errorValid() {
+        return this._level <= 3;
+    }
+
     static debug(msg: string, format?: string) {
         if (this._level <= 0) log("debug", msg, format || this._format);
     }

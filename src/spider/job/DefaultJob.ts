@@ -59,7 +59,7 @@ export class DefaultJob implements Job {
         return this._key || this._url;
     }
 
-    datas(newDatas: any): any {
+    datas(newDatas?: any): any {
         if (newDatas != null) {
             this._datas = newDatas;
         }
@@ -98,7 +98,7 @@ export class DefaultJob implements Job {
         return this._createTime;
     }
 
-    exeTimes(time: JobExeTime): JobExeTime[] {
+    exeTimes(time?: JobExeTime): JobExeTime[] {
         if (!this._exeTimes) this._exeTimes = [];
         if (time) {
             if (time.start != null) {

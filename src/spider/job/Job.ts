@@ -70,6 +70,6 @@ export interface Job {
     createTime(): number;
 
     // 插入执行时间 或 查询执行时间的记录
-    exeTimes(time: JobExeTime): JobExeTime[];
+    exeTimes(time?: JobExeTime): JobExeTime[];
 
 }
