@@ -7,6 +7,7 @@ import {Defaults} from "../data/Defaults";
 import {EventEmitter} from "events";
 import {FileUtil} from "../../common/util/FileUtil";
 import {jobManager} from "../manager/JobManager";
+import {logger} from "../..";
 
 const taskInstances: any = {};
 export function getTaskInstances(taskClass) {
@@ -24,6 +25,8 @@ export function Launcher(theAppInfo: AppInfo) {
         });
     }
     FileUtil.mkdirs(appInfo.workplace);
+
+    logger.setting = theAppInfo.logger;
 
     jobManager.init();
     queueManager.loadFromCache(appInfo.workplace + "/queueCache.json");

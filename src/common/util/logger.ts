@@ -43,6 +43,14 @@ function log(level: "debug" | "info" | "warn" | "error", msg: string, format: st
     console[level](formatRes);
 }
 
+export interface LoggerSetting {
+
+    format?: "yyyy-MM-dd HH:mm:ss.SSS [level] position message" | string;
+
+    level?: "debug" | "info" | "warn" | "error" | string;
+
+}
+
 export class logger {
 
     private static _format = "yyyy-MM-dd HH:mm:ss.SSS [level] position message";
@@ -69,6 +77,13 @@ export class logger {
                 break;
             default:
                 this._level = 0;
+        }
+    }
+
+    static set setting(aSetting: LoggerSetting) {
+        if (aSetting) {
+            this.format = aSetting.format;
+            this.level = aSetting.level;
         }
     }
 

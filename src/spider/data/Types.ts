@@ -2,6 +2,7 @@ import {WorkerFactory} from "../worker/WorkerFactory";
 import {Filter} from "../filter/Filter";
 import {Queue} from "../queue/Queue";
 import {Job} from "../job/Job";
+import {LoggerSetting} from "../..";
 
 export type JobExeTime = {
     start?: number;
@@ -103,6 +104,7 @@ export type AppInfo = {
     tasks: any[];
     workerFactorys: WorkerFactory<any>[];
     webUiPort?: number | 9000;
+    logger?: LoggerSetting;
 }
 
 export type Selector = string;

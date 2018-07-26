@@ -1,6 +1,9 @@
-# 2018-07-25 v0.1.14
-1. 日志打印添加等级判断
+# 2018-07-26 v0.1.14
+1. logger打印添加等级判断, 增加修改配置的方法， @Launcher 中增加配置入口
 2. DefaultJob datas 函数参数可选
+3. 在 PuppeteerWorkerFactory 中对 get 方法创建的 Page 实例的 $eval, $$eval,
+    evaluate, evaluateOnNewDocument, evaluateHandle 几个方法进行切面增强,
+    当嵌入的js执行出现异常时能够打印出具体的位置
 
 # 2018-07-24 v0.1.13
 1. 增加 logger 工具类，引入 source-map-support，用于在输出错误信息和日志时，能正确输出原ts文件的位置  

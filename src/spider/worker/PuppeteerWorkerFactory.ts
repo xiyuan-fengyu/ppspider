@@ -10,7 +10,64 @@ export class PuppeteerWorkerFactory implements WorkerFactory<Page> {
     }
 
     get(): Promise<Page> {
-        return this.browser.newPage();
+        return this.browser.newPage().then(page => this.exPage(page));
+    }
+
+    private exPage(page: Page): Page {
+        const prettyError = (oriError: Error, pageFunction: any) => {
+            const oriStackArr = oriError.stack.split("\n");
+            const errPosReg = new RegExp("at __puppeteer_evaluation_script__:(\\d+):(\\d+)");
+            for (let i = 1, len = oriStackArr.length; i < len; i++) {
+                const errPosM = errPosReg.exec(oriStackArr[i]);
+                if (errPosM) {
+                    const rownum = parseInt(errPosM[1]) - 1;
+                    const colnum = parseInt(errPosM[2]) - 1;
+                    const oriFunLines = pageFunction.toString().split("\n");
+                    let oriFunLinesWithErrorPos = "";
+                    for (let j = 0, oriFunLinesLen = oriFunLines.length,
+                             len = Math.max(oriFunLinesLen, rownum); j <= len; j++) {
+                        if (j < oriFunLinesLen) {
+                            oriFunLinesWithErrorPos += oriFunLines[j] + "\n";
+                        }
+                        if (j == rownum) {
+                            for (let k = 0; k < colnum; k++) {
+                                oriFunLinesWithErrorPos += " ";
+                            }
+                            oriFunLinesWithErrorPos += "^\n";
+                        }
+                    }
+                    return new Error(oriError.message + "\n" + oriFunLinesWithErrorPos)
+                }
+            }
+            // 解析失败，返回原错误
+            return oriError;
+        };
+
+        ["$eval", "$$eval"].forEach(async funName => {
+            const oldFun = page[funName];
+            page[funName] = async (selector, pageFunction, ...args) => {
+                try {
+                    return await oldFun.call(page, selector, pageFunction, args);
+                }
+                catch (e) {
+                    throw prettyError(e, pageFunction);
+                }
+            };
+        });
+
+        ["evaluate", "evaluateOnNewDocument", "evaluateHandle"].forEach(async funName => {
+            const oldFun = page[funName];
+            page[funName] = async (pageFunction, ...args) => {
+                try {
+                    return await oldFun.call(page, pageFunction, args);
+                }
+                catch (e) {
+                    throw prettyError(e, pageFunction);
+                }
+            };
+        });
+
+        return page;
     }
 
     release(worker: Page): Promise<void> {
