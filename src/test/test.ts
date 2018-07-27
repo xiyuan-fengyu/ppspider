@@ -43,11 +43,11 @@ class TestTask {
     //         "10/20 * * * * ?": 2
     //     }
     // })
-    // @OnTime({
-    //     urls: "http://www.baidu.com",
-    //     cron: "*/30 * * * * ?",
-    //     workerFactory: PuppeteerWorkerFactory
-    // })
+    // // @OnTime({
+    // //     urls: "http://www.baidu.com",
+    // //     cron: "*/30 * * * * ?",
+    // //     workerFactory: PuppeteerWorkerFactory
+    // // })
     // @AddToQueue({
     //     name: "test"
     // })
@@ -85,7 +85,8 @@ class TestTask {
     @OnStart({
         urls: "http://www.baidu.com",
         workerFactory: PuppeteerWorkerFactory,
-        parallel: 1
+        parallel: 1,
+        exeInterval: 10000
     })
     async index(page: Page, job: Job) {
         // await page.goto(job.url());

@@ -51,6 +51,9 @@ export interface LoggerSetting {
 
 }
 
+/**
+ * 日志打印工具类
+ */
 export class logger {
 
     private static _format = "yyyy-MM-dd HH:mm:ss.SSS [level] position message";

@@ -1,3 +1,4 @@
+import {ParallelConfig} from "../../spider/data/Types";
 
 const later: any = require('later');
 later.date.localTime();
@@ -7,6 +8,11 @@ type CronSchedule = {
     schedule: any;
 }
 
+/**
+ * cron表达式工具类，用途：
+ * 1. 用于计算 OnTime 任务的 cron表达式，算出周期性执行任务的时间
+ * 2. 用于计算 ParallelConfig 中的 cron表达式，添加周期性任务，用于改变任务并行数
+ */
 export class CronUtil {
 
     private static readonly cronSchedules: {

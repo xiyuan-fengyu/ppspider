@@ -383,7 +383,7 @@ OnStart_ClassName_MethodName，所以也可以通过 JobOverride 对 job 进行�
 
 ### @Serialize Serializable @Transient
 ```
-export function Serialize(classId?: string) { ... }
+export function Serialize(config?: SerializeConfig) { ... }
 export class Serializable { ... }
 export function Transient() { ... }
 ```
@@ -502,7 +502,7 @@ export class TestTask {
 // logger.format = "yyyy-MM-dd HH:mm:ss.SSS [level] position message"
 // 设置最低输出等级, 必须是 "debug", "info", "warn", "error" 中的一个
 // logger.level = "info";
-logger.debug("test debug");
+logger.debugValid && logger.debug("test debug");
 logger.info("test info");
 logger.warn("test warn");
 logger.error("test error");

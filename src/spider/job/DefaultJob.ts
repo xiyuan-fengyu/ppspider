@@ -1,7 +1,7 @@
 import {Job, JobStatus} from "./Job";
-import {DateUtil} from "../../common/util/DateUtil";
 import {JobExeTime} from "../data/Types";
 import {Serialize} from "../../common/serialize/Serialize";
+import {StringUtil} from "../../common/util/StringUtil";
 
 @Serialize()
 export class DefaultJob implements Job {
@@ -113,7 +113,7 @@ export class DefaultJob implements Job {
 
     constructor(url: string) {
         const date = new Date();
-        this._id = DateUtil.toStr(date, "yyyyMMdd_HHmmss_SSS_") + (Math.random() * 10000).toFixed();
+        this._id = StringUtil.id();
         this._createTime = date.getTime();
         this._url = url;
     }

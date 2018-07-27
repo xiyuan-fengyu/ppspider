@@ -4,6 +4,10 @@ import {EventEmitter} from "events";
 import {ClientRequest} from "../data/Types";
 import {logger} from "../../common/util/logger";
 
+/**
+ * 通过 express 提供web静态资源服务，静态资源是由 ui 项目发布到 lib/spider/ui/web 目录下
+ * 所有动态请求和动态数据都是通过 websocket 传输的
+ */
 export class WebServer {
 
     private webRoot = __dirname + "/web";

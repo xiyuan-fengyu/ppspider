@@ -13,6 +13,14 @@ class B {
     a: A;
 }
 
+// {
+//     // 重复定义 classId 测试，解开注释报错
+//     @Serialize()
+//     class C {
+//
+//     }
+// }
+
 @Serialize()
 class C {
 

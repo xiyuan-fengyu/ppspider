@@ -1,3 +1,6 @@
+/**
+ * 时间格式化
+ */
 export class DateUtil {
 
     // yyyy-MM-dd HH:mm:ss

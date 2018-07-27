@@ -5,8 +5,8 @@ import {Job} from "../job/Job";
 import {LoggerSetting} from "../..";
 
 export type JobExeTime = {
-    start?: number;
-    end?: number;
+    start?: number; // job 开始执行的时间
+    end?: number; // job 执行结束的时间
 }
 
 export type QueueClass = new () => Queue;
@@ -26,16 +26,16 @@ export type ParallelConfig =  number | {
 export type WorkerFactoryClass = new () => WorkerFactory<any>;
 
 export type OnStartConfig = {
-    urls: string | string[];
-    workerFactory: WorkerFactoryClass;
-    parallel?: ParallelConfig;
-    exeInterval?: number;
-    description?: string;
+    urls: string | string[]; // 要抓取链接
+    workerFactory: WorkerFactoryClass; // worker工厂类型
+    parallel?: ParallelConfig; // 任务并行数配置
+    exeInterval?: number; // 两个任务的执行间隔时间
+    description?: string; // 任务描述
 }
 
 export type OnTimeConfig = {
     urls: string | string[];
-    cron: string;
+    cron: string; // cron表达式，描述了周期性执行的时间
     workerFactory: WorkerFactoryClass;
     parallel?: ParallelConfig;
     exeInterval?: number;
@@ -43,7 +43,7 @@ export type OnTimeConfig = {
 }
 
 export type FromQueueConfig = {
-    name: string;
+    name: string; // 从该队列获取任务执行
     workerFactory: WorkerFactoryClass;
     parallel?: ParallelConfig;
     exeInterval?: number;
@@ -100,11 +100,11 @@ export type WorkerFactoryMap = {
 }
 
 export type AppInfo = {
-    workplace: string;
-    tasks: any[];
-    workerFactorys: WorkerFactory<any>[];
-    webUiPort?: number | 9000;
-    logger?: LoggerSetting;
+    workplace: string; // 系统的工作目录
+    tasks: any[]; // 注入task类的列表
+    workerFactorys: WorkerFactory<any>[]; // 工厂类实例
+    webUiPort?: 9000 | number; // UI管理界面的web服务器端口，默认9000
+    logger?: LoggerSetting; // 日志配置
 }
 
 export type Selector = string;

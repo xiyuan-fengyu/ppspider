@@ -13,6 +13,12 @@ export class PuppeteerWorkerFactory implements WorkerFactory<Page> {
         return this.browser.newPage().then(page => this.exPage(page));
     }
 
+    /**
+     * 对 page 实例进行增强改进
+     * 1. 对 $eval, $$eval, evaluate, evaluateOnNewDocument, evaluateHandle进行增强，当注入的js执行报错时，能打印出错误的具体位置
+     * @param {Page} page
+     * @returns {Page}
+     */
     private exPage(page: Page): Page {
         const prettyError = (oriError: Error, pageFunction: any) => {
             const oriStackArr = oriError.stack.split("\n");
@@ -31,7 +37,7 @@ export class PuppeteerWorkerFactory implements WorkerFactory<Page> {
                         }
                         if (j == rownum) {
                             for (let k = 0; k < colnum; k++) {
-                                oriFunLinesWithErrorPos += " ";
+                                oriFunLinesWithErrorPos += "^";
                             }
                             oriFunLinesWithErrorPos += "^\n";
                         }
@@ -47,7 +53,7 @@ export class PuppeteerWorkerFactory implements WorkerFactory<Page> {
             const oldFun = page[funName];
             page[funName] = async (selector, pageFunction, ...args) => {
                 try {
-                    return await oldFun.call(page, selector, pageFunction, args);
+                    return await oldFun.call(page, selector, pageFunction, ...args);
                 }
                 catch (e) {
                     throw prettyError(e, pageFunction);
@@ -59,7 +65,7 @@ export class PuppeteerWorkerFactory implements WorkerFactory<Page> {
             const oldFun = page[funName];
             page[funName] = async (pageFunction, ...args) => {
                 try {
-                    return await oldFun.call(page, pageFunction, args);
+                    return await oldFun.call(page, pageFunction, ...args);
                 }
                 catch (e) {
                     throw prettyError(e, pageFunction);

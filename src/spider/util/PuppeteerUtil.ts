@@ -5,6 +5,7 @@ import {FileUtil} from "../../common/util/FileUtil";
 import * as fs from "fs";
 import {Defaults} from "../data/Defaults";
 import {LinkPredictMap} from "../data/Types";
+import {logger} from "../..";
 
 export type ResponseListener = (response: Response) => any;
 
@@ -57,6 +58,11 @@ const onePxBuffer = [82, 73, 70, 70, 74, 0, 0, 0, 87, 69, 66, 80, 86, 80, 56, 88
 
 export class PuppeteerUtil {
 
+    /**
+     * 设置Page默认的分辨率，1920 * 1080
+     * @param {Page} page
+     * @returns {Promise<void>}
+     */
     static async defaultViewPort(page: Page) {
         await page.setViewport({
             width: 1920,
@@ -64,6 +70,13 @@ export class PuppeteerUtil {
         });
     }
 
+    /**
+     * 向 Page 中注入 jQuery，一定要在 await page.goto(url) 之后调用
+     * @param {Page} page
+     * @param {string} url
+     * @param {string} savePath
+     * @returns {Promise<void>}
+     */
     static async addJquery(
         page: Page,
         url: string = "https://cdn.bootcss.com/jquery/3.3.1/jquery.min.js",
@@ -83,6 +96,11 @@ export class PuppeteerUtil {
         }
     }
 
+    /**
+     * 解析jsonp字符串中的json数据
+     * @param {string} jsonp
+     * @returns {any}
+     */
     // noinspection JSUnusedGlobalSymbols
     static jsonp(jsonp: string): any {
         let index;
@@ -93,7 +111,7 @@ export class PuppeteerUtil {
             return eval(evalStr);
         }
         catch (e) {
-            console.warn(e.stack);
+            logger.warn(e.stack);
             return {};
         }
     }
@@ -105,6 +123,12 @@ export class PuppeteerUtil {
         await page.setRequestInterception(requestInterceptionNum > 0);
     }
 
+    /**
+     * 是指是否阻止图片加载
+     * @param {Page} page
+     * @param {boolean} enable
+     * @returns {Promise<void>}
+     */
     static async setImgLoad(page: Page, enable: boolean) {
         await this.requestInterceptionNumDelta(page, enable ? -1 : 1);
         if (enable) {
@@ -125,10 +149,11 @@ export class PuppeteerUtil {
                                 if (checkUrl.startsWith("//")) checkUrl = requestUrl.split("//")[0] + checkUrl;
                                 return requestUrl.match(checkUrl) != null || checkUrl === requestUrl;
                             })) {
-                                // 下载图片
+                                // 下载图片，不阻止
                                 request.continue();
                             }
                             else {
+                                // 屏蔽原本的请求行为，直接返回 格式为webp 大小为 1px 的默认图片
                                 await request.respond({
                                     status: 200,
                                     contentType: "image/webp",
@@ -136,7 +161,7 @@ export class PuppeteerUtil {
                                 });
                             }
                         }
-                        else request.continue();
+                        else request.continue(); // 非图片请求，直接放行
                     }
                 };
             }
@@ -193,6 +218,15 @@ export class PuppeteerUtil {
         this.initResponseListener(page);
     }
 
+    /**
+     * 监听返回结果
+     * @param {Page} page
+     * @param {string | RegExp} url
+     * @param {ResponseListener} listener
+     * @param {number} fireMax
+     * @param {number} timeout
+     * @returns {Promise<ResponseCheckUrlResult>}
+     */
     static onResponse(page: Page, url: string | RegExp, listener: ResponseListener, fireMax: number = -1, timeout: number = Defaults.responseTimeout): Promise<ResponseCheckUrlResult> {
         fireMax = parseInt("" + fireMax);
         return new Promise<ResponseCheckUrlResult>(resolve => {
@@ -235,6 +269,14 @@ export class PuppeteerUtil {
         });
     }
 
+    /**
+     * 监听返回结果，监听成功一次后结束
+     * @param {Page} page
+     * @param {string | RegExp} url
+     * @param {ResponseListener} listener
+     * @param {number} timeout
+     * @returns {Promise<ResponseCheckUrlResult>}
+     */
     static onceResponse(page: Page, url: string | RegExp, listener: ResponseListener, timeout?: number): Promise<ResponseCheckUrlResult> {
         return this.onResponse(page, url, listener, 1, timeout);
     }
@@ -254,6 +296,14 @@ export class PuppeteerUtil {
         }
     }
 
+    /**
+     * 下载图片
+     * @param {Page} page
+     * @param {string} selectorOrSrc 图片的地址或者 img节点的css selector
+     * @param {string} saveDir 图片保存目录
+     * @param {number} timeout 超时时间
+     * @returns {Promise<DownloadImgResult>}
+     */
     static downloadImg(page: Page, selectorOrSrc: string, saveDir: string, timeout: number = Defaults.responseTimeout): Promise<DownloadImgResult> {
         const time = new Date().getTime();
         return new Promise<DownloadImgResult>(async resolve => {
@@ -363,6 +413,13 @@ export class PuppeteerUtil {
         });
     }
 
+    /**
+     * 获取符合要求的url
+     * @param {Page} page
+     * @param {LinkPredictMap} predicts
+     * @param {boolean} onlyAddToFirstMatch 是否只添加到第一个匹配的列表中
+     * @returns {Promise<any>}
+     */
     static async links(page: Page, predicts: LinkPredictMap, onlyAddToFirstMatch: boolean = true) {
         if (predicts == null || Object.keys(predicts).length == 0) return {};
 
@@ -428,6 +485,12 @@ export class PuppeteerUtil {
         }, predictStrMap, onlyAddToFirstMatch);
     }
 
+    /**
+     * 获取 满足 css selector 的节点个数
+     * @param {Page} page
+     * @param {string} selector
+     * @returns {Promise<number>}
+     */
     static async count(page: Page, selector: string): Promise<number> {
         return await page.evaluate(selector => {
             const doms = document.querySelectorAll(selector);
@@ -436,6 +499,12 @@ export class PuppeteerUtil {
         }, selector);
     }
 
+    /**
+     * 通过 jQuery 找到符合 css selector 的所有节点，并给其中没有id属性的节点设置特殊的id，并返回所有节点的id
+     * @param {Page} page
+     * @param {string} selector
+     * @returns {Promise<string[]>}
+     */
     static async specifyIdByJquery(page: Page, selector: string): Promise<string[]> {
         await this.addJquery(page);
         return await page.evaluate(selector => {
@@ -460,6 +529,14 @@ export class PuppeteerUtil {
         }, selector);
     }
 
+    /**
+     * 滚动到最底部，特殊的滚动需求可以参考这个自行编写
+     * @param {Page} page
+     * @param {number} scrollTimeout
+     * @param {number} scrollInterval
+     * @param {number} scrollYDelta
+     * @returns {Promise<boolean>}
+     */
     static async scrollToBottom(page: Page, scrollTimeout: number = 30000, scrollInterval: number = 250, scrollYDelta: number = 500) {
         return new Promise<boolean>( resolve => {
             if (scrollTimeout > 0) {

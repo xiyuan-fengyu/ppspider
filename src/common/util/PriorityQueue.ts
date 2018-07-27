@@ -1,4 +1,6 @@
-
+/**
+ * 优先级队列 | 堆
+ */
 export class PriorityQueue<T> {
 
     private datas: T[] = [];

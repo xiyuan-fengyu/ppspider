@@ -5,6 +5,9 @@ import {SerializableUtil} from "../../common/serialize/Serialize";
 import {ObjectUtil} from "../../common/util/ObjectUtil";
 import {DateUtil} from "../../common/util/DateUtil";
 
+/**
+ * 使用 nedb 保存 job，用于查询回顾 job 信息
+ */
 export class JobManager {
 
     private jobsDb: Nedb;
@@ -35,6 +38,10 @@ export class JobManager {
         });
     }
 
+    /**
+     * 周期性删除需要自动清理的job信息，目前只有状态为 JobStatus.Filtered 的job 有这个标记
+     * 状态为 JobStatus.Filtered 的job 在nedb中最少会保留 10分钟，之后再一次清理行为执行后，就无法查询到了
+     */
     private autoReleaseLoop() {
         const autoRelease = () => {
             let next = 60000;
@@ -51,6 +58,12 @@ export class JobManager {
         autoRelease();
     }
 
+    /**
+     * 对 nedb 的数据进行压缩整理，这个源于nedb的数据存储方式
+     * 数据更新都是 append 操作，删除是增加一个 delete记录，更新数据是增加一个 update记录，这些记录都会添加到持久化文件末尾
+     * compat之后，会将最新的数据记录保存到持久化文件中，delete/update记录就不会存在了，从而达到压缩体积的目的
+     * 系统启动时否认会压缩一次数据
+     */
     private compact() {
         this.compacting = true;
         this.jobsDb.persistence.compactDatafile();
@@ -64,6 +77,10 @@ export class JobManager {
         }
     }
 
+    /**
+     * 记录更新操作的次数，达到一定次数，执行compact操作
+     * @param {number} actionNum
+     */
     private afterAction(actionNum: number = 1) {
         this.actionCount += actionNum;
         if (this.actionCount >= this.compactRateForSave) {
@@ -72,6 +89,10 @@ export class JobManager {
         }
     }
 
+    /**
+     * 保存job，不存在则新增，已存在则更新
+     * @param {Job} job
+     */
     save(job: Job) {
         if (this.jobsDb && !this.compacting) {
             const doc = {
@@ -101,6 +122,11 @@ export class JobManager {
         }
     }
 
+    /**
+     * 分页查询job
+     * @param pager
+     * @returns {Promise<any>}
+     */
     jobs(pager: any): Promise<any> {
         this.searching = true;
         return new Promise<any>(async resolve => {
@@ -219,6 +245,11 @@ export class JobManager {
         });
     }
 
+    /**
+     * 将时间戳转换为字符串，便于UI界面阅读
+     * @param obj
+     * @returns {any}
+     */
     private transformToJob(obj: any) {
         const job = SerializableUtil.deserialize(obj) as Job;
         job.status(JobStatus[job.status()] as any);
@@ -230,6 +261,11 @@ export class JobManager {
         });
     }
 
+    /**
+     * 将查询语句中的regex string转换为Regex对象实例，因为nedb的$regex操作只接受 Regex对象实例
+     * @param query
+     * @returns {any}
+     */
     private castRegexInMatch(query: any) {
         if (query == null) return query;
         if (query instanceof Array) {
@@ -248,6 +284,10 @@ export class JobManager {
         return query;
     }
 
+    /**
+     * 将 job 的status由 数字转换为字符串，便于UI界面阅读
+     * @returns {any[]}
+     */
     private jobStatus(): any[] {
         return Object.keys(JobStatus).map(key => {
             const v = JobStatus[key];

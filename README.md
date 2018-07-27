@@ -376,7 +376,7 @@ or OnTime_ClassName_MethodName, so you can set a JobOverride to it.
 
 ### @Serialize Serializable @Transient
 ```
-export function Serialize(classId?: string) { ... }
+export function Serialize(config?: SerializeConfig) { ... }
 export class Serializable { ... }
 export function Transient() { ... }
 ```
@@ -499,7 +499,7 @@ The output logs contain extra info: timestamp, log level, source file position.
 // logger.format = "yyyy-MM-dd HH:mm:ss.SSS [level] position message"
 // set log level, must be "debug", "info", "warn" or "error"
 // logger.level = "info";
-logger.debug("test debug");
+logger.debugValid && logger.debug("test debug");
 logger.info("test info");
 logger.warn("test warn");
 logger.error("test error");
