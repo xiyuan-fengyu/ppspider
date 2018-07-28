@@ -22,7 +22,7 @@ export class PuppeteerWorkerFactory implements WorkerFactory<Page> {
     private exPage(page: Page): Page {
         const prettyError = (oriError: Error, pageFunction: any) => {
             const oriStackArr = oriError.stack.split("\n");
-            const errPosReg = new RegExp("at __puppeteer_evaluation_script__:(\\d+):(\\d+)");
+            const errPosReg = new RegExp("__puppeteer_evaluation_script__:(\\d+):(\\d+)");
             for (let i = 1, len = oriStackArr.length; i < len; i++) {
                 const errPosM = errPosReg.exec(oriStackArr[i]);
                 if (errPosM) {

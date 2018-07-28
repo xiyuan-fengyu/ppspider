@@ -94,9 +94,16 @@ class TestTask {
             const $ = 123;
         });
 
-        await page.evaluate(() => {
-            console.log($);
-        });
+        // await page.evaluate(() => {
+        //     console.log($);
+        // });
+
+        await page.evaluate(() => new Promise(resolve => {
+            const test = () => {
+                console.log($);
+            };
+            test();
+        }));
     }
 
 }
@@ -109,7 +116,8 @@ class TestTask {
     workerFactorys: [
         new PuppeteerWorkerFactory({
             headless: false,
-            devtools: true
+            devtools: true,
+            executablePath: "E:\\Development\\chromium\\win64-578898\\chrome-win32\\chrome.exe"
         })
     ],
     logger: {
