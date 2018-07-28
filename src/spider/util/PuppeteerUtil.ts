@@ -69,15 +69,20 @@ export class PuppeteerUtil {
         url: string = "https://cdn.bootcss.com/jquery/3.3.1/jquery.min.js",
         savePath = os.tmpdir() + "/jquery.min.js") {
         const jQueryExisted = await page.evaluate(() => {
-           return jQuery != undefined;
+            return jQuery != undefined;
         });
 
         if (!jQueryExisted) {
             await DownloadUtil.download(url, savePath).then(async res => {
                 if (res > 0) {
-                    await page.addScriptTag({
-                        path: savePath
-                    });
+                    // 某些网站（例如twitter）因为安全问题会导致js注入失败，所以弃用这种方式
+                    // await page.addScriptTag({
+                    //     path: savePath
+                    // });
+                    const jQueryStr = fs.readFileSync(savePath, "utf-8");
+                    await page.evaluate(jQueryStr => {
+                        eval(jQueryStr);
+                    }, jQueryStr);
                 }
             });
         }
