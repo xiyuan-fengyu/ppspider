@@ -1,5 +1,9 @@
 import {launch} from "puppeteer";
 
+/*
+puppeteer version 1.6.1
+ */
+
 const test0 = async () => {
     const browser = await launch({
         headless: false,
