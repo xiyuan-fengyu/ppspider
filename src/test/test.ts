@@ -116,8 +116,7 @@ class TestTask {
     workerFactorys: [
         new PuppeteerWorkerFactory({
             headless: false,
-            devtools: true,
-            executablePath: "E:\\Development\\chromium\\win64-578898\\chrome-win32\\chrome.exe"
+            devtools: true
         })
     ],
     logger: {
