@@ -1,4 +1,6 @@
-
+/**
+ * 定义系统中用到的默认值
+ */
 export class Defaults {
 
     static maxParallel = 3;

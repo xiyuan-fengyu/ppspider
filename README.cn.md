@@ -2,6 +2,8 @@
 
 <!-- toc -->
 
+- [Puppeteer Doc](#puppeteer-doc)
+  * [Puppeteer 相关问题](#puppeteer-%E7%9B%B8%E5%85%B3%E9%97%AE%E9%A2%98)
 - [快速起步](#%E5%BF%AB%E9%80%9F%E8%B5%B7%E6%AD%A5)
   * [安装nodejs](#%E5%AE%89%E8%A3%85nodejs)
   * [安装typescript](#%E5%AE%89%E8%A3%85typescript)
@@ -18,6 +20,7 @@
     + [@OnTime](#ontime)
     + [@AddToQueue @FromQueue](#addtoqueue-fromqueue)
     + [@JobOverride](#joboverride)
+    + [@Serialize Serializable @Transient](#serialize-serializable-transient)
   * [工具类 PuppeteerUtil](#%E5%B7%A5%E5%85%B7%E7%B1%BB-puppeteerutil)
     + [PuppeteerUtil.defaultViewPort](#puppeteerutildefaultviewport)
     + [PuppeteerUtil.addJquery](#puppeteerutiladdjquery)
@@ -31,10 +34,42 @@
     + [PuppeteerUtil.specifyIdByJquery](#puppeteerutilspecifyidbyjquery)
     + [PuppeteerUtil.scrollToBottom](#puppeteerutilscrolltobottom)
     + [PuppeteerUtil 例子](#puppeteerutil-%E4%BE%8B%E5%AD%90)
+  * [日志](#%E6%97%A5%E5%BF%97)
 - [调试](#%E8%B0%83%E8%AF%95)
 - [控制界面](#%E6%8E%A7%E5%88%B6%E7%95%8C%E9%9D%A2)
 
 <!-- tocstop -->
+
+# Puppeteer Doc
+https://github.com/GoogleChrome/puppeteer/blob/master/docs/api.md     
+## Puppeteer 相关问题
+1. puppeteer 在安装过程中会自动下载 chromium 浏览器，如果下载不成功，  
+    可以在执行npm install之前通过命令行设置临时环境变量  
+    ```
+    # win
+    set PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=1
+    # unix
+    export PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=1
+    ```
+    然后到 [这里](https://download-chromium.appspot.com/) 下载 chromium 或者
+    直接使用本地已安装的 chrome
+    最后在 Launcher 中实例化 PuppeteerWorkerFactory 的时候，通过 executablePath 字段
+    指定 chromium / chrome 的路径  
+    ```
+    @Launcher({
+        workplace: __dirname + "/workplace",
+        tasks: [
+            TestTask
+        ],
+        workerFactorys: [
+            new PuppeteerWorkerFactory({
+                headless: false,
+                executablePath: "YOU_CHROMIUM_OR_CHROME_EXECUTE_PATH"
+            })
+        ]
+    })
+    class App {}
+    ```
 
 # 快速起步
 ## 安装nodejs
@@ -346,6 +381,22 @@ OnStart_ClassName_MethodName，所以也可以通过 JobOverride 对 job 进行�
 [JobOverride example](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/bilibili/tasks/BilibiliTask.ts)  
 
 
+### @Serialize Serializable @Transient
+```
+export function Serialize(config?: SerializeConfig) { ... }
+export class Serializable { ... }
+export function Transient() { ... }
+```
+@Serialize 用于标记在序列化和反序列化中，需要保留类信息的类，没有这个标记的类的实例在
+序列化之后会丢失类的信息  
+继承至 Serializable 的类可以自定义序列化和反序列化的实现方式， 例子：[BitSet](https://github.com/xiyuan-fengyu/ppspider/blob/master/src/common/util/BitSet.ts)    
+@Transient 用于标记类成员，在序列化时忽略该字段。注意：类静态成员不参与序列化  
+这三个主要为关闭系统时保存运行状态提供支持，在实际使用的时候，如果有些类成员和运行状态没有直接关联，不需要序列化保存的
+时候，一定要用 @Transient 来忽略该字段，可以减小序列化后文件的大小，也可以避免对象嵌套太深导致的反序列化失败  
+[example](https://github.com/xiyuan-fengyu/ppspider/blob/master/src/test/SerializeTest.ts)
+
+
+
 ## 工具类 PuppeteerUtil
 ### PuppeteerUtil.defaultViewPort
 将 page 的窗口分辨率设置为 1920 * 1080  
@@ -440,6 +491,21 @@ export class TestTask {
     }
 
 }
+```
+
+## 日志
+通过 src/common/util/logger.ts 中定义的 logger.debug, logger.info, logger.warn, logger.error 方法输出日志  
+输出的日志中包含时间，等级，源文件位置这些额外信息      
+```
+// 示例
+// 设置输出格式
+// logger.format = "yyyy-MM-dd HH:mm:ss.SSS [level] position message"
+// 设置最低输出等级, 必须是 "debug", "info", "warn", "error" 中的一个
+// logger.level = "info";
+logger.debugValid && logger.debug("test debug");
+logger.info("test info");
+logger.warn("test warn");
+logger.error("test error");
 ```
 
 # 调试

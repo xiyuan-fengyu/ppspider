@@ -2,6 +2,9 @@ import {AbsQueue} from "./AbsQueue";
 import {Job} from "../job/Job";
 import {Serialize} from "../../common/serialize/Serialize";
 
+/**
+ * 默认队列，FIFO，先进先出
+ */
 @Serialize()
 export class DefaultQueue extends AbsQueue {
 

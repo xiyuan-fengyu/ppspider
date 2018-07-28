@@ -2,7 +2,12 @@ import {Server as HttpServer} from "http";
 import {Server as ScoketIOServer} from "socket.io";
 import {EventEmitter} from "events";
 import {ClientRequest} from "../data/Types";
+import {logger} from "../../common/util/logger";
 
+/**
+ * 通过 express 提供web静态资源服务，静态资源是由 ui 项目发布到 lib/spider/ui/web 目录下
+ * 所有动态请求和动态数据都是通过 websocket 传输的
+ */
 export class WebServer {
 
     private webRoot = __dirname + "/web";
@@ -29,10 +34,13 @@ export class WebServer {
                 });
                 messager.emit("request", request);
             });
+            socket.on("error", (error: Error) => {
+                if (error) logger.warn("socket error: " + (error.message || "") + "\n" + (error.stack || ""));
+            });
         });
 
         this.http.listen(port, () => {
-            console.log("The web ui server start at port: " + port);
+            logger.info("The web ui server start at port: " + port);
         });
 
         messager.on("push", (key: string, data: any) => {
@@ -43,7 +51,7 @@ export class WebServer {
     shutdown() {
         this.http.close();
         this.io.close();
-        console.log("The webUI stopped");
+        logger.info("The web ui server stopped");
     }
 
 }

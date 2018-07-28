@@ -2,7 +2,9 @@
 
 <!-- toc -->
 
-- [Documentation in other languages](#documentation-in-other-languages)
+- [Translations](#translations)
+- [Puppeteer Doc](#puppeteer-doc)
+  * [Questions about puppeteer](#questions-about-puppeteer)
 - [Quick Start](#quick-start)
   * [Install NodeJs](#install-nodejs)
   * [Install TypeScript](#install-typescript)
@@ -19,6 +21,7 @@
     + [@OnTime](#ontime)
     + [@AddToQueue @FromQueue](#addtoqueue-fromqueue)
     + [@JobOverride](#joboverride)
+    + [@Serialize Serializable @Transient](#serialize-serializable-transient)
   * [PuppeteerUtil](#puppeteerutil)
     + [PuppeteerUtil.defaultViewPort](#puppeteerutildefaultviewport)
     + [PuppeteerUtil.addJquery](#puppeteerutiladdjquery)
@@ -32,13 +35,45 @@
     + [PuppeteerUtil.specifyIdByJquery](#puppeteerutilspecifyidbyjquery)
     + [PuppeteerUtil.scrollToBottom](#puppeteerutilscrolltobottom)
     + [PuppeteerUtil example](#puppeteerutil-example)
+  * [logger](#logger)
 - [Debug](#debug)
 - [WebUI](#webui)
 
 <!-- tocstop -->
 
-# Documentation in other languages
+# Translations
 [中文文档](https://github.com/xiyuan-fengyu/ppspider/blob/master/README.cn.md)  
+
+# Puppeteer Doc
+https://github.com/GoogleChrome/puppeteer/blob/master/docs/api.md   
+## Questions about puppeteer
+1. When installing puppeteer, it will download chromium by default. If download is fail, you 
+    can set temp environment variable by terminal before executing 'npm install'  
+    ```
+    # win
+    set PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=1
+    # unix
+    export PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=1
+    ```
+    Then you can download chromium at this page (https://download-chromium.appspot.com/) or
+    use the local chrome installed.  
+    Finally, init the PuppeteerWorkerFactory with parameter named 'executablePath'.  
+    ```
+    @Launcher({
+        workplace: __dirname + "/workplace",
+        tasks: [
+            TestTask
+        ],
+        workerFactorys: [
+            new PuppeteerWorkerFactory({
+                headless: false,
+                executablePath: "YOU_CHROMIUM_OR_CHROME_EXECUTE_PATH"
+            })
+        ]
+    })
+    class App {}
+    ```
+
 
 # Quick Start
 ## Install NodeJs
@@ -80,7 +115,7 @@ All npm dependencies will be saved to node_modules folder in the project
 Run 'tsc' in terminal  
 Or  
 ContextMenu on package.json -> Show npm Scripts -> Double click 'auto build'   
-tsc is a TypeScript compiler which can auto compile the ts file to js file after any js file change  
+tsc is a TypeScript compiler which can auto compile the ts file to js file after any ts file change  
 
 
 ### Startup ppspider App
@@ -339,6 +374,23 @@ Actually, sub task type OnStart/OnTime is also managed by queue whose name just 
 or OnTime_ClassName_MethodName, so you can set a JobOverride to it.   
 [JobOverride example](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/bilibili/tasks/BilibiliTask.ts)
 
+### @Serialize Serializable @Transient
+```
+export function Serialize(config?: SerializeConfig) { ... }
+export class Serializable { ... }
+export function Transient() { ... }
+```
+@Serialize is used to mark a class, then the class info will keep during serializing and deserializing.
+Otherwise, the class info will lose when serializing.   
+a class which extends from Serializable supports customized serialize / deserialize， for example: [BitSet](https://github.com/xiyuan-fengyu/ppspider/blob/master/src/common/util/BitSet.ts)    
+@Transient is used to mark a field which will be ignored when serializing and deserializing.
+Warn: static field will not be serialized.   
+These three are mainly used to save running status. You can use @Transient to ignore fields which are not 
+related with running status, then the output file will be smaller in size 
+and the possible error caused by deep nested object during deserializing will be avoid.  
+[example](https://github.com/xiyuan-fengyu/ppspider/blob/master/src/test/SerializeTest.ts)
+
+
 
 ## PuppeteerUtil
 ### PuppeteerUtil.defaultViewPort
@@ -435,6 +487,22 @@ export class TestTask {
     }
 
 }
+```
+
+## logger
+Use logger.debug, logger.info, logger.warn or logger.error to print log.  
+Those functions are defined in src/common/util/logger.ts.  
+The output logs contain extra info: timestamp, log level, source file position.  
+```
+// example
+// set format, the default format is as follows
+// logger.format = "yyyy-MM-dd HH:mm:ss.SSS [level] position message"
+// set log level, must be "debug", "info", "warn" or "error"
+// logger.level = "info";
+logger.debugValid && logger.debug("test debug");
+logger.info("test info");
+logger.warn("test warn");
+logger.error("test error");
 ```
 
 # Debug

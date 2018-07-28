@@ -3,6 +3,7 @@ import {queueManager} from "../spider/manager/QueueManager";
 import {appInfo} from "../spider/decorators/Launcher";
 import Nedb = require("nedb");
 import {JobStatus} from "../spider/job/Job";
+import {StringUtil} from "../common/util/StringUtil";
 
 // @Serialize()
 // class B {
@@ -33,29 +34,29 @@ import {JobStatus} from "../spider/job/Job";
 
 
 
-const db = new Nedb({
-    filename: __dirname + "/workplace/db/test.db",
-    autoload: true,
-    onload: err => {
-        db.persistence.compactDatafile();
-    }
-});
-
-db.insert({
-    _id: "test",
-    "name": "2"
-}, (err, doc) => {
-    if (err) {
-        db.update({_id: "test"}, {
-            _id: "test",
-            "name": "3"
-        });
-    }
-});
-
-db.find({age: null}, (err, docs) => {
-   console.log(err, docs);
-});
+// const db = new Nedb({
+//     filename: __dirname + "/workplace/db/test.db",
+//     autoload: true,
+//     onload: err => {
+//         db.persistence.compactDatafile();
+//     }
+// });
+//
+// db.insert({
+//     _id: "test",
+//     "name": "2"
+// }, (err, doc) => {
+//     if (err) {
+//         db.update({_id: "test"}, {
+//             _id: "test",
+//             "name": "3"
+//         });
+//     }
+// });
+//
+// db.find({age: null}, (err, docs) => {
+//    console.log(err, docs);
+// });
 
 
 // const temp = Object.keys(JobStatus).map(key => {
@@ -66,3 +67,13 @@ db.find({age: null}, (err, docs) => {
 //     } : null
 // }).filter(item => item != null);
 // console.log(temp);
+
+
+
+// console.log(StringUtil.random(5));
+// console.log(StringUtil.isBlank("\t"));
+// console.log(StringUtil.id());
+// console.log(StringUtil.id());
+// console.log(StringUtil.id());
+// console.log(StringUtil.id());
+

@@ -2,6 +2,7 @@ import {AddToQueueConfig, AddToQueueInfo} from "../data/Types";
 import {instanceofJob, Job} from "../job/Job";
 import {queueManager} from "../manager/QueueManager";
 import {getTaskInstances} from "./Launcher";
+import {logger} from "../..";
 
 function getAddToQueueConfig(queueConfigs: AddToQueueConfig | AddToQueueConfig[], queueName: string): AddToQueueConfig {
     let config: AddToQueueConfig = null;
@@ -32,7 +33,7 @@ function getAddToQueueConfig(queueConfigs: AddToQueueConfig | AddToQueueConfig[]
         let queueNum: number;
         if (queueConfigs.constructor == Array) {
             if ((queueNum = (queueConfigs as AddToQueueConfig[]).length) != 1) {
-                console.warn(queueNum == 0 ? "no queue to add" : queueNum + " queues provide and cannot decide which to add to");
+                logger.warn(queueNum == 0 ? "no queue to add" : queueNum + " queues provide and cannot decide which to add to");
                 return null;
             }
             else {
@@ -44,6 +45,12 @@ function getAddToQueueConfig(queueConfigs: AddToQueueConfig | AddToQueueConfig[]
     return config;
 }
 
+/**
+ * 将被装饰的方法的返回值添加到队列中
+ * @param {AddToQueueConfig | AddToQueueConfig[]} queueConfigs
+ * @returns {(target, key, descriptor) => any}
+ * @constructor
+ */
 export function AddToQueue(queueConfigs: AddToQueueConfig | AddToQueueConfig[]) {
     return function (target, key, descriptor) {
         const targetIns = getTaskInstances(target.constructor);

@@ -3,6 +3,9 @@ import {Filter} from "../filter/Filter";
 import {Job} from "../job/Job";
 import {FilterClass} from "../data/Types";
 
+/**
+ * Queue的抽象实现类，实现了 Filter 相关的逻辑
+ */
 export abstract class AbsQueue implements Queue {
 
     private readonly filters: {[filterType: string]: Filter} = {};

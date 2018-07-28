@@ -7,12 +7,25 @@ export type WaitPromiseResult = {
 
 export class PromiseUtil {
 
+    /**
+     * 等待一定时间
+     * @param {number} timeout
+     * @returns {Promise<void>}
+     */
     static sleep(timeout: number): Promise<void> {
         if (timeout < 0) timeout = 0;
         return new Promise<void>(resolve => {
             setTimeout(() => resolve(), timeout);
         });
     }
+
+    /**
+     * 等待特定条件
+     * @param {() => boolean} predict
+     * @param {number} interval
+     * @param {number} timeout
+     * @returns {Promise<boolean>}
+     */
     static wait(predict: () => boolean, interval: number = 100, timeout: number = -1): Promise<boolean> {
         return new Promise<boolean>(resolve => {
             const start = new Date().getTime();
@@ -27,6 +40,12 @@ export class PromiseUtil {
         });
     }
 
+    /**
+     * 等待多个 Promise 执行完成
+     * @param {Promise<any>[]} promises
+     * @param {number} timeout
+     * @returns {Promise<WaitPromiseResult>}
+     */
     static waitPromises(promises: Promise<any>[], timeout: number = 30000): Promise<WaitPromiseResult> {
         return new Promise<WaitPromiseResult>(resolve => {
             let res = {

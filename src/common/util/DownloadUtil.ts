@@ -8,6 +8,9 @@ export enum DownloadResult {
     saveFail = -2
 }
 
+/**
+ * 通过 url 下载文件的工具类，目前框架中仅用于 PuppeteerUtil.addJquery 中下载保存 jquery
+ */
 export class DownloadUtil {
 
     static download(url: string, savePath: string, checkExisted: boolean = true): Promise<DownloadResult> {
