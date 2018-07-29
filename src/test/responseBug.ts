@@ -100,9 +100,9 @@ const test2 = async () => {
     await page.goto("https://mobile.twitter.com/Jackie_9692");
 };
 
-// test0(); // log: 3 lines of https://api.twitter.com/graphql/ey5le5rFYEThjq0u1i43tA and json result
-// test1(); // log: just 2 lines of https://api.twitter.com/graphql/ey5le5rFYEThjq0u1i43tA, cannot get json result
-// test2(); // log: 3 lines of https://api.twitter.com/graphql/ey5le5rFYEThjq0u1i43tA and json result
+test0(); // log: 3 lines of https://api.twitter.com/graphql/ey5le5rFYEThjq0u1i43tA and json result
+test1(); // log: just 2 lines of https://api.twitter.com/graphql/ey5le5rFYEThjq0u1i43tA, cannot get json result
+test2(); // log: 3 lines of https://api.twitter.com/graphql/ey5le5rFYEThjq0u1i43tA and json result
 
 /*
 compare these 3 test, I think there must be some bugs in
