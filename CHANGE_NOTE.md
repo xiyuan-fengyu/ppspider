@@ -1,4 +1,4 @@
-#2018-07-30 v0.1.15
+# 2018-07-30 v0.1.15
 1. 调整jQuery的注入方式，因为有一些网站因为安全原因  
     无法通过 page.addScriptTag 注入  
 2. 修复 PuppeteerWorkerFactory.exPage 计算js执行错误位置的bug  
