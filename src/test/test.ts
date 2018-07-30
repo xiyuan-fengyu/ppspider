@@ -90,19 +90,13 @@ class TestTask {
     })
     async index(page: Page, job: Job) {
         // await page.goto(job.url());
-        await page.evaluate(() => {
-            const $ = 123;
-        });
-
-        // await page.evaluate(() => {
-        //     console.log($);
-        // });
-
+        // await PuppeteerUtil.addJquery(page);
         await page.evaluate(() => new Promise(resolve => {
             const test = () => {
                 console.log($);
             };
             test();
+            resolve(true);
         }));
     }
 

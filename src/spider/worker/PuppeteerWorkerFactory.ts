@@ -42,7 +42,7 @@ export class PuppeteerWorkerFactory implements WorkerFactory<Page> {
                             oriFunLinesWithErrorPos += "^\n";
                         }
                     }
-                    return new Error(oriError.message + "\n" + oriFunLinesWithErrorPos)
+                    return new Error(oriError.message + "\n" + oriFunLinesWithErrorPos);
                 }
             }
             // 解析失败，返回原错误

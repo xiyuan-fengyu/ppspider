@@ -1,11 +1,13 @@
-#2018-07-28 v0.1.15
-1. 调整jQuery的注入方式，因为有一些网站因为安全原因
-    无法通过 addScriptTag 注入  
+#2018-07-30 v0.1.15
+1. 调整jQuery的注入方式，因为有一些网站因为安全原因  
+    无法通过 page.addScriptTag 注入  
 2. 修复 PuppeteerWorkerFactory.exPage 计算js执行错误位置的bug  
+7. 修复 CronUtil.next 的bug：  
+    OnTime队列最后一个任务（记为A）执行之后，立即添加的OnTime任务中第一个任务的执行时间和A执行时间可能重复  
 
 # 2018-07-27 v0.1.14
 1. logger打印添加等级判断, 增加修改配置的方法， @Launcher 中增加日志配置    
-2. DefaultJob datas 方法参数可选  
+2. DefaultJob datas 方法参数可选   
 3. 在 PuppeteerWorkerFactory 中对 get 方法创建的 Page 实例的 $eval, $$eval,
     evaluate, evaluateOnNewDocument, evaluateHandle 几个方法进行切面增强,
     当注入的js执行出现异常时能够打印出具体的位置  

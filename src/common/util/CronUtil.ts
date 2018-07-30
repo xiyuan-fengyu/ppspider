@@ -38,7 +38,11 @@ export class CronUtil {
         return cronSchedule;
     }
 
-    static next(cron: string, num: number = 10, point: Date = new Date()): Date[] {
+    static next(cron: string, num: number = 10, point: Date = null): Date[] {
+        if (!point) {
+            point = new Date();
+            point.setTime(point.getTime() + 1000); // 防止OnTime队列最后一个任务（记为A）执行之后，新添加的OnTime任务中第一个任务的执行时间和A执行时间重复
+        }
         const cronExp = CronUtil.getCronSchedule(cron);
         if (!cronExp) return [];
         return cronExp.schedule.next(num, point) || [];
