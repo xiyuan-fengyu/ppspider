@@ -301,7 +301,7 @@ export class QueueManager {
             }
         }
 
-        if (!queueInfo.curMaxParallel) {
+        if (queueInfo.curMaxParallel === null) {
             queueInfo.curMaxParallel = Defaults.maxParallel;
         }
         else if (queueInfo.config && typeof queueInfo.config.parallel == "number"

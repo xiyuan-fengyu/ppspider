@@ -1,3 +1,6 @@
+# 2018-07-30 v0.1.16
+1. 修复无法设置 maxParallelConfig=0 的bug  
+
 # 2018-07-30 v0.1.15
 1. 调整jQuery的注入方式，因为有一些网站因为安全原因  
     无法通过 page.addScriptTag 注入  
