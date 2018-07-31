@@ -187,7 +187,7 @@ export class QueueManager {
                 method: queue.config['method'],
                 type: taskType,
                 workerFactory: queue.config.workerFactory.name,
-                parallel: queue.config.parallel || Defaults.maxParallel,
+                parallel: queue.config.parallel === null || queue.config.parallel === undefined ? Defaults.maxParallel : queue.config.parallel,
                 exeInterval: queue.config.exeInterval || 0,
                 description: queue.config.description,
                 curMaxParallel: queue.curMaxParallel || 0,
@@ -301,7 +301,7 @@ export class QueueManager {
             }
         }
 
-        if (queueInfo.curMaxParallel === null) {
+        if (queueInfo.curMaxParallel === null || queueInfo.curMaxParallel === undefined) {
             queueInfo.curMaxParallel = Defaults.maxParallel;
         }
         else if (queueInfo.config && typeof queueInfo.config.parallel == "number"

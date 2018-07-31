@@ -10,6 +10,9 @@ import {PuppeteerUtil} from "../spider/util/PuppeteerUtil";
 import {OnTime} from "../spider/decorators/OnTime";
 import {logger} from "../common/util/logger";
 
+import * as puppeteer from "puppeteer";
+logger.debug(puppeteer.executablePath());
+
 class TestTask {
 
     // @OnStart({
@@ -82,6 +85,24 @@ class TestTask {
     // }
 
 
+    // @OnStart({
+    //     urls: "http://www.baidu.com",
+    //     workerFactory: PuppeteerWorkerFactory,
+    //     parallel: 1,
+    //     exeInterval: 10000
+    // })
+    // async index(page: Page, job: Job) {
+    //     // await page.goto(job.url());
+    //     // await PuppeteerUtil.addJquery(page);
+    //     await page.evaluate(() => new Promise(resolve => {
+    //         const test = () => {
+    //             console.log($);
+    //         };
+    //         test();
+    //         resolve(true);
+    //     }));
+    // }
+
     @OnStart({
         urls: "http://www.baidu.com",
         workerFactory: PuppeteerWorkerFactory,
@@ -89,15 +110,11 @@ class TestTask {
         exeInterval: 10000
     })
     async index(page: Page, job: Job) {
-        // await page.goto(job.url());
-        // await PuppeteerUtil.addJquery(page);
-        await page.evaluate(() => new Promise(resolve => {
-            const test = () => {
-                console.log($);
-            };
-            test();
-            resolve(true);
-        }));
+        await PuppeteerUtil.setImgLoad(page, false);
+        await page.goto("http://www.baidu.com");
+        const lgImg = await PuppeteerUtil.specifyIdByJquery(page, "#lg img:eq(0)");
+        const downloadImgRes = await PuppeteerUtil.downloadImg(page, "#" + lgImg[0], __dirname);
+        console.log(downloadImgRes);
     }
 
 }

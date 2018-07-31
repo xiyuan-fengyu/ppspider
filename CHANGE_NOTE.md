@@ -1,5 +1,6 @@
-# 2018-07-30 v0.1.16
+# 2018-07-31 v0.1.16
 1. 修复无法设置 maxParallelConfig=0 的bug  
+2. 更新 puppeteer 版本为 1.6.1-next.1533003082302， 临时修复 puppeteer 1.6.1 的 response 丢失的bug  
 
 # 2018-07-30 v0.1.15
 1. 调整jQuery的注入方式，因为有一些网站因为安全原因  

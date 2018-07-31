@@ -2,7 +2,7 @@
   "name": "ppspider",
   "author": "xiyuan_fengyu <xiyuan_fengyu@163.com> (https://github.com/xiyuan-fengyu)",
   "homepage": "github.com/xiyuan-fengyu/ppspider",
-  "version": "0.1.15",
+  "version": "0.1.16",
   "description": "spider build with puppeteer",
   "main": "./lib/index.js",
   "types": "./lib/index.d.ts",
@@ -13,14 +13,16 @@
   "keywords": [
     "spider",
     "crawler",
-    "puppeteer"
+    "puppeteer",
+    "headless",
+    "chromium"
   ],
   "license": "MIT",
   "dependencies": {
     "express": "^4.16.3",
     "later": "^1.2.0",
     "nedb": "^1.8.0",
-    "puppeteer": "^1.6.1",
+    "puppeteer": "1.6.1-next.1533003082302",
     "request": "^2.87.0",
     "socket.io": "^2.1.1",
     "source-map-support": "^0.5.6",
