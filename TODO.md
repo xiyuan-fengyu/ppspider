@@ -1,3 +1,6 @@
+# 2018-08-23
+1. ui 任务详情弹框中增加递归查询父任务的功能，所有连接的改为 target="_blank"
+
 # 2018-08-10
 1. 更新 puppeteer 版本
 2. 增加 VirtualWorkerFactory ， 不需要手动实例化 ，url支持空字符串
