@@ -308,6 +308,8 @@ export class JobInfoComponent implements OnInit {
 })
 export class JobDetailDialog implements OnInit {
 
+  parentJobId: string;
+
   constructor(
     public dialogRef: MatDialogRef<JobDetailDialog>,
     private socketIOService: SocketIOService,
@@ -317,14 +319,23 @@ export class JobDetailDialog implements OnInit {
   ) {}
 
   ngOnInit() {
+    this.loadJobDetail(this.data._id);
+  }
+
+  loadJobDetail(jobId: string) {
     this.socketIOService.request({
       key: "jobDetail",
       data: {
-        _id: this.data._id
+        _id: jobId
       }
     }, res => {
       if (res.success) {
-        $("#jsonViewer").jsonViewer(res.data, { collapsed: false });
+        this.parentJobId = res.data._parentId_justForParentFetch;
+        delete res.data._parentId_justForParentFetch;
+
+        $("#jsonViewers").append(`<pre id="jsonViewer_${jobId}"/>`);
+        $(`#jsonViewer_${jobId}`).jsonViewer(res.data, { collapsed: false });
+        $(`#jsonViewer_${jobId} a.json-string`).attr("target", "_blank");
       }
     });
   }

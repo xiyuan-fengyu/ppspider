@@ -1,4 +1,5 @@
 import "source-map-support/register";
+import {StringUtil} from "./StringUtil";
 
 function log(level: "debug" | "info" | "warn" | "error", msg: string, format: string) {
     const now = new Date();
@@ -8,27 +9,22 @@ function log(level: "debug" | "info" | "warn" | "error", msg: string, format: st
             return "" + now.getFullYear();
         })
         .replace(/MM/, (substring, ...args) => {
-            const temp = now.getMonth() + 1;
-            return temp < 10 ? "0" + temp : "" + temp;
+            return StringUtil.preFill("" + now.getMonth(), 2, "0");
         })
         .replace(/dd/, (substring, ...args) => {
-            const temp = now.getDate();
-            return temp < 10 ? "0" + temp : "" + temp;
+            return StringUtil.preFill("" + now.getDate(), 2, "0");
         })
         .replace(/HH/, (substring, ...args) => {
-            const temp = now.getHours();
-            return temp < 10 ? "0" + temp : "" + temp;
+            return StringUtil.preFill("" + now.getHours(), 2, "0");
         })
         .replace(/mm/, (substring, ...args) => {
-            const temp = now.getMinutes();
-            return temp < 10 ? "0" + temp : "" + temp;
+            return StringUtil.preFill("" + now.getMinutes(), 2, "0");
         })
         .replace(/ss/, (substring, ...args) => {
-            const temp = now.getSeconds();
-            return temp < 10 ? "0" + temp : "" + temp;
+            return StringUtil.preFill("" + now.getSeconds(), 2, "0");
         })
         .replace(/SSS/, (substring, ...args) => {
-            return "" + now.getMilliseconds();
+            return StringUtil.preFill("" + now.getMilliseconds(), 3, "0");
         })
         .replace(/level/, (substring, ...args) => {
             return level;

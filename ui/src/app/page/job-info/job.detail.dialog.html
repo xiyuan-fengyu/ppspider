@@ -1,6 +1,8 @@
 <h2 mat-dialog-title>Job detail</h2>
 <mat-dialog-content>
-  <pre id="jsonViewer"></pre>
+  <div id="jsonViewers">
+  </div>
+  <button *ngIf="parentJobId" mat-button (click)="loadJobDetail(parentJobId)">Load Parent Job Info</button>
 </mat-dialog-content>
 <mat-dialog-actions class="flexRowReverse">
   <button mat-button [mat-dialog-close]="null">Cancle</button>

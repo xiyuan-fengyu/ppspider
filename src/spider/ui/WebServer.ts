@@ -3,6 +3,7 @@ import {Server as ScoketIOServer} from "socket.io";
 import {EventEmitter} from "events";
 import {ClientRequest} from "../data/Types";
 import {logger} from "../../common/util/logger";
+import {mainMessager} from "../decorators/Launcher";
 
 /**
  * 通过 express 提供web静态资源服务，静态资源是由 ui 项目发布到 lib/spider/ui/web 目录下
@@ -16,7 +17,7 @@ export class WebServer {
 
     private io: ScoketIOServer;
 
-    constructor(private port: number, messager: EventEmitter) {
+    constructor(private port: number) {
         if (this.http != null) return;
 
         const express = require("express");
@@ -29,10 +30,10 @@ export class WebServer {
         this.io.on("connection", socket => {
             socket.on("request", (request: ClientRequest) => {
                 const responseId = "response_" + request.id;
-                messager.once(responseId, res => {
+                mainMessager.once(responseId, res => {
                     socket.emit(responseId, res);
                 });
-                messager.emit("request", request);
+                mainMessager.emit("request", request);
             });
             socket.on("error", (error: Error) => {
                 if (error) logger.warn("socket error: " + (error.message || "") + "\n" + (error.stack || ""));
@@ -43,7 +44,7 @@ export class WebServer {
             logger.info("The web ui server start at port: " + port);
         });
 
-        messager.on("push", (key: string, data: any) => {
+        mainMessager.on("push", (key: string, data: any) => {
            this.io.clients().emit("push_" + key, data);
         });
     }

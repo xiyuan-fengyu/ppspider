@@ -1,3 +1,11 @@
+# 2018-08-24 v0.1.17
+1. ui 任务详情弹框中增加递归查询父任务的功能，所有连接的改为 target="_blank"  
+2. 系统的实时信息推送方式由 周期推送 改为 事件驱动延迟缓存推送  
+3. 更新 puppeteer 版本为 1.7.0  
+4. 增加 NoneWorkerFactory ， 不需要显式手动实例化 ，用于处理不需要打开 page 的任务  
+5. logger 时间戳 SSS 格式化 0 补位
+6. 可以创建url为空字符串的任务
+
 # 2018-07-31 v0.1.16
 1. 修复无法设置 maxParallelConfig=0 的bug  
 2. 更新 puppeteer 版本为 1.6.1-next.1533003082302， 临时修复 puppeteer 1.6.1 的 response 丢失的bug  

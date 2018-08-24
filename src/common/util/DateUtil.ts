@@ -1,3 +1,5 @@
+import {StringUtil} from "./StringUtil";
+
 /**
  * 时间格式化
  */
@@ -11,27 +13,22 @@ export class DateUtil {
                 return "" + date.getFullYear();
             })
             .replace(/MM/, (substring, ...args) => {
-                const temp = date.getMonth() + 1;
-                return temp < 10 ? "0" + temp : "" + temp;
+                return StringUtil.preFill("" + date.getMonth(), 2, "0");
             })
             .replace(/dd/, (substring, ...args) => {
-                const temp = date.getDate();
-                return temp < 10 ? "0" + temp : "" + temp;
+                return StringUtil.preFill("" + date.getDate(), 2, "0");
             })
             .replace(/HH/, (substring, ...args) => {
-                const temp = date.getHours();
-                return temp < 10 ? "0" + temp : "" + temp;
+                return StringUtil.preFill("" + date.getHours(), 2, "0");
             })
             .replace(/mm/, (substring, ...args) => {
-                const temp = date.getMinutes();
-                return temp < 10 ? "0" + temp : "" + temp;
+                return StringUtil.preFill("" + date.getMinutes(), 2, "0");
             })
             .replace(/ss/, (substring, ...args) => {
-                const temp = date.getSeconds();
-                return temp < 10 ? "0" + temp : "" + temp;
+                return StringUtil.preFill("" + date.getSeconds(), 2, "0");
             })
             .replace(/SSS/, (substring, ...args) => {
-                return "" + date.getMilliseconds();
+                return StringUtil.preFill("" + date.getMilliseconds(), 3, "0");
             })
             ;
     }

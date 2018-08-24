@@ -8,14 +8,26 @@ export class CommonService implements OnDestroy{
 
   private subscription: Subscription = new Subscription();
 
-  public info: any;
+  public running = false;
+
+  public queues: any = {};
 
   constructor(
     private socketIOService: SocketIOService,
   ) {
-    this.info = {};
-    this.subscription.add(socketIOService.pushObserver("info").subscribe(data => {
-      ObjectUtil.copy(data, this.info);
+    this.subscription.add(socketIOService.connectObserver().subscribe(data => {
+      this.socketIOService.request({
+        key: "getQueueInfo",
+        data: null
+      }, res => {
+        ObjectUtil.copy(res.data, this.queues);
+        this.running = true;
+      });
+    }));
+
+    this.subscription.add(socketIOService.pushObserver("queues").subscribe(data => {
+      ObjectUtil.copy(data, this.queues);
+      this.running = true;
     }));
   }
 

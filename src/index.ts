@@ -45,4 +45,5 @@ export {
     PuppeteerUtil
 } from "./spider/util/PuppeteerUtil";
 export {PuppeteerWorkerFactory} from "./spider/worker/PuppeteerWorkerFactory";
+export {NoneWorkerFactory} from "./spider/worker/NoneWorkerFactory";
 export {WorkerFactory} from "./spider/worker/WorkerFactory";

@@ -26,6 +26,7 @@ import {PromiseUtil} from "../../common/util/PromiseUtil";
 import {jobManager} from "./JobManager";
 import {EventEmitter} from "events";
 import {logger} from "../../common/util/logger";
+import {mainMessager} from "../decorators/Launcher";
 
 const shutdownWaitTimeout = 60000;
 
@@ -59,6 +60,7 @@ export class QueueManager {
 
     resetPause(value: boolean) {
         this.pause = value;
+        this.delayPushInfo();
     }
 
     /**
@@ -67,6 +69,7 @@ export class QueueManager {
      */
     async waitRunning() {
         this.pause = true;
+        this.delayPushInfo();
         await PromiseUtil.wait(() => this.runningNum <= 0, 500, shutdownWaitTimeout);
         if (this.runningNum > 0) {
             // 发出强行终止任务的信号
@@ -75,6 +78,7 @@ export class QueueManager {
         }
         if (this.runningNum > 0) this.failNum += this.runningNum;
         this.runningNum = 0;
+        this.delayPushInfo();
     }
 
     /**
@@ -91,6 +95,8 @@ export class QueueManager {
                 message: e.message
             };
         }
+
+        this.delayPushInfo();
         return {
             success: true,
             message: "Delete queue cache successfully"
@@ -108,6 +114,7 @@ export class QueueManager {
         }
         catch (e) {
             logger.warn(e.stack);
+            return false;
         }
         return true;
     }
@@ -161,6 +168,7 @@ export class QueueManager {
         catch (e) {
             logger.warn(e.stack);
         }
+        this.delayPushInfo();
     }
 
     /**
@@ -223,6 +231,19 @@ export class QueueManager {
         return res;
     }
 
+    // 延迟 50ms 推送信息变更
+    @Transient()
+    private lastDelayPushTime = 0;
+    private delayPushInfo() {
+        if (this.lastDelayPushTime === 0) {
+            this.lastDelayPushTime = new Date().getTime();
+            setTimeout(() => {
+                this.lastDelayPushTime = 0;
+                mainMessager.emit("push", "queues", this.info());
+            }, 50);
+        }
+    }
+
     /**
      * 更新队列配置
      * @param {UpdateQueueConfigData} data
@@ -260,6 +281,7 @@ export class QueueManager {
             queueInfo.curMaxParallel = data.value;
         }
 
+        this.delayPushInfo();
         return {
             success: true,
             message: "update success: " + data.field
@@ -373,7 +395,7 @@ export class QueueManager {
                 }
 
                 const jobs = jobInfo.jobs;
-                if (jobs) {
+                if (jobs != null) {
                     if (jobs.constructor == String || instanceofJob(jobs)) {
                         QueueManager.addJobToQueue(jobs, parent, queueName, queue, filter, jobInfo.other, this.jobOverrideConfigs[queueName]);
                     }
@@ -384,6 +406,7 @@ export class QueueManager {
                     }
                 }
             }
+            this.delayPushInfo();
         }
     }
 
@@ -528,12 +551,15 @@ export class QueueManager {
                     if (job) {
                         queue.curParallel = (queue.curParallel || 0) + 1;
                         queue.lastExeTime = now;
+
                         workerFactory.get().then(async worker => {
                             const target = queue.config["target"];
                             const method = target[queue.config["method"]];
 
                             // 执行前更改一些信息
                             this.runningNum++;
+                            this.delayPushInfo();
+
                             job.exeTimes({
                                 start: new Date().getTime()
                             });
@@ -578,6 +604,7 @@ export class QueueManager {
                                 end: new Date().getTime()
                             });
                             this.runningNum--;
+                            this.delayPushInfo();
                             return worker;
                         }).then(async worker => {
                             queue.curParallel--;
@@ -590,6 +617,8 @@ export class QueueManager {
                             }
 
                             jobManager.save(job);
+
+                            this.delayPushInfo();
 
                             // 释放worker
                             await workerFactory.release(worker);

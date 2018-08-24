@@ -11,6 +11,7 @@ import {OnTime} from "../spider/decorators/OnTime";
 import {logger} from "../common/util/logger";
 
 import * as puppeteer from "puppeteer";
+import {NoneWorkerFactory} from "../spider/worker/NoneWorkerFactory";
 logger.debug(puppeteer.executablePath());
 
 class TestTask {
@@ -38,38 +39,38 @@ class TestTask {
 
 
 
-    // @OnStart({
+    @OnStart({
+        urls: "http://www.baidu.com",
+        workerFactory: PuppeteerWorkerFactory,
+        parallel: {
+            "0/20 * * * * ?": 1,
+            "10/20 * * * * ?": 2
+        }
+    })
+    // @OnTime({
     //     urls: "http://www.baidu.com",
-    //     workerFactory: PuppeteerWorkerFactory,
-    //     parallel: {
-    //         "0/20 * * * * ?": 1,
-    //         "10/20 * * * * ?": 2
-    //     }
+    //     cron: "*/30 * * * * ?",
+    //     workerFactory: PuppeteerWorkerFactory
     // })
-    // // @OnTime({
-    // //     urls: "http://www.baidu.com",
-    // //     cron: "*/30 * * * * ?",
-    // //     workerFactory: PuppeteerWorkerFactory
-    // // })
-    // @AddToQueue({
-    //     name: "test"
-    // })
-    // async index(page: Page, job: Job): AddToQueueData {
-    //     await page.goto(job.url());
-    //     return PuppeteerUtil.links(page, {
-    //         "test": "http.*"
-    //     });
-    // }
-    //
-    // @FromQueue({
-    //     name: "test",
-    //     workerFactory: PuppeteerWorkerFactory,
-    //     parallel: 1,
-    //     exeInterval: 100000
-    // })
-    // async printUrl(page: Page, job: Job) {
-    //     logger.debug(job.url());
-    // }
+    @AddToQueue({
+        name: "test"
+    })
+    async index(page: Page, job: Job): AddToQueueData {
+        await page.goto(job.url());
+        return PuppeteerUtil.links(page, {
+            "test": "http.*"
+        });
+    }
+
+    @FromQueue({
+        name: "test",
+        workerFactory: PuppeteerWorkerFactory,
+        parallel: 1,
+        exeInterval: 100000
+    })
+    async printUrl(page: Page, job: Job) {
+        logger.debug(job.url());
+    }
 
 
     // @OnStart({
@@ -103,19 +104,29 @@ class TestTask {
     //     }));
     // }
 
-    @OnStart({
-        urls: "http://www.baidu.com",
-        workerFactory: PuppeteerWorkerFactory,
-        parallel: 1,
-        exeInterval: 10000
-    })
-    async index(page: Page, job: Job) {
-        await PuppeteerUtil.setImgLoad(page, false);
-        await page.goto("http://www.baidu.com");
-        const lgImg = await PuppeteerUtil.specifyIdByJquery(page, "#lg img:eq(0)");
-        const downloadImgRes = await PuppeteerUtil.downloadImg(page, "#" + lgImg[0], __dirname);
-        console.log(downloadImgRes);
-    }
+    // @OnStart({
+    //     urls: "http://www.baidu.com",
+    //     workerFactory: PuppeteerWorkerFactory,
+    //     parallel: 1,
+    //     exeInterval: 10000
+    // })
+    // async index(page: Page, job: Job) {
+    //     await PuppeteerUtil.setImgLoad(page, false);
+    //     await page.goto("http://www.baidu.com");
+    //     const lgImg = await PuppeteerUtil.specifyIdByJquery(page, "#lg img:eq(0)");
+    //     const downloadImgRes = await PuppeteerUtil.downloadImg(page, "#" + lgImg[0], __dirname);
+    //     console.log(downloadImgRes);
+    // }
+
+    // @OnStart({
+    //     urls: "",
+    //     workerFactory: NoneWorkerFactory,
+    //     parallel: 1,
+    //     exeInterval: 10000
+    // })
+    // async noneWorkerTest(worker: any, job: Job) {
+    //     console.log("noneWorkerTest", worker, job);
+    // }
 
 }
 

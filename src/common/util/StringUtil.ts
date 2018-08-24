@@ -48,7 +48,7 @@ export class StringUtil {
             + this.preFill("" + this.lastIdIndex, 4, '0');
     }
 
-    private static preFill(str: string, fillLength: number, fillStr: string): string {
+    static preFill(str: string, fillLength: number, fillStr: string): string {
         if (str.length >= fillLength) return str;
         for (let i = str.length, fillStrLen = fillStr.length; i < fillLength; i += fillStrLen) str = fillStr + str;
         return str;

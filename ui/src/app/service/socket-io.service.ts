@@ -8,7 +8,7 @@ export class SocketIOService implements OnDestroy{
 
   private client: any = io(environment.server);
 
-  private observers: {[pushLey: string]: Observable<any>} = {};
+  private observers: {[pushKey: string]: Observable<any>} = {};
 
   private reconnectNum = 0;
 
@@ -26,16 +26,24 @@ export class SocketIOService implements OnDestroy{
     });
   }
 
-  pushObserver(key: string): Observable<any> {
+  observer(key: string): Observable<any> {
     let observer = this.observers[key];
     if (observer == null) {
       this.observers[key] = observer = new Observable(subscriber => {
-        this.client.on('push_' + key, data => {
+        this.client.on(key, data => {
           subscriber.next(data);
         });
       });
     }
     return observer;
+  }
+
+  pushObserver(key: string): Observable<any> {
+    return this.observer('push_' + key);
+  }
+
+  connectObserver(): Observable<any> {
+    return this.observer('connect');
   }
 
   request(request: {

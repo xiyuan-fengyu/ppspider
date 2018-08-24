@@ -1,30 +1,30 @@
 
-<p *ngIf="!info || !info.running">ppspider is not working !</p>
+<p *ngIf="!commonService.queues || !commonService.running">ppspider is not working !</p>
 
-<ng-container *ngIf="info?.running">
+<ng-container *ngIf="commonService.running">
   <div class="buttons">
-    <ng-container *ngIf="info?.queue?.pause == false">
+    <ng-container *ngIf="commonService.queues?.pause == false">
       <button (click)="resetQueueManagerPause(true)" mat-icon-button>
         <mat-icon
           matTooltip="Pause QueueManager"
           style="color: #ffb670">pause</mat-icon>
       </button>
     </ng-container>
-    <ng-container *ngIf="info?.queue?.pause">
+    <ng-container *ngIf="commonService.queues?.pause">
       <button (click)="resetQueueManagerPause(false)" mat-icon-button>
         <mat-icon
           matTooltip="Resume QueueManager"
           style="color: #2c8aff">play_arrow</mat-icon>
       </button>
     </ng-container>
-    <ng-container *ngIf="info?.queue?.cacheExist">
+    <ng-container *ngIf="commonService.queues?.cacheExist">
       <button (click)="deleteQueueCache()" mat-icon-button>
         <mat-icon
-          matTooltip="Delete queue cache"
+          matTooltip="Delete queues cache"
           style="color: #ff4d44">delete_forever</mat-icon>
       </button>
     </ng-container>
-    <ng-container *ngIf="info?.queue">
+    <ng-container *ngIf="commonService.queues">
       <button (click)="showShutdownConfirm()" mat-icon-button>
         <mat-icon
           matTooltip="Shutdown the system"
@@ -34,11 +34,11 @@
   </div>
 </ng-container>
 
-<mat-grid-list *ngIf="info?.running" cols="3" rowHeight="100px">
+<mat-grid-list *ngIf="commonService.running" cols="3" rowHeight="100px">
   <mat-grid-tile [colspan]="1" [rowspan]="1">
     <div class="taskNumItem success">
       <mat-icon>done</mat-icon>
-      <h4>{{info.queue.success}}</h4>
+      <h4>{{commonService.queues.success}}</h4>
       <span>success</span>
     </div>
   </mat-grid-tile>
@@ -46,7 +46,7 @@
   <mat-grid-tile [colspan]="1" [rowspan]="1">
     <div class="taskNumItem running">
       <mat-icon>refresh</mat-icon>
-      <h4>{{info.queue.running}}</h4>
+      <h4>{{commonService.queues.running}}</h4>
       <span>running</span>
     </div>
   </mat-grid-tile>
@@ -54,14 +54,14 @@
   <mat-grid-tile [colspan]="1" [rowspan]="1">
     <div class="taskNumItem fail">
       <mat-icon>error</mat-icon>
-      <h4>{{info.queue.fail}}</h4>
+      <h4>{{commonService.queues.fail}}</h4>
       <span>fail</span>
     </div>
   </mat-grid-tile>
 </mat-grid-list>
 
-<ng-container *ngIf="info?.queue && info.queue.queues">
-  <ng-container *ngFor="let queue of info.queue.queues; let queueI = index">
+<ng-container *ngIf="commonService.queues?.queues">
+  <ng-container *ngFor="let queue of commonService.queues.queues; let queueI = index">
     <mat-divider></mat-divider>
     <mat-card [class]="'queueItem ' + queue.type">
       <mat-card-header>

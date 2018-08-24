@@ -189,7 +189,8 @@ export type OnStartConfig = {
     // urls to crawl
     urls: string | string[];  
     
-    // a workerFactory class whose instance shold be declared in @Launcher parameter's property: workerFactorys. Only PuppeteerWorkerFactory is supported at present.
+    // a workerFactory class whose instance must be declared in @Launcher parameter's property: workerFactorys except NoneWorkerFactory. 
+    // PuppeteerWorkerFactory and NoneWorkerFactory are supported at present.
     workerFactory: WorkerFactoryClass;
     
     // config of max paralle num, can be a number or a object with cron key and number value    
@@ -219,6 +220,16 @@ export class TestTask {
             "all": "http.*"
         });
         console.log(urls);
+    }
+
+    @OnStart({
+        urls: "",
+        workerFactory: NoneWorkerFactory,
+        parallel: 1,
+        exeInterval: 10000
+    })
+    async noneWorkerTest(worker: any, job: Job) {
+        console.log("noneWorkerTest", worker, job);
     }
 
 }

@@ -8,6 +8,7 @@ import {EventEmitter} from "events";
 import {FileUtil} from "../../common/util/FileUtil";
 import {jobManager} from "../manager/JobManager";
 import {logger} from "../..";
+import {NoneWorkerFactory} from "../worker/NoneWorkerFactory";
 
 const taskInstances: any = {};
 export function getTaskInstances(taskClass) {
@@ -17,6 +18,8 @@ export function getTaskInstances(taskClass) {
 }
 
 export const appInfo: AppInfo = {} as any;
+export const mainLooper = new Looper();
+export const mainMessager = new EventEmitter(); // 用于 WebServer 和 ClientRequestHandler 通信
 
 /**
  * 整个系统的启动入口
@@ -25,11 +28,8 @@ export const appInfo: AppInfo = {} as any;
  * @constructor
  */
 export function Launcher(theAppInfo: AppInfo) {
-    for (let key of Object.keys(theAppInfo)) {
-        Object.defineProperty(appInfo, key, {
-            get: () => theAppInfo[key]
-        });
-    }
+    Object.assign(appInfo, theAppInfo);
+
     FileUtil.mkdirs(appInfo.workplace); // 创建工作目录
 
     logger.setting = theAppInfo.logger; // 设置日志配置
@@ -38,17 +38,33 @@ export function Launcher(theAppInfo: AppInfo) {
     queueManager.loadFromCache(appInfo.workplace + "/queueCache.json"); // 尝试加载之前保存的运行状态
 
     return function (target) {
-        const mainLooper = new Looper();
-        const mainMessager = new EventEmitter(); // 用于 WebServer 和 ClientRequestHandler 通信
-        const webServer = new WebServer(appInfo.webUiPort || Defaults.webUiPort, mainMessager); // 启动UI界面的web服务器
+        const webServer = new WebServer(appInfo.webUiPort || Defaults.webUiPort); // 启动UI界面的web服务器
 
         const workerFactoryMap: WorkerFactoryMap = {};
         for (let workerFactory of appInfo.workerFactorys) {
             workerFactoryMap[(workerFactory as any).constructor.name] = workerFactory;
         }
 
+        // 如果用户没有添加 NoneWorkerFactory, 则自动添加这个 factory
+        const kNoneWorkerFactory = NoneWorkerFactory.name;
+        if (!workerFactoryMap.hasOwnProperty(kNoneWorkerFactory)) {
+            workerFactoryMap[kNoneWorkerFactory] = new NoneWorkerFactory();
+        }
+
         {
             class ClientRequestHandler {
+
+                /**
+                 * ui客户端连接成功后主动获取队列信息
+                 * @param {ClientRequest} request
+                 * @returns {any}
+                 */
+                static getQueueInfo(request: ClientRequest) {
+                    return {
+                        success: true,
+                        data: queueManager.info()
+                    };
+                }
 
                 /**
                  * 删除保存运行状态的文件
@@ -154,14 +170,15 @@ export function Launcher(theAppInfo: AppInfo) {
                 queueManager.dispatch(workerFactoryMap); // 派发任务
             }
 
-            @LooperTask(mainLooper, 750)
-            pushToClients() {
-                // 推送当前系统的运行状态给UI界面
-                mainMessager.emit("push", "info", {
-                    running: true,
-                    queue: queueManager.info()
-                });
-            }
+            // 系统的实时信息推送方式由 周期推送 改为 事件驱动延迟缓存推送
+            // @LooperTask(mainLooper, 750)
+            // pushToClients() {
+            //     // 推送当前系统的运行状态给UI界面
+            //     mainMessager.emit("push", "info", {
+            //         running: true,
+            //         queue: queueManager.info()
+            //     });
+            // }
         }
 
         // 启动mainLooper，并等待系统关闭

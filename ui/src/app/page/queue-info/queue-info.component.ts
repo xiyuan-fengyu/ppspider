@@ -15,18 +15,15 @@ declare const CodeMirror: any;
 })
 export class QueueInfoComponent implements OnInit {
 
-  info: any;
-
   constructor(
     private socketIOService: SocketIOService,
-    private commonService: CommonService,
+    public commonService: CommonService,
     public dialog: MatDialog,
     private toasterService: ToasterService
   ) {
   }
 
   ngOnInit() {
-    this.info = this.commonService.info;
   }
 
   stringify(obj) {
@@ -92,12 +89,12 @@ export class QueueInfoComponent implements OnInit {
     this.dialog.open(ShutdownConfirmDialog, {
       width: "500px",
       data: {
-        shutdownWaitTimeout: (this.info.queue || {} as any).shutdownWaitTimeout || 60000
+        shutdownWaitTimeout: (this.commonService.queues || {} as any).shutdownWaitTimeout || 60000
       }
     }).afterClosed().subscribe(res => {
       if (res != null) {
-        this.info.running = false;
-        this.info.queue = {};
+        this.commonService.running = false;
+        this.commonService.queues = {};
       }
     });
   }

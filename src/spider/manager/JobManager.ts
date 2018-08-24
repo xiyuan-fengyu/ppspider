@@ -253,6 +253,8 @@ export class JobManager {
     private transformToJob(obj: any) {
         const job = SerializableUtil.deserialize(obj) as Job;
         job.status(JobStatus[job.status()] as any);
+        // 仅前端获取父任务id 时会使用到，且前端获取这个字段的值后，会删除这个字段
+        job["_parentId_justForParentFetch"] = job.parentId();
         return ObjectUtil.transform(job, value => {
             if (value.constructor == Number && ("" + value).length == 13) {
                 return DateUtil.toStr(new Date(value), "yyyy-MM-dd HH:mm:ss");

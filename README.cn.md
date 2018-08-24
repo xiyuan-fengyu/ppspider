@@ -185,7 +185,8 @@ export type OnStartConfig = {
     // 页面地址
     urls: string | string[];  
     
-    // worker工厂类型，其类型的实例必须在 @Launcher 参数的workerFactorys属性中申明，目前可能是 PuppeteerWorkerFactory
+    // worker工厂类型，其类型的实例必须在 @Launcher 参数的workerFactorys属性中申明(NoneWorkerFactory 除外)
+    // 目前提供的 WorkerFactory 有 ，PuppeteerWorkerFactory, NoneWorkerFactory
     workerFactory: WorkerFactoryClass;
     
     // 任务的最大并行数配置，可以是具体的数字，也可以用cron表达式动态设置最大的并行数
@@ -217,6 +218,16 @@ export class TestTask {
         console.log(urls);
     }
 
+    @OnStart({
+        urls: "",
+        workerFactory: NoneWorkerFactory,
+        parallel: 1,
+        exeInterval: 10000
+    })
+    async noneWorkerTest(worker: any, job: Job) {
+        console.log("noneWorkerTest", worker, job);
+    }
+
 }
 ```
 
@@ -234,7 +245,8 @@ export type OnTimeConfig = {
     // 执行时间的cron表达式
     cron: string;
     
-    // worker工厂类型，其类型的实例必须在 @Launcher 参数的workerFactorys属性中申明，目前可能是 PuppeteerWorkerFactory
+    // worker工厂类型，其类型的实例必须在 @Launcher 参数的workerFactorys属性中申明(NoneWorkerFactory 除外)
+    // 目前提供的 WorkerFactory 有 ，PuppeteerWorkerFactory, NoneWorkerFactory
     workerFactory: WorkerFactoryClass;
     
     // 任务的最大并行数配置，可以是具体的数字，也可以用cron表达式动态设置最大的并行数
@@ -316,7 +328,8 @@ export type FromQueueConfig = {
     name: string;
     
     
-    // worker工厂类型，其类型的实例必须在 @Launcher 参数的workerFactorys属性中申明，目前可能是 PuppeteerWorkerFactory
+    // worker工厂类型，其类型的实例必须在 @Launcher 参数的workerFactorys属性中申明(NoneWorkerFactory 除外)
+    // 目前提供的 WorkerFactory 有 ，PuppeteerWorkerFactory, NoneWorkerFactory
     workerFactory: WorkerFactoryClass;
     
     // 任务的最大并行数配置，可以是具体的数字，也可以用cron表达式动态设置最大的并行数
