@@ -13,7 +13,7 @@ export class DateUtil {
                 return "" + date.getFullYear();
             })
             .replace(/MM/, (substring, ...args) => {
-                return StringUtil.preFill("" + date.getMonth(), 2, "0");
+                return StringUtil.preFill("" + (date.getMonth() + 1), 2, "0");
             })
             .replace(/dd/, (substring, ...args) => {
                 return StringUtil.preFill("" + date.getDate(), 2, "0");

@@ -1,5 +1,6 @@
 # 2018-08-27
-1. 把 CHNAGE_NOTE 迁移到 README 中
+1. 把 CHNAGE_NOTE 迁移到 README 中 (OK)
+2. 修正 DateUtil 和 logger 中日期格式化 month 解析错误的bug (OK)
 
 # 2018-08-23
 1. ui 任务详情弹框中增加递归查询父任务的功能，所有连接的改为 target="_blank" (OK)

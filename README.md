@@ -38,6 +38,7 @@
   * [logger](#logger)
 - [Debug](#debug)
 - [WebUI](#webui)
+- [Update Note](#update-note)
 
 <!-- tocstop -->
 
@@ -579,4 +580,53 @@ Queue panel: view and control app status
 ![Queue Help](https://s1.ax1x.com/2018/06/13/COcgTs.png)  
 
 Job panel: search jobs and view details  
-![Job Help](https://s1.ax1x.com/2018/06/13/COcRkn.png)
+![ppspiderJobs.en.png](https://i.loli.net/2018/08/29/5b862f27e2809.png)
+
+# Update Note
+2018-08-24 v0.1.17  
+1. In job detail modal, add support to recursively load the parent job detail, 
+    add target="_blank" to all 'a' elements to open a new tab when clicked  
+2. The push mode of spider system info is changed from periodic to event driven and delayed       
+3. Update puppeteer version to 1.7.0    
+4. Add NoneWorkerFactory whose init action is not required, it is used when puppeteer is not required  
+5. Complement the SSS of logger datetime with 0  
+6. The job with empty url is accepted now  
+
+2018-07-31 v0.1.16  
+1. Fix bug: no effect after setting maxParallelConfig=0  
+2. Update puppeteer version to 1.6.1-next.1533003082302 to solve the bug which causes loss of response in version 1.6.1 of puppeteer  
+
+2018-07-30 v0.1.15  
+1. Change the implement of PuppeteerUtil.addJquery  
+    Change the inject way of jQuery because Page.addScriptTag is not supported 
+    by some website   
+2. Fix bug: PuppeteerWorkerFactory.exPage compute a wrong position of js executing error   
+3. Fix bug: The CronUtil.next may generate a next execute time which equals to the last job   
+
+2018-07-27 v0.1.14  
+1. Add support to logger level check  
+    Add support to change logger config  
+    Logger config can be set in @launcher  
+2. Change the parameter of DefaultJob.datas to optional  
+3. Enhance the page created by PuppeteerWorkerFactory, methods such as
+    $eval, $$eval, evaluate, evaluateOnNewDocument, evaluateHandle are improved,
+    when the inject js executes with error, it will print the detail and position 
+    of error
+4. Change the implement of serialize    
+5. Add comments to source code  
+6. Update puppeteer version   
+
+2018-07-24 v0.1.13  
+1. Import source-map-support, add logger to print log with source code position
+
+2018-07-23 v0.1.12  
+1. Add @Transient Decorator to ignore field when serialization  
+
+2018-07-19 v0.1.11  
+1. Set the max wait time to 60 secondes when spider system shutdown,    
+    those jobs which are not complete will become fail once and add to queue
+    to try again  
+2. Fix bug: img url match is incorrect  
+
+2018-07-16 v0.1.8    
+1. Implement a serialization util to solve the circular reference question

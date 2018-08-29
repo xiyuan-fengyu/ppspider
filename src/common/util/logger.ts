@@ -2,29 +2,29 @@ import "source-map-support/register";
 import {StringUtil} from "./StringUtil";
 
 function log(level: "debug" | "info" | "warn" | "error", msg: string, format: string) {
-    const now = new Date();
+    const date = new Date();
     const position = new Error().stack.split("\n")[3].trim().replace(/^at /, "");
     const formatRes = format
         .replace(/yyyy/, (substring, ...args) => {
-            return "" + now.getFullYear();
+            return "" + date.getFullYear();
         })
         .replace(/MM/, (substring, ...args) => {
-            return StringUtil.preFill("" + now.getMonth(), 2, "0");
+            return StringUtil.preFill("" + (date.getMonth() + 1), 2, "0");
         })
         .replace(/dd/, (substring, ...args) => {
-            return StringUtil.preFill("" + now.getDate(), 2, "0");
+            return StringUtil.preFill("" + date.getDate(), 2, "0");
         })
         .replace(/HH/, (substring, ...args) => {
-            return StringUtil.preFill("" + now.getHours(), 2, "0");
+            return StringUtil.preFill("" + date.getHours(), 2, "0");
         })
         .replace(/mm/, (substring, ...args) => {
-            return StringUtil.preFill("" + now.getMinutes(), 2, "0");
+            return StringUtil.preFill("" + date.getMinutes(), 2, "0");
         })
         .replace(/ss/, (substring, ...args) => {
-            return StringUtil.preFill("" + now.getSeconds(), 2, "0");
+            return StringUtil.preFill("" + date.getSeconds(), 2, "0");
         })
         .replace(/SSS/, (substring, ...args) => {
-            return StringUtil.preFill("" + now.getMilliseconds(), 3, "0");
+            return StringUtil.preFill("" + date.getMilliseconds(), 3, "0");
         })
         .replace(/level/, (substring, ...args) => {
             return level;
