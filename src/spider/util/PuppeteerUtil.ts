@@ -5,7 +5,7 @@ import {FileUtil} from "../../common/util/FileUtil";
 import * as fs from "fs";
 import {Defaults} from "../data/Defaults";
 import {LinkPredictMap} from "../data/Types";
-import {logger} from "../..";
+import {logger} from "../../common/util/logger";
 
 export type ResponseListener = (response: Response) => any;
 

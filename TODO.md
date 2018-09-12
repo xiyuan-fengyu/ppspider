@@ -1,3 +1,6 @@
+# 2018-09-12
+1. 把代码中对 index.ts 中导出类的引用地址改为原路径，这样在编辑器中用户更容定位到源代码位置
+
 # 2018-08-27
 1. 把 CHNAGE_NOTE 迁移到 README 中 (OK)
 2. 修正 DateUtil 和 logger 中日期格式化 month 解析错误的bug (OK)

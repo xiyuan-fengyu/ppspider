@@ -7,7 +7,7 @@ import {Defaults} from "../data/Defaults";
 import {EventEmitter} from "events";
 import {FileUtil} from "../../common/util/FileUtil";
 import {jobManager} from "../manager/JobManager";
-import {logger} from "../..";
+import {logger} from "../../common/util/logger";
 import {NoneWorkerFactory} from "../worker/NoneWorkerFactory";
 
 const taskInstances: any = {};

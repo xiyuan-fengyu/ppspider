@@ -2,7 +2,7 @@ import {AddToQueueConfig, AddToQueueInfo} from "../data/Types";
 import {instanceofJob, Job} from "../job/Job";
 import {queueManager} from "../manager/QueueManager";
 import {getTaskInstances} from "./Launcher";
-import {logger} from "../..";
+import {logger} from "../../common/util/logger";
 
 function getAddToQueueConfig(queueConfigs: AddToQueueConfig | AddToQueueConfig[], queueName: string): AddToQueueConfig {
     let config: AddToQueueConfig = null;

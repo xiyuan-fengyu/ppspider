@@ -2,7 +2,7 @@ import {WorkerFactory} from "../worker/WorkerFactory";
 import {Filter} from "../filter/Filter";
 import {Queue} from "../queue/Queue";
 import {Job} from "../job/Job";
-import {LoggerSetting} from "../..";
+import {LoggerSetting} from "../../common/util/logger";
 
 export type JobExeTime = {
     start?: number; // job 开始执行的时间
