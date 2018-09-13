@@ -4,7 +4,25 @@ import {queueManager} from "../manager/QueueManager";
 import {getTaskInstances} from "./Launcher";
 import {logger} from "../../common/util/logger";
 
-function getAddToQueueConfig(queueConfigs: AddToQueueConfig | AddToQueueConfig[], queueName: string): AddToQueueConfig {
+export enum AddToQueueStrategyIfError {
+    // 打印 warn 日志
+    warn,
+    // 抛出异常
+    error,
+    // 忽略
+    ignore
+}
+
+function handleAddToQueueIfError(msg: string, addToQueueStrategyIfError: AddToQueueStrategyIfError) {
+    if (addToQueueStrategyIfError == AddToQueueStrategyIfError.warn) {
+        logger.warn(msg);
+    }
+    else if (addToQueueStrategyIfError == AddToQueueStrategyIfError.error) {
+        throw new Error(msg);
+    }
+}
+
+function getAddToQueueConfig(queueConfigs: AddToQueueConfig | AddToQueueConfig[], queueName: string, addToQueueStrategyIfError: AddToQueueStrategyIfError): AddToQueueConfig {
     let config: AddToQueueConfig = null;
     if (queueName) {
         // 多个队列中根据queueName找到对应的队列
@@ -24,7 +42,7 @@ function getAddToQueueConfig(queueConfigs: AddToQueueConfig | AddToQueueConfig[]
         }
 
         if (config == null) {
-            console.warn("cannot find a queue with name: " + queueName);
+            handleAddToQueueIfError("cannot find a queue with name: " + queueName, addToQueueStrategyIfError);
             return null;
         }
     }
@@ -33,7 +51,8 @@ function getAddToQueueConfig(queueConfigs: AddToQueueConfig | AddToQueueConfig[]
         let queueNum: number;
         if (queueConfigs.constructor == Array) {
             if ((queueNum = (queueConfigs as AddToQueueConfig[]).length) != 1) {
-                logger.warn(queueNum == 0 ? "no queue to add" : queueNum + " queues provide and cannot decide which to add to");
+                handleAddToQueueIfError(queueNum == 0 ? "no queue to add" :
+                    queueNum + " queues provide and cannot decide which to add to", addToQueueStrategyIfError);
                 return null;
             }
             else {
@@ -48,10 +67,11 @@ function getAddToQueueConfig(queueConfigs: AddToQueueConfig | AddToQueueConfig[]
 /**
  * 将被装饰的方法的返回值添加到队列中
  * @param {AddToQueueConfig | AddToQueueConfig[]} queueConfigs
+ * @param addToQueueStrategyIfError 添加到队列过程中，寻找匹配的队列时遇到异常的处理策略，默认打印 warn 日志
  * @returns {(target, key, descriptor) => any}
  * @constructor
  */
-export function AddToQueue(queueConfigs: AddToQueueConfig | AddToQueueConfig[]) {
+export function AddToQueue(queueConfigs: AddToQueueConfig | AddToQueueConfig[], addToQueueStrategyIfError: AddToQueueStrategyIfError = AddToQueueStrategyIfError.warn) {
     return function (target, key, descriptor) {
         const targetIns = getTaskInstances(target.constructor);
         const oriFun = descriptor.value;
@@ -70,8 +90,8 @@ export function AddToQueue(queueConfigs: AddToQueueConfig | AddToQueueConfig[]) 
                 const addToQueueDatas: AddToQueueInfo[] = [];
                 if (res.constructor == Object) {
                     // 多个队列
-                    for (let queueName in res) {
-                        const queueConfig = getAddToQueueConfig(queueConfigs, queueName);
+                    for (let queueName of Object.keys(res)) {
+                        const queueConfig = getAddToQueueConfig(queueConfigs, queueName, addToQueueStrategyIfError);
                         if (queueConfig) {
                             addToQueueDatas.push({
                                 queueName: queueConfig.name,
@@ -84,7 +104,7 @@ export function AddToQueue(queueConfigs: AddToQueueConfig | AddToQueueConfig[]) 
                 }
                 else {
                     // 单个队列
-                    const queueConfig = getAddToQueueConfig(queueConfigs, null);
+                    const queueConfig = getAddToQueueConfig(queueConfigs, null, addToQueueStrategyIfError);
                     if (queueConfig) {
                         addToQueueDatas.push({
                             queueName: queueConfig.name,

@@ -20,7 +20,7 @@ export {
     LinkPredict,
     LinkPredictMap
 } from "./spider/data/Types";
-export {AddToQueue} from "./spider/decorators/AddToQueue";
+export {AddToQueue, AddToQueueStrategyIfError} from "./spider/decorators/AddToQueue";
 export {FromQueue} from "./spider/decorators/FromQueue";
 export {JobOverride} from "./spider/decorators/JobOverride";
 export {appInfo, Launcher} from "./spider/decorators/Launcher";
