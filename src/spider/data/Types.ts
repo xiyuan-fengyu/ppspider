@@ -29,6 +29,7 @@ export type OnStartConfig = {
     urls: string | string[]; // 要抓取链接
     workerFactory: WorkerFactoryClass; // worker工厂类型
     parallel?: ParallelConfig; // 任务并行数配置
+    exeIntervalJitter?: number; // 两个任务的执行间隔时间的抖动范围
     exeInterval?: number; // 两个任务的执行间隔时间
     description?: string; // 任务描述
 }
@@ -39,6 +40,7 @@ export type OnTimeConfig = {
     workerFactory: WorkerFactoryClass;
     parallel?: ParallelConfig;
     exeInterval?: number;
+    exeIntervalJitter?: number;
     description?: string;
 }
 
@@ -47,6 +49,7 @@ export type FromQueueConfig = {
     workerFactory: WorkerFactoryClass;
     parallel?: ParallelConfig;
     exeInterval?: number;
+    exeIntervalJitter?: number;
     description?: string;
 }
 

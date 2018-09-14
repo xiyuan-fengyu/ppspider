@@ -3,7 +3,11 @@
  */
 export class Defaults {
 
-    static maxParallel = 3;
+    static maxParallel = 1;
+
+    static exeInterval = 0;
+
+    static exeIntervalJitter = exeInterval => parseInt("" + exeInterval * 0.25);
 
     static maxTry = 3;
 

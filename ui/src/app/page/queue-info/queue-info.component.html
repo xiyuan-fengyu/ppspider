@@ -118,6 +118,8 @@
             <label class="key">exeInterval</label>
             <div class="value">
               <span (click)="openEditConfig(queue, 'exeInterval', queue.exeInterval)" class="editable">{{queue.exeInterval}}</span>
+              <span class="static">-|+</span>
+              <span (click)="openEditConfig(queue, 'exeIntervalJitter', queue.exeIntervalJitter)" class="editable">{{queue.exeIntervalJitter}}</span>
               <span class="unit">ms</span>
             </div>
           </div>

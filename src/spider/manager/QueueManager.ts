@@ -53,7 +53,7 @@ export class QueueManager {
 
     private runningNum = 0; // 正在执行的任务总数
 
-    private failNum = 0; // 运行失败的任务总数，一个任务运行失败一次即算作一次，但一个任务运行失败后最多还有2次重试的机会
+    private failNum = 0; // 运行失败的任务总数，一个任务尝试3次都失败时，计算一次
 
     @Transient()
     private pause = false; // 是否暂停派发任务
@@ -144,6 +144,8 @@ export class QueueManager {
                         thisQueueInfo.curMaxParallel = queueInfo.curMaxParallel;
 
                         thisQueueInfo.config.exeInterval = queueInfo.config.exeInterval;
+                        thisQueueInfo.config.exeIntervalJitter = queueInfo.config.exeIntervalJitter;
+
                         this.updateConfig({
                             queue: queueName,
                             field: "parallel",
@@ -196,7 +198,8 @@ export class QueueManager {
                 type: taskType,
                 workerFactory: queue.config.workerFactory.name,
                 parallel: queue.config.parallel === null || queue.config.parallel === undefined ? Defaults.maxParallel : queue.config.parallel,
-                exeInterval: queue.config.exeInterval || 0,
+                exeInterval: queue.config.exeInterval,
+                exeIntervalJitter: queue.config.exeIntervalJitter,
                 description: queue.config.description,
                 curMaxParallel: queue.curMaxParallel || 0,
                 curParallel: queue.curParallel || 0,
@@ -277,6 +280,9 @@ export class QueueManager {
         else if (data.field == "exeInterval") {
             queueInfo.config.exeInterval = data.value;
         }
+        else if (data.field == "exeIntervalJitter") {
+            queueInfo.config.exeIntervalJitter = data.value;
+        }
         else if (data.field == "curMaxParallel") {
             queueInfo.curMaxParallel = data.value;
         }
@@ -323,7 +329,7 @@ export class QueueManager {
             }
         }
 
-        if (queueInfo.curMaxParallel === null || queueInfo.curMaxParallel === undefined) {
+        if (queueInfo.curMaxParallel == null) {
             queueInfo.curMaxParallel = Defaults.maxParallel;
         }
         else if (queueInfo.config && typeof queueInfo.config.parallel == "number"
@@ -339,6 +345,18 @@ export class QueueManager {
     addQueueConfig(queueName: string, config: JobConfig): string {
         if (!queueName) {
             queueName = config["type"] + "_" + config["target"].constructor.name + "_" + config["method"];
+        }
+
+        if (config.parallel == null) {
+            config.parallel = Defaults.maxParallel;
+        }
+
+        if (config.exeInterval == null) {
+            config.exeInterval = Defaults.exeInterval;
+        }
+
+        if (config.exeIntervalJitter == null) {
+            config.exeIntervalJitter = Defaults.exeIntervalJitter(config.exeInterval);
         }
 
         let queueInfo = this.queues[queueName];
@@ -495,6 +513,18 @@ export class QueueManager {
         jobManager.save(job);
     }
 
+    @Transient()
+    private queueExeIntervals = new Map<any, number>();
+
+    private getQueueExeInterval(queue: any, refresh: boolean) {
+        let interval = this.queueExeIntervals.get(queue);
+        if (interval == null || refresh) {
+            interval = (((queue.config.exeInterval || 0) + (Math.random() * 2 - 1) * (queue.config.exeIntervalJitter || 0)) || 0);
+            this.queueExeIntervals.set(queue, interval);
+        }
+        return interval;
+    }
+
     /**
      * 派发任务
      * @param {WorkerFactoryMap} workerFactoryMap
@@ -519,13 +549,18 @@ export class QueueManager {
                     this.addOnTimeJob(queueName); // 当前队列是 OnTime 任务类型的队列，且队列中的任务全部运行玩了，添加10个新的任务到队列中
                 }
 
+                let exeInterval = this.getQueueExeInterval(queue, false);
                 const workerFactory = workerFactoryMap[(queue.config.workerFactory as any).name];
                 while (
                     !workerFactory.isBusy()
                     && !queue.queue.isEmpty()
                     && (queue.curParallel || 0) < (queue.curMaxParallel || 0)
-                    && now - (queue.lastExeTime || 0) > (queue.config.exeInterval || 0)
+                    && now - (queue.lastExeTime || 0) > exeInterval
                     ) {
+                    // console.log((exeInterval / 1000).toFixed(2));
+                    // 刷新该队列下一次的 exeInterval
+                    exeInterval = this.getQueueExeInterval(queue, true);
+
                     /*
                     满足以下几个条件，任务才能派发成功
                     1. workerFactory 空闲
