@@ -6,6 +6,7 @@
 4. OnStart, OnTime, FromQueue 三种任务的参数配置增加可选属性 exeIntervalJitter，类型为 number，单位为毫秒，让任务执行间隔在 (exeInterval - exeIntervalJitter, exeInterval + exeIntervalJitter) 范围内随机抖动，
     不设置时默认 exeIntervalJitter = exeInterval * 0.25  (OK)  
 5. 一个任务队列默认最大并行数改为 1 (OK)  
+6. 抓取 github 时，发现 PuppeteerUtil.setImgLoad(page, false) 失效，原因待调查  
 
 # 2018-09-13
 1. 通过 AddToQueue 向队列中添加任务时，如果队列不存在，仅打印 waring 级别的日志，而不是抛出异常，这样可以在使用 PuppeteerUtil.links时，
