@@ -64,10 +64,10 @@ export class logger {
         return this._level <= 3;
     }
 
-    private static log(level: "debug" | "info" | "warn" | "error", ...msgs: string[]) {
+    private static log(level: "debug" | "info" | "warn" | "error", ...msgs: any[]) {
         const date = new Date();
         const position = new Error().stack.split("\n")[3].trim().replace(/^at /, "");
-        const msgsStr = (msgs || []).map(item => typeof item === "object" ? JSON.stringify(item, null, 4) : item).join("\n");
+        const msgsStr = (msgs || []).map(item => typeof item === "object" ? JSON.stringify(item, null, 4) : "" + item).join("\n");
         const formatRes = this._format
             .replace(/yyyy/, (substring, ...args) => {
                 return "" + date.getFullYear();
@@ -103,19 +103,19 @@ export class logger {
         console[level](formatRes);
     }
 
-    static debug(...msgs: string[]) {
+    static debug(...msgs: any[]) {
         if (this._level <= 0) this.log("debug", ...msgs);
     }
 
-    static info(...msgs: string[]) {
+    static info(...msgs: any[]) {
         if (this._level <= 1) this.log("info", ...msgs);
     }
 
-    static warn(...msgs: string[]) {
+    static warn(...msgs: any[]) {
         if (this._level <= 2) this.log("warn", ...msgs);
     }
 
-    static error(...msgs: string[]) {
+    static error(...msgs: any[]) {
         if (this._level <= 3) this.log("error", ...msgs);
     }
 
