@@ -591,13 +591,13 @@ export class QueueManager {
                                 if (job.tryNum() >= Defaults.maxTry) {
                                     // 重试次数达到最大，任务失败
                                     job.status(JobStatus.Fail);
+                                    this.failNum++;
                                 }
                                 else {
                                     // 还有重试机会，置为重试等待状态
                                     job.status(JobStatus.RetryWaiting);
                                 }
-                                this.failNum++;
-                                logger.error(successOrError.stack);
+                                logger.error(JSON.stringify(job, null, 4) + "\n" + successOrError.stack);
                             }
 
                             job.exeTimes({

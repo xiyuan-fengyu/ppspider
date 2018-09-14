@@ -1,44 +1,6 @@
 import "source-map-support/register";
 import {StringUtil} from "./StringUtil";
 
-function log(level: "debug" | "info" | "warn" | "error", msg: string, format: string) {
-    const date = new Date();
-    const position = new Error().stack.split("\n")[3].trim().replace(/^at /, "");
-    const formatRes = format
-        .replace(/yyyy/, (substring, ...args) => {
-            return "" + date.getFullYear();
-        })
-        .replace(/MM/, (substring, ...args) => {
-            return StringUtil.preFill("" + (date.getMonth() + 1), 2, "0");
-        })
-        .replace(/dd/, (substring, ...args) => {
-            return StringUtil.preFill("" + date.getDate(), 2, "0");
-        })
-        .replace(/HH/, (substring, ...args) => {
-            return StringUtil.preFill("" + date.getHours(), 2, "0");
-        })
-        .replace(/mm/, (substring, ...args) => {
-            return StringUtil.preFill("" + date.getMinutes(), 2, "0");
-        })
-        .replace(/ss/, (substring, ...args) => {
-            return StringUtil.preFill("" + date.getSeconds(), 2, "0");
-        })
-        .replace(/SSS/, (substring, ...args) => {
-            return StringUtil.preFill("" + date.getMilliseconds(), 3, "0");
-        })
-        .replace(/level/, (substring, ...args) => {
-            return level;
-        })
-        .replace(/position/, (substring, ...args) => {
-            return position;
-        })
-        .replace(/message/, (substring, ...args) => {
-            return msg;
-        })
-    ;
-    console[level](formatRes);
-}
-
 export interface LoggerSetting {
 
     format?: "yyyy-MM-dd HH:mm:ss.SSS [level] position message" | string;
@@ -102,20 +64,59 @@ export class logger {
         return this._level <= 3;
     }
 
-    static debug(msg: string, format?: string) {
-        if (this._level <= 0) log("debug", msg, format || this._format);
+    private static log(level: "debug" | "info" | "warn" | "error", ...msgs: string[]) {
+        const date = new Date();
+        const position = new Error().stack.split("\n")[3].trim().replace(/^at /, "");
+        const msgsStr = (msgs || []).map(item => typeof item === "object" ? JSON.stringify(item, null, 4) : item).join("\n");
+        const formatRes = this._format
+            .replace(/yyyy/, (substring, ...args) => {
+                return "" + date.getFullYear();
+            })
+            .replace(/MM/, (substring, ...args) => {
+                return StringUtil.preFill("" + (date.getMonth() + 1), 2, "0");
+            })
+            .replace(/dd/, (substring, ...args) => {
+                return StringUtil.preFill("" + date.getDate(), 2, "0");
+            })
+            .replace(/HH/, (substring, ...args) => {
+                return StringUtil.preFill("" + date.getHours(), 2, "0");
+            })
+            .replace(/mm/, (substring, ...args) => {
+                return StringUtil.preFill("" + date.getMinutes(), 2, "0");
+            })
+            .replace(/ss/, (substring, ...args) => {
+                return StringUtil.preFill("" + date.getSeconds(), 2, "0");
+            })
+            .replace(/SSS/, (substring, ...args) => {
+                return StringUtil.preFill("" + date.getMilliseconds(), 3, "0");
+            })
+            .replace(/level/, (substring, ...args) => {
+                return level;
+            })
+            .replace(/position/, (substring, ...args) => {
+                return position;
+            })
+            .replace(/message/, (substring, ...args) => {
+                return msgsStr;
+            })
+        ;
+        console[level](formatRes);
     }
 
-    static info(msg: string, format?: string) {
-        if (this._level <= 1) log("info", msg, format || this._format);
+    static debug(...msgs: string[]) {
+        if (this._level <= 0) this.log("debug", ...msgs);
     }
 
-    static warn(msg: string, format?: string) {
-        if (this._level <= 2) log("warn", msg, format || this._format);
+    static info(...msgs: string[]) {
+        if (this._level <= 1) this.log("info", ...msgs);
     }
 
-    static error(msg: string, format?: string) {
-        if (this._level <= 3) log("error", msg, format || this._format);
+    static warn(...msgs: string[]) {
+        if (this._level <= 2) this.log("warn", ...msgs);
+    }
+
+    static error(...msgs: string[]) {
+        if (this._level <= 3) this.log("error", ...msgs);
     }
 
 }
