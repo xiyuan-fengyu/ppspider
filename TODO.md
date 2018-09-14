@@ -7,6 +7,8 @@
     不设置时默认 exeIntervalJitter = exeInterval * 0.25  (OK)  
 5. 一个任务队列默认最大并行数改为 1 (OK)  
 6. 抓取 github 时，发现 PuppeteerUtil.setImgLoad(page, false) 失效，原因待调查  
+7. 用 ppspider_example/src/spread 中的 NedbDao 实现重写 JobManager  
+    重写 NedbDao 获取创建数据库文件的位置， 默认创建到与 Dao.js 同目录下(通过解析Error的stack)，也可以设置文件夹路径  
 
 # 2018-09-13
 1. 通过 AddToQueue 向队列中添加任务时，如果队列不存在，仅打印 waring 级别的日志，而不是抛出异常，这样可以在使用 PuppeteerUtil.links时，
