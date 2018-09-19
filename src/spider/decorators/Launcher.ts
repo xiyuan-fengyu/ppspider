@@ -1,7 +1,7 @@
 import "source-map-support/register";
 import {Looper, LooperTask} from "./LooperTask";
 import {queueManager} from "../manager/QueueManager";
-import {AppInfo, ClientRequest, WorkerFactoryMap} from "../data/Types";
+import {AppInfo, ClientRequest, JobConfig, RequestMappingConfig, WorkerFactoryMap} from "../data/Types";
 import {WebServer} from "../ui/WebServer";
 import {Defaults} from "../data/Defaults";
 import {EventEmitter} from "events";
@@ -10,16 +10,35 @@ import {jobManager} from "../manager/JobManager";
 import {logger} from "../../common/util/logger";
 import {NoneWorkerFactory} from "../worker/NoneWorkerFactory";
 
-const taskInstances: any = {};
+const taskInstances = new Map<any, any>();
 export function getTaskInstances(taskClass) {
-    const ins = taskInstances[taskClass.name];
-    if (ins) return ins;
-    else return taskInstances[taskClass.name] = new taskClass();
+    let ins = taskInstances.get(taskClass.name);
+    if (!ins) {
+        ins = new taskClass();
+        taskInstances.set(taskClass, ins);
+    }
+    return ins;
 }
+
+export const jobConfigs: JobConfig[] = [];
+export const requestMappingConfigs: RequestMappingConfig[] = [];
 
 export const appInfo: AppInfo = {} as any;
 export const mainLooper = new Looper();
 export const mainMessager = new EventEmitter(); // 用于 WebServer 和 ClientRequestHandler 通信
+
+/**
+ * 消息总线事件 key 命名规则
+ * ModuleName_Action_args
+ */
+export enum MainMessagerEvent {
+    WebServer_Request_request = "WebServer_Request_request",
+    WebServer_Response_id_res = "WebServer_Response_id_res",
+    WebServer_Push_key_data = "WebServer_Push_key_data",
+
+    QueueManager_ForceStop = "QueueManager_ForceStop",
+    QueueManager_QueueToggle_queueNameRegex_running = "QueueManager_QueueToggle_queueNameRegex_running",
+}
 
 /**
  * 整个系统的启动入口
@@ -34,12 +53,7 @@ export function Launcher(theAppInfo: AppInfo) {
 
     logger.setting = theAppInfo.logger; // 设置日志配置
 
-    jobManager.init(); // 初始化 jobManager
-    queueManager.loadFromCache(appInfo.workplace + "/queueCache.json"); // 尝试加载之前保存的运行状态
-
-    return function (target) {
-        const webServer = new WebServer(appInfo.webUiPort || Defaults.webUiPort); // 启动UI界面的web服务器
-
+    (async () => {
         const workerFactoryMap: WorkerFactoryMap = {};
         for (let workerFactory of appInfo.workerFactorys) {
             workerFactoryMap[(workerFactory as any).constructor.name] = workerFactory;
@@ -51,6 +65,22 @@ export function Launcher(theAppInfo: AppInfo) {
             workerFactoryMap[kNoneWorkerFactory] = new NoneWorkerFactory();
         }
 
+        // 等待 jobManager 初始化完成， 实际上是等待 nedb 数据库加载完成
+        await jobManager.init();
+
+        // 添加 任务信息
+        queueManager.addJobConfigs(jobConfigs);
+
+        // 向消息总线中添加更改队列运行状态的消息事件监听
+        queueManager.listenQueueToggle();
+
+        // 加载之前保存的运行状态
+        queueManager.loadFromCache(appInfo.workplace + "/queueCache.json");
+
+        // 启动UI界面的web服务器
+        const webServer = new WebServer(appInfo.webUiPort || Defaults.webUiPort);
+
+        // 添加 UI 请求的处理回调
         {
             class ClientRequestHandler {
 
@@ -116,8 +146,8 @@ export function Launcher(theAppInfo: AppInfo) {
                  * @param {ClientRequest} request
                  * @returns {Promise<any>}
                  */
-                static jobs(request: ClientRequest): Promise<any> {
-                    return jobManager.jobs(request.data);
+                static async jobs(request: ClientRequest): Promise<any> {
+                    return await jobManager.jobs(request.data);
                 }
 
                 /**
@@ -134,29 +164,29 @@ export function Launcher(theAppInfo: AppInfo) {
                  * @param {ClientRequest} request
                  * @returns {Promise<any>}
                  */
-                static jobDetail(request: ClientRequest): Promise<any> {
-                    return jobManager.jobDetail(request.data);
+                static async jobDetail(request: ClientRequest): Promise<any> {
+                    return await jobManager.jobDetail(request.data);
                 }
 
             }
             // UI 请求派发给 ClientRequestHandler 处理
-            mainMessager.on("request", async (request: ClientRequest) => {
+            mainMessager.on(MainMessagerEvent.WebServer_Request_request, async (request: ClientRequest) => {
                 const method = ClientRequestHandler[request.key];
                 if (typeof method == "function") {
                     try {
                         const res = await method.call(ClientRequestHandler, request);
-                        mainMessager.emit("response_" + request.id, res);
+                        mainMessager.emit(MainMessagerEvent.WebServer_Response_id_res, request.id, res);
                     }
                     catch (e) {
                         console.warn(e.stack);
-                        mainMessager.emit("response_" + request.id, {
+                        mainMessager.emit(MainMessagerEvent.WebServer_Response_id_res, request.id, {
                             success: false,
                             message: e.message
                         });
                     }
                 }
                 else {
-                    mainMessager.emit("response_" + request.id, {
+                    mainMessager.emit(MainMessagerEvent.WebServer_Response_id_res, request.id, {
                         success: false,
                         message: "method not found"
                     });
@@ -164,31 +194,26 @@ export function Launcher(theAppInfo: AppInfo) {
             });
         }
 
+        // 主循环，目前只用于 任务派发
         class MainLooperTasks {
+
             @LooperTask(mainLooper, 60)
             queueDispatch() {
                 queueManager.dispatch(workerFactoryMap); // 派发任务
             }
 
-            // 系统的实时信息推送方式由 周期推送 改为 事件驱动延迟缓存推送
-            // @LooperTask(mainLooper, 750)
-            // pushToClients() {
-            //     // 推送当前系统的运行状态给UI界面
-            //     mainMessager.emit("push", "info", {
-            //         running: true,
-            //         queue: queueManager.info()
-            //     });
-            // }
         }
 
-        // 启动mainLooper，并等待系统关闭
-        mainLooper.startAndAwaitShutdown().then(async () => {
-            for (let workerFactory of appInfo.workerFactorys) {
-                workerFactory.shutdown();
-            }
-            webServer.shutdown();
-            process.exit(0);
-        });
-    };
+        // 启动 mainLooper，并等待系统关闭
+        await mainLooper.startAndAwaitShutdown();
 
+        // 停止系统
+        for (let workerFactory of appInfo.workerFactorys) {
+            workerFactory.shutdown();
+        }
+        webServer.shutdown();
+        process.exit(0);
+    })();
+
+    return function (target) {};
 }

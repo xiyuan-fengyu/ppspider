@@ -1,19 +1,15 @@
 # 2018-09-14
 1. 任务报错时打印任务的具体信息 (OK)  
 2. 任务失败次数只统计重复尝试后未成功的任务数 (OK)  
-3. logger 打印日志的几个方法的参数列表改为不定项参数列表，不再接受 format 参数， format 只能统一设定，不定参数列表作为消息列表，消息之间自动换行  
+3. logger 打印日志的几个方法的参数列表改为不定项参数列表，不再接受 format 参数， format 只能统一设定，不定参数列表作为消息列表，消息之间自动换行；
     logger 在打印日志时，如果参数是 object 类型，自动采用 JSON.stringify(obj, null, 4) 将 obj 转换为字符串打印 (OK)  
 4. OnStart, OnTime, FromQueue 三种任务的参数配置增加可选属性 exeIntervalJitter，类型为 number，单位为毫秒，让任务执行间隔在 (exeInterval - exeIntervalJitter, exeInterval + exeIntervalJitter) 范围内随机抖动，
     不设置时默认 exeIntervalJitter = exeInterval * 0.25  (OK)  
 5. 一个任务队列默认最大并行数改为 1 (OK)  
-6. 抓取 github 时，发现 PuppeteerUtil.setImgLoad(page, false) 失效，原因待调查  
-7. 用 ppspider_example/src/spread 中的 NedbDao 实现重写 JobManager  
-    重写 NedbDao 获取创建数据库文件的位置， 默认创建到与 Dao.js 同目录下(通过解析Error的stack)，也可以设置文件夹路径  
-
-# 2018-09-13
-1. 通过 AddToQueue 向队列中添加任务时，如果队列不存在，仅打印 waring 级别的日志，而不是抛出异常，这样可以在使用 PuppeteerUtil.links时，
-    可以先将不需要的url匹配到不存在的队列名中  
-    另外为 AddToQueue 注解添加新的参数用于屏蔽上面的warning信息 (OK)  
+6. 用 ppspider_example/src/spread 中的 NedbDao 实现重写 JobManager (OK)    
+7. 为三种任务的 config 增加属性 running，用于控制这个队列是否暂停工作，默认为 true；
+    通过 mainMessager.emit(MainMessagerEvent.QueueManager_QueueToggle_queueName_running, queueNameRegex: string, running: boolean) 来更改多个队列的工作情况 (OK)  
+8. 增加装饰器 @RequestMapping， 用于声明 HTTP rest 接口，提供远程动态添加任务的能力，返回抓取结果需要自行实现（例如异步url回调）(OK)    
 
 # 2018-09-12
 1. 把代码中对 index.ts 中导出类的引用地址改为原路径，这样在编辑器中用户更容定位到源代码位置 (OK)

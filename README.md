@@ -22,6 +22,7 @@
     + [@AddToQueue @FromQueue](#addtoqueue-fromqueue)
     + [@JobOverride](#joboverride)
     + [@Serialize Serializable @Transient](#serialize-serializable-transient)
+    + [@RequestMapping](#requestmapping)
   * [PuppeteerUtil](#puppeteerutil)
     + [PuppeteerUtil.defaultViewPort](#puppeteerutildefaultviewport)
     + [PuppeteerUtil.addJquery](#puppeteerutiladdjquery)
@@ -155,6 +156,9 @@ export type AppInfo = {
     
     // the port for web ui，default 9000  
     webUiPort?: number | 9000;
+    
+    // logger setting
+    logger?: LoggerSetting; 
 }
 ```
 You can get theAppInfo by a global variable: appInfo
@@ -206,7 +210,16 @@ export type OnStartConfig = {
 ```
 [@OnStart example](https://github.com/xiyuan-fengyu/ppspider_example/tree/master/src/quickstart)
 ```
-import {Job, OnStart, PuppeteerUtil, PuppeteerWorkerFactory} from "ppspider";
+import {
+    Job,
+    logger,
+    mainMessager,
+    MainMessagerEvent,
+    NoneWorkerFactory,
+    OnStart, PromiseUtil,
+    PuppeteerUtil,
+    PuppeteerWorkerFactory
+} from "ppspider";
 import {Page} from "puppeteer";
 
 export class TestTask {
@@ -220,12 +233,17 @@ export class TestTask {
         const urls = await PuppeteerUtil.links(page, {
             "all": "http.*"
         });
-        console.log(urls);
+        logger.debugValid && logger.debug(JSON.stringify(urls, null, 4));
+
+        // wait 3000 ms, then start the queue named "OnStart_TestTask_noneWorkerTest"
+        await PromiseUtil.sleep(3000);
+        mainMessager.emit(MainMessagerEvent.QueueManager_QueueToggle_queueNameRegex_running, "OnStart_TestTask_noneWorkerTest", true);
     }
 
     @OnStart({
         urls: "",
         workerFactory: NoneWorkerFactory,
+        running: false, // this queue will wait until a event message which set this property to true after system startup
         parallel: 1,
         exeInterval: 10000
     })
@@ -251,9 +269,13 @@ export type OnTimeConfig = {
     
     workerFactory: WorkerFactoryClass;
     
+    running?: boolean;
+    
     parallel?: ParallelConfig;
     
     exeInterval?: number;
+    
+    exeIntervalJitter?: number;
     
     description?: string;
 }
@@ -326,9 +348,13 @@ export type FromQueueConfig = {
     
     workerFactory: WorkerFactoryClass;
 
+    running?: boolean;
+
     parallel?: ParallelConfig;
     
     exeInterval?: number;
+    
+    exeIntervalJitter?: number;
     
     description?: string;
 }
@@ -401,6 +427,17 @@ These three are mainly used to save running status. You can use @Transient to ig
 related with running status, then the output file will be smaller in size 
 and the possible error caused by deep nested object during deserializing will be avoid.  
 [example](https://github.com/xiyuan-fengyu/ppspider/blob/master/src/test/SerializeTest.ts)
+
+
+
+### @RequestMapping
+```
+export function RequestMapping(url: string, method: "" | "GET" | "POST" = "") {}
+```
+
+@RequestMapping is used to declare the HTTP rest interface, providing the ability to dynamically add tasks remotely. 
+Returning the crawl results requires self-implementation (such as asynchronous url callbacks).
+[RequestMapping example](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/requestMapping/tasks/TestTask.ts)  
 
 
 
@@ -583,6 +620,25 @@ Job panel: search jobs and view details
 ![ppspiderJobs.en.png](https://i.loli.net/2018/08/29/5b862f27e2809.png)
 
 # Update Note
+2018-09-19 v0.1.18
+1. Change the reference address of the exported class in index.ts to the original path, 
+    so that the user can locate the source code location in the editor quickly.   
+2. Print job detail when an error occurred.  
+3. The number of job failures increases after all attempts fail.  
+4. The parameter list of several methods declared in the logger to print log is changed to an indefinite parameter list. 
+    The format parameter is no longer accepted. The indefinite parameter list is used as the message list, and the messages are automatically divided by '\n';
+    The logger automatically converts obj to string using JSON.stringify(obj, null, 4).
+5. Add a new property named "exeIntervalJitter" to OnStart, OnTime, FromQueue, it makes a random jitter in a range to the execution interval(exeInterval).
+    default: exeIntervalJitter = exeInterval * 0.25  
+6. Add a new property named "running" to OnStart, OnTime, FromQueue to control the queue running status, default is true.
+    Change the running status like following: 
+    ```
+    mainMessager.emit(MainMessagerEvent.QueueManager_QueueToggle_queueName_running, queueNameRegex: string, running: boolean)
+    ```
+7. The nedb related code in JobManager is rewritten with NedbDao  
+8. Add a decorator @RequestMapping to declare the HTTP rest interface, providing the ability to dynamically add jobs remotely. 
+    Returning the crawl results requires self-implementation (such as asynchronous url callbacks).  
+
 2018-08-24 v0.1.17  
 1. In job detail modal, add support to recursively load the parent job detail, 
     add target="_blank" to all 'a' elements to open a new tab when clicked  

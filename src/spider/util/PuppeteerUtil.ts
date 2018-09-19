@@ -6,6 +6,7 @@ import * as fs from "fs";
 import {Defaults} from "../data/Defaults";
 import {LinkPredictMap} from "../data/Types";
 import {logger} from "../../common/util/logger";
+import {PromiseUtil} from "../../common/util/PromiseUtil";
 
 export type ResponseListener = (response: Response) => any;
 
@@ -496,8 +497,8 @@ export class PuppeteerUtil {
      * @param {string} selector
      * @returns {Promise<number>}
      */
-    static async count(page: Page, selector: string): Promise<number> {
-        return await page.evaluate(selector => {
+    static count(page: Page, selector: string): Promise<number> {
+        return page.evaluate(selector => {
             const doms = document.querySelectorAll(selector);
             if (doms) return doms.length;
             else return 0;
@@ -542,7 +543,7 @@ export class PuppeteerUtil {
      * @param {number} scrollYDelta
      * @returns {Promise<boolean>}
      */
-    static async scrollToBottom(page: Page, scrollTimeout: number = 30000, scrollInterval: number = 250, scrollYDelta: number = 500) {
+    static scrollToBottom(page: Page, scrollTimeout: number = 30000, scrollInterval: number = 250, scrollYDelta: number = 500) {
         return new Promise<boolean>( resolve => {
             if (scrollTimeout > 0) {
                 setTimeout(() => {

@@ -24,14 +24,8 @@ import {SerializableUtil, Serialize, Transient} from "../../common/serialize/Ser
 import * as fs from "fs";
 import {PromiseUtil} from "../../common/util/PromiseUtil";
 import {jobManager} from "./JobManager";
-import {EventEmitter} from "events";
 import {logger} from "../../common/util/logger";
-import {mainMessager} from "../decorators/Launcher";
-
-const shutdownWaitTimeout = 60000;
-
-const SIGNAL_FORCE_STOP = "SIGNAL_FORCE_STOP";
-const signals = new EventEmitter();
+import {mainMessager, MainMessagerEvent} from "../decorators/Launcher";
 
 /**
  * 任务配置管理和任务派发的核心类，基本上是最重要的类了
@@ -58,6 +52,20 @@ export class QueueManager {
     @Transient()
     private pause = false; // 是否暂停派发任务
 
+    listenQueueToggle() {
+        mainMessager.on(MainMessagerEvent.QueueManager_QueueToggle_queueNameRegex_running,
+            (queueNameRegex: string, running: boolean) => {
+            for (let queueName of Object.keys(this.queues)) {
+                if (queueName.match(queueNameRegex)) {
+                    const queueConfig = this.queues[queueName];
+                    if (queueConfig) {
+                        queueConfig.config.running = running;
+                    }
+                }
+            }
+        });
+    }
+
     resetPause(value: boolean) {
         this.pause = value;
         this.delayPushInfo();
@@ -70,10 +78,10 @@ export class QueueManager {
     async waitRunning() {
         this.pause = true;
         this.delayPushInfo();
-        await PromiseUtil.wait(() => this.runningNum <= 0, 500, shutdownWaitTimeout);
+        await PromiseUtil.wait(() => this.runningNum <= 0, 500, Defaults.queueManagerShutdownTimeout);
         if (this.runningNum > 0) {
             // 发出强行终止任务的信号
-            signals.emit(SIGNAL_FORCE_STOP);
+            mainMessager.emit(MainMessagerEvent.QueueManager_ForceStop);
             await PromiseUtil.wait(() => this.runningNum <= 0, 500);
         }
         if (this.runningNum > 0) this.failNum += this.runningNum;
@@ -185,7 +193,7 @@ export class QueueManager {
             running: this.runningNum,
             fail: this.failNum,
             queues: [],
-            shutdownWaitTimeout: shutdownWaitTimeout
+            shutdownWaitTimeout: Defaults.queueManagerShutdownTimeout
         };
         for (let queueName in this.queues) {
             const queue = this.queues[queueName];
@@ -242,7 +250,7 @@ export class QueueManager {
             this.lastDelayPushTime = new Date().getTime();
             setTimeout(() => {
                 this.lastDelayPushTime = 0;
-                mainMessager.emit("push", "queues", this.info());
+                mainMessager.emit(MainMessagerEvent.WebServer_Push_key_data, "queues", this.info());
             }, 50);
         }
     }
@@ -347,6 +355,10 @@ export class QueueManager {
             queueName = config["type"] + "_" + config["target"].constructor.name + "_" + config["method"];
         }
 
+        if (config.running == null) {
+            config.running = true;
+        }
+
         if (config.parallel == null) {
             config.parallel = Defaults.maxParallel;
         }
@@ -426,6 +438,21 @@ export class QueueManager {
             }
             this.delayPushInfo();
         }
+    }
+
+    addJobConfigs(configs: JobConfig[]) {
+        configs.forEach(config => {
+            const type = config["type"];
+            if (type == "OnStart") {
+                this.addOnStartConfig(config as OnStartConfig);
+            }
+            else if (type == "OnTime") {
+                this.addOnTimeConfig(config as OnTimeConfig);
+            }
+            else if (type == "FromQueue") {
+                this.addFromQueueConfig(config as FromQueueConfig);
+            }
+        });
     }
 
     addOnStartConfig(config: OnStartConfig) {
@@ -517,8 +544,8 @@ export class QueueManager {
     private queueExeIntervals = new Map<any, number>();
 
     private getQueueExeInterval(queue: any, refresh: boolean) {
-        let interval = this.queueExeIntervals.get(queue);
-        if (interval == null || refresh) {
+        let interval;
+        if (refresh || (interval = this.queueExeIntervals.get(queue)) == null) {
             interval = (((queue.config.exeInterval || 0) + (Math.random() * 2 - 1) * (queue.config.exeIntervalJitter || 0)) || 0);
             this.queueExeIntervals.set(queue, interval);
         }
@@ -578,10 +605,18 @@ export class QueueManager {
                         job = queue.queue.peek();
                         if (job) {
                             if (job.datas().other.exeTime > now) job = null;
-                            else queue.queue.pop();
+                            else {
+                                queue.queue.pop();
+                                if (!queue.config.running) {
+                                    // 队列未工作，则忽略这个任务
+                                    job = null;
+                                }
+                            }
                         }
                     }
-                    else job = queue.queue.pop();
+                    else if (queue.config.running) {
+                        job = queue.queue.pop();
+                    }
 
                     if (job) {
                         queue.curParallel = (queue.curParallel || 0) + 1;
@@ -605,11 +640,11 @@ export class QueueManager {
                             const successOrError = await new Promise<any>(async resolve => {
                                 try {
                                     const listener = () => {
-                                        resolve(new Error(SIGNAL_FORCE_STOP));
+                                        resolve(new Error(MainMessagerEvent.QueueManager_ForceStop));
                                     };
-                                    signals.once(SIGNAL_FORCE_STOP, listener);
+                                    mainMessager.once(MainMessagerEvent.QueueManager_ForceStop, listener);
                                     await method.call(target, worker, job);
-                                    signals.removeListener(SIGNAL_FORCE_STOP, listener);
+                                    mainMessager.removeListener(MainMessagerEvent.QueueManager_ForceStop, listener);
                                     resolve(true);
                                 }
                                 catch (e) {

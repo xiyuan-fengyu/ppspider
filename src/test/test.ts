@@ -7,12 +7,11 @@ import {AddToQueueData} from "../spider/data/Types";
 import {FromQueue} from "../spider/decorators/FromQueue";
 import {Launcher} from "../spider/decorators/Launcher";
 import {PuppeteerUtil} from "../spider/util/PuppeteerUtil";
-import {OnTime} from "../spider/decorators/OnTime";
 import {logger} from "../common/util/logger";
-
-import * as puppeteer from "puppeteer";
 import {NoneWorkerFactory} from "../spider/worker/NoneWorkerFactory";
-logger.debug(puppeteer.executablePath());
+import {mainMessager, MainMessagerEvent, NoFilter, PromiseUtil} from "..";
+import {RequestMapping} from "../spider/decorators/RequestMapping";
+import {Request, Response} from "express";
 
 class TestTask {
 
@@ -56,19 +55,44 @@ class TestTask {
         name: "test"
     })
     async index(page: Page, job: Job): AddToQueueData {
+        await PuppeteerUtil.defaultViewPort(page);
+        await PuppeteerUtil.setImgLoad(page, false);
         await page.goto(job.url());
         return PuppeteerUtil.links(page, {
             "test": "http.*"
         });
     }
 
+    @RequestMapping("/addJob/test")
+    @AddToQueue({
+        name: "test",
+        filterType: NoFilter
+    })
+    async addJobTest(req: Request, res: Response, next: any): AddToQueueData {
+        res.send({
+            success: true
+        });
+        return req.query.url;
+    }
+
+    @OnStart({
+        urls: "",
+        workerFactory: NoneWorkerFactory
+    })
+    async delayToStartPrintUrl(useless: any, job: Job) {
+        await PromiseUtil.sleep(5000);
+        logger.debug("toggle test queue to running");
+        mainMessager.emit(MainMessagerEvent.QueueManager_QueueToggle_queueNameRegex_running, "test", true);
+    }
+
     @FromQueue({
         name: "test",
-        workerFactory: PuppeteerWorkerFactory,
+        workerFactory: NoneWorkerFactory,
+        running: false,
         parallel: 1,
-        exeInterval: 100000
+        exeInterval: 1000
     })
-    async printUrl(page: Page, job: Job) {
+    async printUrl(useless: any, job: Job) {
         logger.debug(job.url());
     }
 

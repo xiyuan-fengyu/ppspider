@@ -28,9 +28,10 @@ export type WorkerFactoryClass = new () => WorkerFactory<any>;
 export type OnStartConfig = {
     urls: string | string[]; // 要抓取链接
     workerFactory: WorkerFactoryClass; // worker工厂类型
+    running?: boolean; // 系统启动后该队列是否处于工作状态
     parallel?: ParallelConfig; // 任务并行数配置
-    exeIntervalJitter?: number; // 两个任务的执行间隔时间的抖动范围
     exeInterval?: number; // 两个任务的执行间隔时间
+    exeIntervalJitter?: number; // 在 exeInterval 基础上增加一个随机的抖动，这个值为左右抖动最大半径，默认为 exeIntervalJitter * 0.25
     description?: string; // 任务描述
 }
 
@@ -38,6 +39,7 @@ export type OnTimeConfig = {
     urls: string | string[];
     cron: string; // cron表达式，描述了周期性执行的时间
     workerFactory: WorkerFactoryClass;
+    running?: boolean;
     parallel?: ParallelConfig;
     exeInterval?: number;
     exeIntervalJitter?: number;
@@ -47,10 +49,18 @@ export type OnTimeConfig = {
 export type FromQueueConfig = {
     name: string; // 从该队列获取任务执行
     workerFactory: WorkerFactoryClass;
+    running?: boolean;
     parallel?: ParallelConfig;
     exeInterval?: number;
     exeIntervalJitter?: number;
     description?: string;
+}
+
+export type RequestMappingConfig = {
+    url: string;
+    httpMethod: "" | "GET" | "POST";
+    target: any;
+    method: string;
 }
 
 export type JobConfig =  OnStartConfig | OnTimeConfig | FromQueueConfig;

@@ -21,6 +21,7 @@
     + [@AddToQueue @FromQueue](#addtoqueue-fromqueue)
     + [@JobOverride](#joboverride)
     + [@Serialize Serializable @Transient](#serialize-serializable-transient)
+    + [@RequestMapping](#requestmapping)
   * [工具类 PuppeteerUtil](#%E5%B7%A5%E5%85%B7%E7%B1%BB-puppeteerutil)
     + [PuppeteerUtil.defaultViewPort](#puppeteerutildefaultviewport)
     + [PuppeteerUtil.addJquery](#puppeteerutiladdjquery)
@@ -152,9 +153,12 @@ export type AppInfo = {
     
     // webUiPort属性用于申明系统管理界面的服务器端口，默认9000  
     webUiPort?: number | 9000;
+    
+    // 日志配置
+    logger?: LoggerSetting; 
 }
 ```
-可以通过全局变量 appInfo 访问到这些信息，单启动后不可更改  
+可以通过全局变量 appInfo 访问到这些信息   
 ```
 import {Launcher, PuppeteerWorkerFactory} from "ppspider";
 import {TestTask} from "./tasks/TestTask";
@@ -190,11 +194,18 @@ export type OnStartConfig = {
     // 目前提供的 WorkerFactory 有 ，PuppeteerWorkerFactory, NoneWorkerFactory
     workerFactory: WorkerFactoryClass;
     
+    // 系统启动后该队列是否处于工作状态
+    // 通过 mainMessager.emit(MainMessagerEvent.QueueManager_QueueToggle_queueName_running, queueNameRegex: string, running: boolean) 来更改多个队列的工作情况
+    running?: boolean; 
+    
     // 任务的最大并行数配置，可以是具体的数字，也可以用cron表达式动态设置最大的并行数
     parallel?: ParallelConfig;
     
-    // 该子任务的最小执行间隔，多个并行任务共享同一个间隔  
+    // 该子任务的执行间隔，同一个队列中多个并行任务共享同一个间隔  
     exeInterval?: number;
+    
+    // 在 exeInterval 基础上增加一个随机的抖动，这个值为左右抖动最大半径，默认为 exeIntervalJitter * 0.25
+    exeIntervalJitter?: number; 
     
     // 该子任务的具体描述
     description?: string;
@@ -202,7 +213,16 @@ export type OnStartConfig = {
 ```
 使用例子 [@OnStart example](https://github.com/xiyuan-fengyu/ppspider_example/tree/master/src/quickstart)
 ```
-import {Job, OnStart, PuppeteerUtil, PuppeteerWorkerFactory} from "ppspider";
+import {
+    Job,
+    logger,
+    mainMessager,
+    MainMessagerEvent,
+    NoneWorkerFactory,
+    OnStart, PromiseUtil,
+    PuppeteerUtil,
+    PuppeteerWorkerFactory
+} from "ppspider";
 import {Page} from "puppeteer";
 
 export class TestTask {
@@ -216,12 +236,17 @@ export class TestTask {
         const urls = await PuppeteerUtil.links(page, {
             "all": "http.*"
         });
-        console.log(urls);
+        logger.debugValid && logger.debug(JSON.stringify(urls, null, 4));
+
+        // 等待 3000 毫秒 后启动 OnStart_TestTask_noneWorkerTest 这个队列
+        await PromiseUtil.sleep(3000);
+        mainMessager.emit(MainMessagerEvent.QueueManager_QueueToggle_queueNameRegex_running, "OnStart_TestTask_noneWorkerTest", true);
     }
 
     @OnStart({
         urls: "",
         workerFactory: NoneWorkerFactory,
+        running: false, // 系统启动后这个队列处于等待状态，直到这个属性被一个事件消息更改为 true
         parallel: 1,
         exeInterval: 10000
     })
@@ -250,11 +275,15 @@ export type OnTimeConfig = {
     // 目前提供的 WorkerFactory 有 ，PuppeteerWorkerFactory, NoneWorkerFactory
     workerFactory: WorkerFactoryClass;
     
+    running?: boolean;
+    
     // 任务的最大并行数配置，可以是具体的数字，也可以用cron表达式动态设置最大的并行数
     parallel?: ParallelConfig;
     
     // 该子任务的最小执行间隔，多个并行任务共享同一个间隔  
     exeInterval?: number;
+    
+    exeIntervalJitter?: number;
     
     // 该子任务的具体描述
     description?: string;
@@ -327,17 +356,20 @@ export function FromQueue(config: FromQueueConfig) { ... }
 export type FromQueueConfig = {
     // 队列名
     name: string;
-    
-    
+     
     // worker工厂类型，其类型的实例必须在 @Launcher 参数的workerFactorys属性中申明(NoneWorkerFactory 除外)
     // 目前提供的 WorkerFactory 有 ，PuppeteerWorkerFactory, NoneWorkerFactory
     workerFactory: WorkerFactoryClass;
+    
+    running?: boolean;
     
     // 任务的最大并行数配置，可以是具体的数字，也可以用cron表达式动态设置最大的并行数
     parallel?: ParallelConfig;
     
     // 该子任务的最小执行间隔，多个并行任务共享同一个间隔  
     exeInterval?: number;
+    
+    exeIntervalJitter?: number;
     
     // 该子任务的具体描述
     description?: string;
@@ -409,6 +441,13 @@ export function Transient() { ... }
 时候，一定要用 @Transient 来忽略该字段，可以减小序列化后文件的大小，也可以避免对象嵌套太深导致的反序列化失败  
 [example](https://github.com/xiyuan-fengyu/ppspider/blob/master/src/test/SerializeTest.ts)
 
+
+### @RequestMapping
+```
+export function RequestMapping(url: string, method: "" | "GET" | "POST" = "") {}
+```
+@RequestMapping 用于声明 HTTP rest 接口，提供远程动态添加任务的能力，返回抓取结果需要自行实现（例如异步url回调）
+[RequestMapping example](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/requestMapping/tasks/TestTask.ts)  
 
 
 ## 工具类 PuppeteerUtil
@@ -582,6 +621,20 @@ Job 面板可以对所有子任务实例进行搜索，查看任务详情
 ![ppspiderJobs.cn.png](https://i.loli.net/2018/08/29/5b862ef9b9dd5.png)
 
 # 更新日志
+2018-09-19 v0.1.18
+1. 把代码中对 index.ts 中导出类的引用地址改为原路径，这样在编辑器中用户更容定位到源代码位置  
+2. 任务报错时打印任务的具体信息  
+3. 任务失败次数只统计重复尝试失败后的次数  
+4. logger 打印日志的几个方法的参数列表改为不定项参数列表，不再接受 format 参数（format 只能统一设定），不定参数列表作为消息列表，消息之间自动换行；
+    logger 在打印日志时，如果参数是 object 类型，自动采用 JSON.stringify(obj, null, 4) 将 obj 转换为字符串    
+5. OnStart, OnTime, FromQueue 三种任务的参数配置增加可选属性 exeIntervalJitter，类型为 number，单位为毫秒，
+    让任务执行间隔在 (exeInterval - exeIntervalJitter, exeInterval + exeIntervalJitter) 范围内随机抖动，
+    不设置时默认 exeIntervalJitter = exeInterval * 0.25
+6. 为三种任务的 config 增加属性 running，用于控制这个队列是否暂停工作，默认为 true，
+    可通过 mainMessager.emit(MainMessagerEvent.QueueManager_QueueToggle_queueName_running, queueNameRegex: string, running: boolean) 来更改多个队列的工作情况
+7. JobManager 和 nedb 相关的代码使用 NedbDao 重写  
+8. 增加装饰器 @RequestMapping， 用于声明 HTTP rest 接口，提供远程动态添加任务的能力，返回抓取结果需要自行实现（例如异步url回调）         
+
 2018-08-24 v0.1.17  
 1. ui 任务详情弹框中增加递归查询父任务的功能，所有连接的改为 target="_blank"  
 2. 系统的实时信息推送方式由 周期推送 改为 事件驱动延迟缓存推送  

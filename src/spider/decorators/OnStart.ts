@@ -1,6 +1,5 @@
 import {OnStartConfig} from "../data/Types";
-import {queueManager} from "../manager/QueueManager";
-import {getTaskInstances} from "./Launcher";
+import {getTaskInstances, jobConfigs} from "./Launcher";
 
 /**
  * 添加一个系统启动后立即执行的任务配置
@@ -13,7 +12,8 @@ export function OnStart(config: OnStartConfig) {
         config["type"] = "OnStart";
         config["target"] = getTaskInstances(target.constructor);
         config["method"] = key;
-        queueManager.addOnStartConfig(config);
+        jobConfigs.push(config);
+        // queueManager.addOnStartConfig(config);
         return descriptor;
     }
 }

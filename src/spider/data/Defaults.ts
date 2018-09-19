@@ -15,6 +15,8 @@ export class Defaults {
 
     static responseTimeoutMin = 1000;
 
+    static queueManagerShutdownTimeout = 60000;
+
     static webUiPort = 9000;
 
 }

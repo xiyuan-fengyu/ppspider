@@ -1,6 +1,5 @@
 import {FromQueueConfig} from "../data/Types";
-import {queueManager} from "../manager/QueueManager";
-import {getTaskInstances} from "./Launcher";
+import {getTaskInstances, jobConfigs} from "./Launcher";
 
 /**
  * 从一个任务队列中获取任务并执行
@@ -14,7 +13,8 @@ export function FromQueue(config: FromQueueConfig) {
         config["type"] = "FromQueue";
         config["target"] = getTaskInstances(target.constructor);
         config["method"] = key;
-        queueManager.addFromQueueConfig(config);
+        jobConfigs.push(config);
+        // queueManager.addFromQueueConfig(config);
         return descriptor;
     }
 }
