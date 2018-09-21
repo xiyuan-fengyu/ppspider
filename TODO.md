@@ -1,3 +1,6 @@
+# 2018-09-21
+1. QueueManager 推送队列状态信息时，所有队列按照 TaskClassName > JobType(OnStart > OnTime > FromQueue) > JobExecutionMethodPosition 的方式来排序 (OK)    
+
 # 2018-09-14
 1. 任务报错时打印任务的具体信息 (OK)  
 2. 任务失败次数只统计重复尝试后未成功的任务数 (OK)  

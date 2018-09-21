@@ -195,6 +195,7 @@ export class QueueManager {
             queues: [],
             shutdownWaitTimeout: Defaults.queueManagerShutdownTimeout
         };
+
         for (let queueName in this.queues) {
             const queue = this.queues[queueName];
             if (!queue.config || !queue.queue) continue;
@@ -239,6 +240,22 @@ export class QueueManager {
             }
             res.queues.push(queueInfo);
         }
+
+        // 对 res.queues 进行排序，排序规则：按照 TaskClassName > JobType(OnStart > OnTime > FromQueue) > JobExecutionMethodPosition 的三个要素来排序
+        const queueTypes = {OnStart: 0, OnTime: 1, FromQueue: 2};
+        res.queues.sort((item1, item2) => {
+            if (item1.target !== item2.target) {
+                return item1.target > item2.target;
+            }
+            else if (item1.type != item2.type) {
+                return queueTypes[item1.type] > queueTypes[item2.type];
+            }
+            else {
+                const methods = this.targetMethods[item1.target];
+                return (methods[item1.method] || 0) - (methods[item2.method] || 0);
+            }
+        });
+
         return res;
     }
 
@@ -380,7 +397,35 @@ export class QueueManager {
         queueInfo.config = config;
         this.resetQueueParallel(queueInfo);
 
+        this.refreshTargetMethods();
+
         return queueName;
+    }
+
+    /**
+     * 记录所有 TaskClass 中 method 的排序，用于后续 info 方法中对 queues 排序
+     * @type {{}}
+     */
+    @Transient()
+    private targetMethods: any = {};
+
+    private refreshTargetMethods() {
+        const targets: any = {};
+        for (let queueName in this.queues) {
+            const queue = this.queues[queueName];
+            if (!queue.config || !queue.queue) continue;
+            const target = queue.config['target'];
+            const targetName = target.constructor.name;
+            let methods = null;
+            if ((methods = targets[targetName]) == null) {
+                targets[targetName] = methods = {};
+            }
+            const methodName = queue.config['method'];
+            if (methods[methodName] == null) {
+                methods[methodName] = Object.keys(methods).length;
+            }
+        }
+        this.targetMethods = targets;
     }
 
     /**

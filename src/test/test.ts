@@ -9,7 +9,7 @@ import {Launcher} from "../spider/decorators/Launcher";
 import {PuppeteerUtil} from "../spider/util/PuppeteerUtil";
 import {logger} from "../common/util/logger";
 import {NoneWorkerFactory} from "../spider/worker/NoneWorkerFactory";
-import {mainMessager, MainMessagerEvent, NoFilter, PromiseUtil} from "..";
+import {mainMessager, MainMessagerEvent, NoFilter, OnTime, PromiseUtil} from "..";
 import {RequestMapping} from "../spider/decorators/RequestMapping";
 import {Request, Response} from "express";
 
@@ -27,14 +27,14 @@ class TestTask {
 
 
 
-    // @OnTime({
-    //     urls: "http://www.baidu.com",
-    //     cron: "*/5 * * * * *",
-    //     workerFactory: PuppeteerWorkerFactory
-    // })
-    // async index(page: Page, job: Job) {
-    //     console.log(job.datas());
-    // }
+    @OnTime({
+        urls: "",
+        cron: "*/5 * * * * *",
+        workerFactory: NoneWorkerFactory
+    })
+    async onTime(useless: any, job: Job) {
+        logger.debug("just test: " + new Date().getTime());
+    }
 
 
 
@@ -167,6 +167,7 @@ class TestTask {
     ],
     logger: {
         level: "debug"
-    }
+    },
+    webUiPort: 9001
 })
 class App {}
