@@ -397,7 +397,7 @@ export class QueueManager {
         queueInfo.config = config;
         this.resetQueueParallel(queueInfo);
 
-        this.refreshTargetMethods();
+        this.refreshTargetMethods(queueName);
 
         return queueName;
     }
@@ -409,23 +409,18 @@ export class QueueManager {
     @Transient()
     private targetMethods: any = {};
 
-    private refreshTargetMethods() {
-        const targets: any = {};
-        for (let queueName in this.queues) {
-            const queue = this.queues[queueName];
-            if (!queue.config || !queue.queue) continue;
-            const target = queue.config['target'];
-            const targetName = target.constructor.name;
-            let methods = null;
-            if ((methods = targets[targetName]) == null) {
-                targets[targetName] = methods = {};
-            }
-            const methodName = queue.config['method'];
-            if (methods[methodName] == null) {
-                methods[methodName] = Object.keys(methods).length;
-            }
+    private refreshTargetMethods(queueName: string) {
+        const queue = this.queues[queueName];
+        const target = queue.config['target'];
+        const targetName = target.constructor.name;
+        let methods;
+        if ((methods = this.targetMethods[targetName]) == null) {
+            this.targetMethods[targetName] = methods = {};
         }
-        this.targetMethods = targets;
+        const methodName = queue.config['method'];
+        if (methods[methodName] == null) {
+            methods[methodName] = Object.keys(methods).length;
+        }
     }
 
     /**
