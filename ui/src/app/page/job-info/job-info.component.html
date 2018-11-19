@@ -29,6 +29,7 @@
           [floatLabel]="'never'">
           <mat-select
             [name]="'value'"
+            [multiple]="true"
             [(ngModel)]="condition.value" placeholder="value"
             (selectionChange)="saveSearchState()">
             <mat-option *ngFor="let option of condition.field.options" [value]="option">{{option.key || option}}</mat-option>

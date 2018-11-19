@@ -77,9 +77,14 @@ export class JobInfoComponent implements OnInit {
       types: ["number", "date"]
     },
     {
-      key: "eq",
+      key: "$eq",
       label: "=",
       types: ["number", "date", "text"]
+    },
+    {
+      key: "$in",
+      label: "in",
+      types: ["select"]
     },
     {
       key: "$lte",
@@ -138,7 +143,14 @@ export class JobInfoComponent implements OnInit {
       const con: any = {};
       if (condition.field) con.fieldKey = condition.field.key;
       if (condition.operator) con.operatorKey = condition.operator.key;
-      if (condition.value) con.value = typeof condition.value == "object" ? condition.value["value"] : condition.value;
+      if (condition.value) {
+        if (condition.value instanceof Array) {
+          con.value = condition.value.map(item => item.value == null ? item : item.value);
+        }
+        else {
+          con.value = typeof condition.value == "object" ? condition.value["value"] : condition.value;
+        }
+      }
       cons.push(con);
     });
     localStorage.setItem("jobSearchState", JSON.stringify({
@@ -158,7 +170,7 @@ export class JobInfoComponent implements OnInit {
         if (con.fieldKey) condition.field = this.searchFields.find(item => item.key == con.fieldKey);
         if (con.operatorKey) condition.operator = this.operators.find(item => item.key == con.operatorKey);
         if (condition.field && condition.field.type == "select" && con.value != null) {
-          condition.value = condition.field.options.find(item => item == con.value || item.value == con.value);
+          condition.value = condition.field.options.filter(item => con.value.indexOf(item.value == null ? item : item.value) > -1);
         }
         else condition.value = con.value;
         conditions.push(condition);
@@ -173,7 +185,7 @@ export class JobInfoComponent implements OnInit {
 
   conditionFieldChanged(condition) {
     condition.value = null;
-    if (condition.field && condition.field.type == "select") condition.operator = this.operators.find(item => item.key == "eq");
+    if (condition.field && condition.field.type == "select") condition.operator = this.operators.find(item => item.key == "$in");
     else condition.operator = this.operators.find(item => item.types.indexOf(condition.field.type) > -1);
   }
 
@@ -218,8 +230,8 @@ export class JobInfoComponent implements OnInit {
         const field = con.field.key;
         const operator = con.operator.key;
         let value = null;
-        if (field == "status") {
-          if (con.value) value = con.value.value;
+        if (con.field.type == "select" && con.value instanceof Array) {
+          value = con.value.map(item => item.value == null ? item : item.value);
         }
         else if (field == "createTime" && con.value){
           value = new Date(con.value).getTime();
@@ -233,7 +245,7 @@ export class JobInfoComponent implements OnInit {
         }
 
         if (value != null) {
-          if (operator == "eq") {
+          if (operator == "$eq") {
             let temp: any = {};
             temp[field] = value;
             cons.push(temp)

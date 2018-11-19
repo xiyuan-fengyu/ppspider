@@ -67,7 +67,14 @@ export class logger {
     private static log(level: "debug" | "info" | "warn" | "error", ...msgs: any[]) {
         const date = new Date();
         const position = new Error().stack.split("\n")[3].trim().replace(/^at /, "");
-        const msgsStr = (msgs || []).map(item => typeof item === "object" ? JSON.stringify(item, null, 4) : "" + item).join("\n");
+        const msgsStr = (msgs || []).map(item => {
+            if (item.constructor == Error) {
+                return "\n" + item.stack;
+            }
+            else {
+                return typeof item === "object" ? JSON.stringify(item, null, 4) : "" + item;
+            }
+        }).join("\n");
         const formatRes = this._format
             .replace(/yyyy/, (substring, ...args) => {
                 return "" + date.getFullYear();

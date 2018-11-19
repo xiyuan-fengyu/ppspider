@@ -1,6 +1,10 @@
+# 2018-11-19
+1. 修复 logger 打印 Error 始终为 {} 的问题(OK 2018-11-19)  
+2. 更新puppeteer版本(OK 2018-11-19)  
+
 # 2018-09-21
 1. QueueManager 推送队列状态信息时，所有队列按照 TaskClassName > JobType(OnStart > OnTime > FromQueue) > JobExecutionMethodPosition 的方式来排序 (OK)    
-2. UI界面搜索添加条件时，如果是选择类型的，则采用checkbox可勾选多项的方式
+2. UI界面搜索添加条件时，如果是选择类型的，则采用checkbox可勾选多项的方式(OK 2018-11-19)  
 
 # 2018-09-14
 1. 任务报错时打印任务的具体信息 (OK)  

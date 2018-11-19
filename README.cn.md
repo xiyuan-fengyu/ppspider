@@ -53,25 +53,16 @@ https://github.com/GoogleChrome/puppeteer/blob/master/docs/api.md
     # unix
     export PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=1
     ```
-    然后到 [这里](https://download-chromium.appspot.com/) 下载 chromium 或者
-    直接使用本地已安装的 chrome  
-    最后在 Launcher 中实例化 PuppeteerWorkerFactory 的时候，通过 executablePath 字段
-    指定 chromium / chrome 的路径  
+    
+    然后编写一个 src/temp.ts（ppspider_example/src/quickstart/App.ts中也有这段代码），内容如下  
     ```
-    @Launcher({
-        workplace: __dirname + "/workplace",
-        tasks: [
-            TestTask
-        ],
-        workerFactorys: [
-            new PuppeteerWorkerFactory({
-                headless: false,
-                executablePath: "YOU_CHROMIUM_OR_CHROME_EXECUTE_PATH"
-            })
-        ]
-    })
-    class App {}
+    import * as puppeteer from "puppeteer";
+    const chromiumInfo = (puppeteer as any).createBrowserFetcher({})
+        .revisionInfo(require("puppeteer/package.json").puppeteer.chromium_revision);
+    logger.debug("", "download url: " + chromiumInfo.url, "chromium path: " + chromiumInfo.executablePath.replace(/\\/g, '/'));
     ```
+    运行之后，便可知道对应版本的chromium的下载地址和本地保存路径，然后通过其他
+    手段下载压缩包，并解压到相应的文件夹即可    
 
 # 快速起步
 ## 安装nodejs
@@ -621,7 +612,12 @@ Job 面板可以对所有子任务实例进行搜索，查看任务详情
 ![ppspiderJobs.cn.png](https://i.loli.net/2018/08/29/5b862ef9b9dd5.png)
 
 # 更新日志
-2018-09-19 v0.1.18
+2018-11-19 v0.1.19  
+1. 修复 logger 打印 Error 始终为 {} 的问题  
+2. UI界面搜索添加条件时，如果是选择类型的，则采用checkbox可勾选多项的方式  
+3. 更新puppeteer版本  
+  
+2018-09-19 v0.1.18  
 1. 把代码中对 index.ts 中导出类的引用地址改为原路径，这样在编辑器中用户更容定位到源代码位置  
 2. 任务报错时打印任务的具体信息  
 3. 任务失败次数只统计重复尝试失败后的次数  

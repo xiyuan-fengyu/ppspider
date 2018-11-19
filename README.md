@@ -57,24 +57,15 @@ https://github.com/GoogleChrome/puppeteer/blob/master/docs/api.md
     # unix
     export PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=1
     ```
-    Then you can download chromium at this page (https://download-chromium.appspot.com/) or
-    use the local chrome installed.  
-    Finally, init the PuppeteerWorkerFactory with parameter named 'executablePath'.  
+    Then write a typescript src/temp.ts with the following code:
     ```
-    @Launcher({
-        workplace: __dirname + "/workplace",
-        tasks: [
-            TestTask
-        ],
-        workerFactorys: [
-            new PuppeteerWorkerFactory({
-                headless: false,
-                executablePath: "YOU_CHROMIUM_OR_CHROME_EXECUTE_PATH"
-            })
-        ]
-    })
-    class App {}
+    import * as puppeteer from "puppeteer";
+    const chromiumInfo = (puppeteer as any).createBrowserFetcher({})
+        .revisionInfo(require("puppeteer/package.json").puppeteer.chromium_revision);
+    logger.debug("", "download url: " + chromiumInfo.url, "chromium path: " + chromiumInfo.executablePath.replace(/\\/g, '/'));
     ```
+    Run it and you can see the chromium download url and the local path to save.  
+    You can download the chromium by other tools and extract it to the right place.  
 
 
 # Quick Start
@@ -620,6 +611,11 @@ Job panel: search jobs and view details
 ![ppspiderJobs.en.png](https://i.loli.net/2018/08/29/5b862f27e2809.png)
 
 # Update Note
+2018-11-19 v0.1.19
+1. Fix a bug: the logger always print error as '{}'.   
+2. You can select multiple items when the condition has a list of options on the UI interface.    
+3. Update puppeteer version to 0.10.0.  
+
 2018-09-19 v0.1.18
 1. Change the reference address of the exported class in index.ts to the original path, 
     so that the user can locate the source code location in the editor quickly.   

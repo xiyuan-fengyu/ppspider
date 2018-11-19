@@ -55,6 +55,7 @@ class TestTask {
         name: "test"
     })
     async index(page: Page, job: Job): AddToQueueData {
+        logger.info(new Error("just test"));
         await PuppeteerUtil.defaultViewPort(page);
         await PuppeteerUtil.setImgLoad(page, false);
         await page.goto(job.url());
@@ -168,6 +169,6 @@ class TestTask {
     logger: {
         level: "debug"
     },
-    webUiPort: 9001
+    webUiPort: 9000
 })
 class App {}
