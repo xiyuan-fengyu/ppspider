@@ -50,21 +50,25 @@
 https://github.com/GoogleChrome/puppeteer/blob/master/docs/api.md   
 ## Questions about puppeteer
 1. When installing puppeteer, it will download chromium by default. If download is fail, you 
-    can set temp environment variable by terminal before executing 'npm install'  
+    can set temp environment variable in terminal before executing 'npm install'  
     ```
     # win
     set PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=1
     # unix
     export PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=1
     ```
+    
+    Run "npm install".  
+    
     Then write a typescript src/temp.ts with the following code:
     ```
+    import {logger} from "ppspider";
     import * as puppeteer from "puppeteer";
     const chromiumInfo = (puppeteer as any).createBrowserFetcher({})
         .revisionInfo(require("puppeteer/package.json").puppeteer.chromium_revision);
     logger.debug("", "download url: " + chromiumInfo.url, "chromium path: " + chromiumInfo.executablePath.replace(/\\/g, '/'));
     ```
-    Run it and you can see the chromium download url and the local path to save.  
+    Run "tsc" in terminal to compile. Then run the compiled js, the chromium download url and the local path to save will be printed.  
     You can download the chromium by other tools and extract it to the right place.  
 
 

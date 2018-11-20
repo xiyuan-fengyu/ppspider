@@ -46,7 +46,7 @@
 https://github.com/GoogleChrome/puppeteer/blob/master/docs/api.md     
 ## Puppeteer 相关问题
 1. puppeteer 在安装过程中会自动下载 chromium 浏览器，如果下载不成功，  
-    可以在执行npm install之前通过命令行设置临时环境变量  
+    可以在执行npm install之前在命令行运行如下命令设置临时环境变量  
     ```
     # win
     set PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=1
@@ -54,14 +54,17 @@ https://github.com/GoogleChrome/puppeteer/blob/master/docs/api.md
     export PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=1
     ```
     
+    重新运行"npm install"安装依赖  
+    
     然后编写一个 src/temp.ts（ppspider_example/src/quickstart/App.ts中也有这段代码），内容如下  
     ```
+    import {logger} from "ppspider";
     import * as puppeteer from "puppeteer";
     const chromiumInfo = (puppeteer as any).createBrowserFetcher({})
         .revisionInfo(require("puppeteer/package.json").puppeteer.chromium_revision);
     logger.debug("", "download url: " + chromiumInfo.url, "chromium path: " + chromiumInfo.executablePath.replace(/\\/g, '/'));
     ```
-    运行之后，便可知道对应版本的chromium的下载地址和本地保存路径，然后通过其他
+    运行 tsc 编译 ts文件。 运行编译之后的 js 文件，便可知道对应版本的chromium的下载地址和本地保存路径，然后通过其他
     手段下载压缩包，并解压到相应的文件夹即可    
 
 # 快速起步
