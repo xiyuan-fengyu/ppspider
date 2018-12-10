@@ -615,6 +615,9 @@ Job panel: search jobs and view details
 ![ppspiderJobs.en.png](https://i.loli.net/2018/08/29/5b862f27e2809.png)
 
 # Update Note
+2018-12-10 v0.1.20
+1. Fix a bug: duplicate instances of the same user defined Task are created    
+
 2018-11-19 v0.1.19
 1. Fix a bug: the logger always print error as '{}'.   
 2. You can select multiple items when the condition has a list of options on the UI interface.    

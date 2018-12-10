@@ -12,7 +12,7 @@ import {NoneWorkerFactory} from "../worker/NoneWorkerFactory";
 
 const taskInstances = new Map<any, any>();
 export function getTaskInstances(taskClass) {
-    let ins = taskInstances.get(taskClass.name);
+    let ins = taskInstances.get(taskClass);
     if (!ins) {
         ins = new taskClass();
         taskInstances.set(taskClass, ins);
