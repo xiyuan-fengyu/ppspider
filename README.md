@@ -2,7 +2,7 @@
 
 <!-- toc -->
 
-- [Translations](#translations)
+- [中文文档](#%E4%B8%AD%E6%96%87%E6%96%87%E6%A1%A3)
 - [Puppeteer Doc](#puppeteer-doc)
   * [Questions about puppeteer](#questions-about-puppeteer)
 - [Quick Start](#quick-start)
@@ -43,8 +43,8 @@
 
 <!-- tocstop -->
 
-# Translations
-[中文文档](https://github.com/xiyuan-fengyu/ppspider/blob/master/README.cn.md)  
+# 中文文档  
+https://github.com/xiyuan-fengyu/ppspider/blob/master/README.cn.md  
 
 # Puppeteer Doc
 https://github.com/GoogleChrome/puppeteer/blob/master/docs/api.md   
