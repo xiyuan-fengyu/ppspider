@@ -1,4 +1,5 @@
-import {JobExeTime} from "../data/Types";
+
+import {DateUtil} from "../../common/util/DateUtil";
 
 export enum JobStatus {
     // 新创建
@@ -31,7 +32,11 @@ export function instanceofJob(obj: any): obj is Job {
         && typeof cast.status == "function"
         && typeof cast.tryNum == "function"
         && typeof cast.createTime == "function"
-        && typeof cast.exeTimes == "function";
+        && typeof cast.logs == "function";
+}
+
+export function formatLog(level: "debug" | "info" | "warn" | "error", msg: string) {
+    return DateUtil.toStr(new Date(), "yyyy-MM-dd HH:mm:ss.SSS") + " [" + level + "] " + msg;
 }
 
 export interface Job {
@@ -69,7 +74,7 @@ export interface Job {
     // 创建时间
     createTime(): number;
 
-    // 插入执行时间 或 查询执行时间的记录
-    exeTimes(time?: JobExeTime): JobExeTime[];
+    // 有参数：插入日志；无参数：返回所有日志；可以通过 formatLog 方法来构建标准格式的日志
+    logs(log?: string): string[];
 
 }

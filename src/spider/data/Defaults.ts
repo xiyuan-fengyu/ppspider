@@ -3,20 +3,22 @@
  */
 export class Defaults {
 
-    static maxParallel = 1;
+    static readonly maxParallel = 1;
 
-    static exeInterval = 0;
+    static readonly exeInterval = 0;
 
-    static exeIntervalJitter = exeInterval => parseInt("" + exeInterval * 0.25);
+    static readonly exeIntervalJitter = exeInterval => parseInt("" + exeInterval * 0.25);
 
-    static maxTry = 3;
+    static readonly maxTry = 3;
 
-    static responseTimeout = 30000;
+    static readonly responseTimeout = 30000;
 
-    static responseTimeoutMin = 1000;
+    static readonly responseTimeoutMin = 1000;
 
-    static queueManagerShutdownTimeout = 60000;
+    static readonly jobTimeout = 300000;
 
-    static webUiPort = 9000;
+    static readonly queueManagerShutdownTimeout = 60000;
+
+    static readonly webUiPort = 9000;
 
 }

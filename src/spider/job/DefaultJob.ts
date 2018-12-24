@@ -1,5 +1,4 @@
 import {Job, JobStatus} from "./Job";
-import {JobExeTime} from "../data/Types";
 import {Serialize} from "../../common/serialize/Serialize";
 import {StringUtil} from "../../common/util/StringUtil";
 
@@ -28,7 +27,7 @@ export class DefaultJob implements Job {
 
     private _createTime: number;
 
-    private _exeTimes: JobExeTime[];
+    private _logs: string[];
 
     id(): string {
         return this._id;
@@ -98,17 +97,12 @@ export class DefaultJob implements Job {
         return this._createTime;
     }
 
-    exeTimes(time?: JobExeTime): JobExeTime[] {
-        if (!this._exeTimes) this._exeTimes = [];
-        if (time) {
-            if (time.start != null) {
-                this._exeTimes.push(time);
-            }
-            else if (time.end != null && this._exeTimes.length > 0) {
-                this._exeTimes[this._exeTimes.length - 1].end = time.end;
-            }
+    logs(log?: string): string[] {
+        if (!this._logs) this._logs = [];
+        if (log) {
+            this._logs.push(log);
         }
-        return this._exeTimes;
+        return this._logs;
     }
 
     constructor(url: string) {

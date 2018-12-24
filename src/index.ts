@@ -33,7 +33,7 @@ export {BloonFilter} from "./spider/filter/BloonFilter";
 export {Filter} from "./spider/filter/Filter";
 export {NoFilter} from "./spider/filter/NoFilter";
 export {DefaultJob} from "./spider/job/DefaultJob";
-export {JobStatus, instanceofJob, Job} from "./spider/job/Job";
+export {JobStatus, instanceofJob, Job, formatLog} from "./spider/job/Job";
 export {DefaultPriorityQueue} from "./spider/queue/DefaultPriorityQueue";
 export {DefaultQueue} from "./spider/queue/DefaultQueue";
 export {AbsQueue} from "./spider/queue/AbsQueue";

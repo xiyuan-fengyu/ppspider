@@ -52,10 +52,10 @@ class TestTask {
     //     workerFactory: PuppeteerWorkerFactory
     // })
     @AddToQueue({
-        name: "test"
+        name: "test",
     })
     async index(page: Page, job: Job): AddToQueueData {
-        logger.info(new Error("just test"));
+        // logger.info(new Error("just test"));
         await PuppeteerUtil.defaultViewPort(page);
         await PuppeteerUtil.setImgLoad(page, false);
         await page.goto(job.url());

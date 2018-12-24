@@ -13,7 +13,7 @@ import {
 } from "../data/Types";
 import {CronUtil} from "../../common/util/CronUtil";
 import {Defaults} from "../data/Defaults";
-import {instanceofJob, Job, JobStatus} from "../job/Job";
+import {formatLog, instanceofJob, Job, JobStatus} from "../job/Job";
 import {Queue} from "../queue/Queue";
 import {BloonFilter} from "../filter/BloonFilter";
 import {DefaultQueue} from "../queue/DefaultQueue";
@@ -571,9 +571,11 @@ export class QueueManager {
             if (filter) filter.setExisted(job);
             queue.push(job);
             if (job.status() != JobStatus.RetryWaiting)job.status(JobStatus.Waiting);
+            job.logs(formatLog("info", "add to queue"));
         }
         else {
             job.status(JobStatus.Filtered);
+            job.logs(formatLog("warn", "filtered"));
         }
 
         // 保存job的当前状态信息
@@ -670,18 +672,25 @@ export class QueueManager {
                             this.runningNum++;
                             this.delayPushInfo();
 
-                            job.exeTimes({
-                                start: new Date().getTime()
-                            });
+                            job.logs(formatLog("info", "start execution"));
                             job.status(JobStatus.Running);
                             job.tryNum(job.tryNum() + 1);
                             jobManager.save(job);
 
                             const successOrError = await new Promise<any>(async resolve => {
                                 try {
+                                    // 如果任务设置有超时时间，则设置超时回调
+                                    if (queue.config.timeout == null || queue.config.timeout >= 0) {
+                                        const timeout = queue.config.timeout || Defaults.jobTimeout;
+                                        setTimeout(() => {
+                                            resolve(new Error("job timeout in " + timeout + "ms"));
+                                        }, timeout);
+                                    }
+
                                     const listener = () => {
                                         resolve(new Error(MainMessagerEvent.QueueManager_ForceStop));
                                     };
+                                    // ppspider系统关闭，强制停止任务
                                     mainMessager.once(MainMessagerEvent.QueueManager_ForceStop, listener);
                                     await method.call(target, worker, job);
                                     mainMessager.removeListener(MainMessagerEvent.QueueManager_ForceStop, listener);
@@ -695,6 +704,7 @@ export class QueueManager {
                             // 执行后更新信息
                             if (successOrError === true) {
                                 job.status(JobStatus.Success);
+                                job.logs(formatLog("info", "executed successfully"));
                                 this.successNum++;
                             }
                             else {
@@ -707,12 +717,11 @@ export class QueueManager {
                                     // 还有重试机会，置为重试等待状态
                                     job.status(JobStatus.RetryWaiting);
                                 }
-                                logger.error(JSON.stringify(job, null, 4) + "\n" + successOrError.stack);
+                                const e = successOrError as Error;
+                                job.logs(formatLog("error", e.stack));
+                                logger.error(JSON.stringify(job, null, 4) + "\n" + e.stack);
                             }
 
-                            job.exeTimes({
-                                end: new Date().getTime()
-                            });
                             this.runningNum--;
                             this.delayPushInfo();
                             return worker;

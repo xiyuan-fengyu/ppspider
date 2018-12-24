@@ -4,11 +4,6 @@ import {Queue} from "../queue/Queue";
 import {Job} from "../job/Job";
 import {LoggerSetting} from "../../common/util/logger";
 
-export type JobExeTime = {
-    start?: number; // job 开始执行的时间
-    end?: number; // job 执行结束的时间
-}
-
 export type QueueClass = new () => Queue;
 
 export type FilterClass = new () => Filter;
@@ -32,6 +27,7 @@ export type OnStartConfig = {
     parallel?: ParallelConfig; // 任务并行数配置
     exeInterval?: number; // 两个任务的执行间隔时间
     exeIntervalJitter?: number; // 在 exeInterval 基础上增加一个随机的抖动，这个值为左右抖动最大半径，默认为 exeIntervalJitter * 0.25
+    timeout?: number; // 任务超时时间，单位：毫秒，默认：300000ms(5分钟)，负数表示永不超时
     description?: string; // 任务描述
 }
 
@@ -43,6 +39,7 @@ export type OnTimeConfig = {
     parallel?: ParallelConfig;
     exeInterval?: number;
     exeIntervalJitter?: number;
+    timeout?: number;
     description?: string;
 }
 
@@ -53,6 +50,7 @@ export type FromQueueConfig = {
     parallel?: ParallelConfig;
     exeInterval?: number;
     exeIntervalJitter?: number;
+    timeout?: number;
     description?: string;
 }
 

@@ -201,6 +201,9 @@ export type OnStartConfig = {
     // 在 exeInterval 基础上增加一个随机的抖动，这个值为左右抖动最大半径，默认为 exeIntervalJitter * 0.25
     exeIntervalJitter?: number; 
     
+    // 任务超时时间，单位：毫秒，默认：300000，负数表示永不超时
+    timeout?: number;
+    
     // 该子任务的具体描述
     description?: string;
 }
@@ -278,6 +281,9 @@ export type OnTimeConfig = {
     exeInterval?: number;
     
     exeIntervalJitter?: number;
+    
+    // 任务超时时间，单位：毫秒，默认：300000，负数表示永不超时
+    timeout?: number;
     
     // 该子任务的具体描述
     description?: string;
@@ -364,6 +370,9 @@ export type FromQueueConfig = {
     exeInterval?: number;
     
     exeIntervalJitter?: number;
+    
+    // 任务超时时间，单位：毫秒，默认：300000，负数表示永不超时
+    timeout?: number;
     
     // 该子任务的具体描述
     description?: string;
@@ -615,6 +624,10 @@ Job 面板可以对所有子任务实例进行搜索，查看任务详情
 ![ppspiderJobs.cn.png](https://i.loli.net/2018/08/29/5b862ef9b9dd5.png)
 
 # 更新日志
+2018-12-24 v0.1.21
+1. 任务增加超时时间的配置，默认 300000ms  
+2. 任务执行过程中记录日志，方便分析执时间和失败原因  
+
 2018-12-10 v0.1.20
 1. 修复用户定义的 Task 实例重复生成的bug  
 

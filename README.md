@@ -199,6 +199,9 @@ export type OnStartConfig = {
     // the execute interval between jobs, all paralle jobs share the same exeInterval  
     exeInterval?: number;
     
+    // Task timeout, in milliseconds, default: 300000, negative number means never timeout
+    timeout?: number;
+    
     // description of this sub task type
     description?: string;
 }
@@ -271,6 +274,9 @@ export type OnTimeConfig = {
     exeInterval?: number;
     
     exeIntervalJitter?: number;
+    
+    // Task timeout, in milliseconds, default: 300000, negative number means never timeout
+    timeout?: number;
     
     description?: string;
 }
@@ -350,6 +356,9 @@ export type FromQueueConfig = {
     exeInterval?: number;
     
     exeIntervalJitter?: number;
+    
+    // Task timeout, in milliseconds, default: 300000, negative number means never timeout
+    timeout?: number;
     
     description?: string;
 }
@@ -615,6 +624,10 @@ Job panel: search jobs and view details
 ![ppspiderJobs.en.png](https://i.loli.net/2018/08/29/5b862f27e2809.png)
 
 # Update Note
+2018-12-24 v0.1.21
+1. Add timeout to task configuration, default 300000ms  
+2. Add logs to job during task execution to analysis execution time and failure reasons  
+
 2018-12-10 v0.1.20
 1. Fix a bug: duplicate instances of the same user defined Task are created    
 
