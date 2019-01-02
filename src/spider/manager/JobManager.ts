@@ -63,7 +63,21 @@ export class JobManager {
             fs.renameSync(appInfo.workplace + "/db/jobs.db", appInfo.workplace + "/nedb/JobDao.db");
         }
         this.jobDao = new JobDao(appInfo.workplace + "/nedb");
-        return this.jobDao.waitNedbReady();
+        this.jobDao.waitNedbReady().then(res => this.autoReleaseLoop());
+    }
+
+    /**
+     * 周期性删除需要自动清理的job信息，目前只有状态为 JobStatus.Filtered 的job 有这个标记
+     * 状态为 JobStatus.Filtered 的job 在nedb中最少会保留 10分钟，之后再一次清理行为执行后，就无法查询到了
+     */
+    private autoReleaseLoop() {
+        const autoRelease = () => {
+            this.jobDao.remove({autoRelease: true, createTime: {"$lte": new Date().getTime() - 1000 * 120}},
+                true).then(res => {
+                    setTimeout(autoRelease, 600000);
+            });
+        };
+        autoRelease();
     }
 
     /**

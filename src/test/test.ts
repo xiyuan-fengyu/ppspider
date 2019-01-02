@@ -66,8 +66,7 @@ class TestTask {
 
     @RequestMapping("/addJob/test")
     @AddToQueue({
-        name: "test",
-        filterType: NoFilter
+        name: "test"
     })
     async addJobTest(req: Request, res: Response, next: any): AddToQueueData {
         res.send({
