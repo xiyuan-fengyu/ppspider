@@ -127,6 +127,33 @@ export class QueueManager {
         return true;
     }
 
+    jobManulRetry(data: any): Promise<any> {
+        return new Promise<any>(resolve => {
+            jobManager.job(data._id).then(doc => {
+                const job = SerializableUtil.deserialize(doc.serialize) as Job;
+
+                // 重新设置最大尝试次数
+                if (job.datas().other == null) {
+                    job.datas().other = {};
+                }
+                job.datas().other.maxTry = job.tryNum() + Defaults.maxTry;
+
+                // 重新添加到任务队列
+                QueueManager.addJobToQueue(job, null, job.queue(), this.queues[job.queue()].queue, null);
+                resolve({
+                    success: true,
+                    message: "add to queue success"
+                });
+            }).catch(err => {
+                logger.errorValid && logger.error(err);
+                resolve({
+                    success: false,
+                    message: err.message
+                });
+            });
+        });
+    }
+
     /**
      * 从运行状态持久化文件中恢复运行状态
      * 实际上是通过反序列化创建了一个临时的QueueManager实例，然后将需要的信息复制给当前的实例
@@ -554,9 +581,7 @@ export class QueueManager {
             if (!datasOther) {
                 job.datas().other = datasOther = {};
             }
-            for (let key of Object.keys(other)) {
-                datasOther[key] = other[key];
-            }
+            Object.assign(datasOther, other);
         }
 
         // 检查和修复 job 的信息
@@ -708,7 +733,7 @@ export class QueueManager {
                                 this.successNum++;
                             }
                             else {
-                                if (job.tryNum() >= Defaults.maxTry) {
+                                if (job.tryNum() >= ((job.datas().other || {}).maxTry || Defaults.maxTry)) {
                                     // 重试次数达到最大，任务失败
                                     job.status(JobStatus.Fail);
                                     this.failNum++;

@@ -168,7 +168,17 @@ export function Launcher(theAppInfo: AppInfo) {
                     return await jobManager.jobDetail(request.data);
                 }
 
+                /**
+                 * 手动将jobs页面搜索到的job重新添加到队列中，Fail 和 Success 状态的任务可以自行此操作
+                 * @param {ClientRequest} request
+                 * @returns {Promise<any>}
+                 */
+                static async jobManulRetry(request: ClientRequest): Promise<any> {
+                    return await queueManager.jobManulRetry(request.data);
+                }
+
             }
+
             // UI 请求派发给 ClientRequestHandler 处理
             mainMessager.on(MainMessagerEvent.WebServer_Request_request, async (request: ClientRequest) => {
                 const method = ClientRequestHandler[request.key];

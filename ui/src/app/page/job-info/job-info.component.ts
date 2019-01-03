@@ -51,7 +51,8 @@ export class JobInfoComponent implements OnInit {
     "depth",
     "tryNum",
     "status",
-    "createTime"
+    "createTime",
+    "option"
   ];
 
   searchFields: any[] = [
@@ -308,6 +309,17 @@ export class JobInfoComponent implements OnInit {
         else this.loadSearchState();
       }
       else this.toasterService.pop("warning", "Message", res.message);
+    });
+  }
+
+  jobManulRetry(jobId: string) {
+    this.socketIOService.request({
+      key: "jobManulRetry",
+      data: {
+        _id: jobId
+      }
+    }, res => {
+      this.toasterService.pop(res.success ? "success" : "warning", "Message", res.message);
     });
   }
 

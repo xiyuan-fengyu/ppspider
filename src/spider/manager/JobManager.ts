@@ -7,6 +7,7 @@ import {DateUtil} from "../../common/util/DateUtil";
 import {FileUtil} from "../../common/util/FileUtil";
 import {logger} from "../../common/util/logger";
 import * as fs from "fs";
+import {QueueManager} from "./QueueManager";
 
 
 class JobWrapper extends NedbModel {
@@ -87,6 +88,10 @@ export class JobManager {
     save(job: Job) {
         const jobWrapper = new JobWrapper(job);
         return this.jobDao.save(jobWrapper);
+    }
+
+    job(_id: any): Promise<any> {
+        return this.jobDao.findById(_id);
     }
 
     /**

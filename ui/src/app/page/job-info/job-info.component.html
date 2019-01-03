@@ -108,6 +108,14 @@
           <a *ngSwitchCase="'_id'" (click)="jobDetail(job[col])" class="url">{{job[col]}}</a>
           <a *ngSwitchCase="'parentId'" (click)="jobDetail(job[col])" class="url">{{job[col]}}</a>
           <ng-container *ngSwitchCase="'createTime'">{{job[col] | longToDateStr}}</ng-container>
+          <ng-container *ngSwitchCase="'option'">
+            <button
+              *ngIf="job.status == 'Success' || job.status == 'Fail'"
+              (click)="jobManulRetry(job._id)"
+              mat-icon-button color="primary">
+              <mat-icon>refresh</mat-icon>
+            </button>
+          </ng-container>
           <ng-container *ngSwitchDefault>{{job[col]}}</ng-container>
         </ng-container>
       </td>
