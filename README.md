@@ -624,6 +624,10 @@ Job panel: search jobs and view details
 ![ppspiderJobs.en.png](https://i.loli.net/2018/08/29/5b862f27e2809.png)
 
 # Update Note
+2019-01-28 v0.1.22
+1. Automatically clear jobs marked as filtered.
+2. Add job (status: Fail | Success) to queue by clicking button on the Job UI . 
+
 2018-12-24 v0.1.21
 1. Add timeout to task configuration, default 300000ms  
 2. Add logs to job during task execution to analysis execution time and failure reasons  
