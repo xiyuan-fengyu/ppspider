@@ -27,74 +27,74 @@ class TestTask {
 
 
 
-    @OnTime({
-        urls: "",
-        cron: "*/5 * * * * *",
-        workerFactory: NoneWorkerFactory
-    })
-    async onTime(useless: any, job: Job) {
-        logger.debug("just test: " + new Date().getTime());
-    }
-
-
-
-    @OnStart({
-        urls: "http://www.baidu.com",
-        workerFactory: PuppeteerWorkerFactory,
-        parallel: {
-            "0/20 * * * * ?": 1,
-            "10/20 * * * * ?": 2
-        }
-    })
     // @OnTime({
-    //     urls: "http://www.baidu.com",
-    //     cron: "*/30 * * * * ?",
-    //     workerFactory: PuppeteerWorkerFactory
+    //     urls: "",
+    //     cron: "*/5 * * * * *",
+    //     workerFactory: NoneWorkerFactory
     // })
-    @AddToQueue({
-        name: "test",
-    })
-    async index(page: Page, job: Job): AddToQueueData {
-        // logger.info(new Error("just test"));
-        await PuppeteerUtil.defaultViewPort(page);
-        await PuppeteerUtil.setImgLoad(page, false);
-        await page.goto(job.url());
-        return PuppeteerUtil.links(page, {
-            "test": "http.*"
-        });
-    }
-
-    @RequestMapping("/addJob/test")
-    @AddToQueue({
-        name: "test"
-    })
-    async addJobTest(req: Request, res: Response, next: any): AddToQueueData {
-        res.send({
-            success: true
-        });
-        return req.query.url;
-    }
-
-    @OnStart({
-        urls: "",
-        workerFactory: NoneWorkerFactory
-    })
-    async delayToStartPrintUrl(useless: any, job: Job) {
-        await PromiseUtil.sleep(5000);
-        logger.debug("toggle test queue to running");
-        mainMessager.emit(MainMessagerEvent.QueueManager_QueueToggle_queueNameRegex_running, "test", true);
-    }
-
-    @FromQueue({
-        name: "test",
-        workerFactory: NoneWorkerFactory,
-        running: false,
-        parallel: 1,
-        exeInterval: 1000
-    })
-    async printUrl(useless: any, job: Job) {
-        logger.debug(job.url());
-    }
+    // async onTime(useless: any, job: Job) {
+    //     logger.debug("just test: " + new Date().getTime());
+    // }
+    //
+    //
+    //
+    // @OnStart({
+    //     urls: "http://www.baidu.com",
+    //     workerFactory: PuppeteerWorkerFactory,
+    //     parallel: {
+    //         "0/20 * * * * ?": 1,
+    //         "10/20 * * * * ?": 2
+    //     }
+    // })
+    // // @OnTime({
+    // //     urls: "http://www.baidu.com",
+    // //     cron: "*/30 * * * * ?",
+    // //     workerFactory: PuppeteerWorkerFactory
+    // // })
+    // @AddToQueue({
+    //     name: "test",
+    // })
+    // async index(page: Page, job: Job): AddToQueueData {
+    //     // logger.info(new Error("just test"));
+    //     await PuppeteerUtil.defaultViewPort(page);
+    //     await PuppeteerUtil.setImgLoad(page, false);
+    //     await page.goto(job.url());
+    //     return PuppeteerUtil.links(page, {
+    //         "test": "http.*"
+    //     });
+    // }
+    //
+    // @RequestMapping("/addJob/test")
+    // @AddToQueue({
+    //     name: "test"
+    // })
+    // async addJobTest(req: Request, res: Response, next: any): AddToQueueData {
+    //     res.send({
+    //         success: true
+    //     });
+    //     return req.query.url;
+    // }
+    //
+    // @OnStart({
+    //     urls: "",
+    //     workerFactory: NoneWorkerFactory
+    // })
+    // async delayToStartPrintUrl(useless: any, job: Job) {
+    //     await PromiseUtil.sleep(5000);
+    //     logger.debug("toggle test queue to running");
+    //     mainMessager.emit(MainMessagerEvent.QueueManager_QueueToggle_queueNameRegex_running, "test", true);
+    // }
+    //
+    // @FromQueue({
+    //     name: "test",
+    //     workerFactory: NoneWorkerFactory,
+    //     running: false,
+    //     parallel: 1,
+    //     exeInterval: 1000
+    // })
+    // async printUrl(useless: any, job: Job) {
+    //     logger.debug(job.url());
+    // }
 
 
     // @OnStart({
@@ -150,6 +150,17 @@ class TestTask {
     // })
     // async noneWorkerTest(worker: any, job: Job) {
     //     console.log("noneWorkerTest", worker, job);
+    // }
+
+    // @OnStart({
+    //     urls: "http://car.bitauto.com/tree_chexing/mb_9/",
+    //     workerFactory: PuppeteerWorkerFactory
+    // })
+    // async test(page: Page, job: Job) {
+    //     // 研究 page.goto 操作一直loading的问题
+    //     await PuppeteerUtil.setImgLoad(page, false);
+    //     await page.goto(job.url(), {waitUntil: 'load', timeout: 0});
+    //     console.log();
     // }
 
 }

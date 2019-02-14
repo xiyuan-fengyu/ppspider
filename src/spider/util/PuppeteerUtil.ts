@@ -6,7 +6,6 @@ import * as fs from "fs";
 import {Defaults} from "../data/Defaults";
 import {LinkPredictMap} from "../data/Types";
 import {logger} from "../../common/util/logger";
-import {PromiseUtil} from "../../common/util/PromiseUtil";
 
 export type ResponseListener = (response: Response) => any;
 
@@ -144,11 +143,12 @@ export class PuppeteerUtil {
         }
         else {
             if (!page[kRequestInterception_ImgLoad]) {
-                page[kRequestInterception_ImgLoad] = async (request: Request) => {
+                page[kRequestInterception_ImgLoad] = (request: Request) => {
                     const interceptionHandled = request["_interceptionHandled"];
                     if (!interceptionHandled) {
-                        if (request.resourceType() == "image") {
-                            const requestUrl = request.url();
+                        const requestUrl = request.url();
+                        const resourceType = request.resourceType();
+                        if (resourceType === "image") {
                             let responseCheckUrls: ResponseCheckUrlInfo[] = page[kResponseCheckUrls] || [];
                             if (responseCheckUrls.find(item => {
                                 let checkUrl = item.url.toString();
@@ -159,15 +159,24 @@ export class PuppeteerUtil {
                                 request.continue();
                             }
                             else {
-                                // 屏蔽原本的请求行为，直接返回 格式为webp 大小为 1px 的默认图片
-                                await request.respond({
+                                // 拦截请求，直接返回 1px 的webp图片
+                                request.respond({
                                     status: 200,
                                     contentType: "image/webp",
                                     body: Buffer.from(onePxBuffer)
                                 });
                             }
                         }
-                        else request.continue(); // 非图片请求，直接放行
+                        else if (requestUrl.indexOf("://hm.baidu.com/h.js") > -1) {
+                            // 禁用百度统计代码
+                            // 当禁止图片加载的时候，百度统计可能导致资源一直加载，page.goto操作一直无法完成
+                            request.respond({
+                                status: 200,
+                                contentType: "application/javascript",
+                                body: Buffer.from([])
+                            });
+                        }
+                        else request.continue(); // 其他请求，直接放行
                     }
                 };
             }
