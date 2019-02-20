@@ -8,8 +8,8 @@
   "types": "./lib/index.d.ts",
   "scripts": {
     "auto build": "tsc",
-    "国内用户安装依赖(windows)": "set PUPPETEER_DOWNLOAD_HOST=https://npm.taobao.org/mirrors/ & npm install",
-    "国内用户安装依赖(unix)": "export PUPPETEER_DOWNLOAD_HOST=https://npm.taobao.org/mirrors/ & npm install",
+    "国内用户安装依赖(windows)": "set PUPPETEER_DOWNLOAD_HOST='https://npm.taobao.org/mirrors/' & npm install",
+    "国内用户安装依赖(unix)": "export PUPPETEER_DOWNLOAD_HOST='https://npm.taobao.org/mirrors/' & npm install",
     "generate README toc": "markdown-toc -i ./README.cn.md && markdown-toc -i ./README.md"
   },
   "keywords": [
