@@ -1,5 +1,5 @@
 import {OnTimeConfig} from "../data/Types";
-import {getTaskInstances, jobConfigs} from "./Launcher";
+import {jobConfigs} from "./Launcher";
 
 /**
  * 添加一个周期性执行的任务配置
@@ -10,7 +10,7 @@ import {getTaskInstances, jobConfigs} from "./Launcher";
 export function OnTime(config: OnTimeConfig) {
     return function (target, key, descriptor) {
         config["type"] = "OnTime";
-        config["target"] = getTaskInstances(target.constructor);
+        config["target"] = target.constructor;
         config["method"] = key;
         jobConfigs.push(config);
         // queueManager.addOnTimeConfig(config);

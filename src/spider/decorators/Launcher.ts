@@ -69,6 +69,7 @@ export function Launcher(theAppInfo: AppInfo) {
         await jobManager.init();
 
         // 添加 任务信息
+        jobConfigs.forEach(item => item["target"] = getTaskInstances(item["target"]));
         queueManager.addJobConfigs(jobConfigs);
 
         // 向消息总线中添加更改队列运行状态的消息事件监听
@@ -78,6 +79,7 @@ export function Launcher(theAppInfo: AppInfo) {
         queueManager.loadFromCache(appInfo.workplace + "/queueCache.json");
 
         // 启动UI界面的web服务器
+        requestMappingConfigs.forEach(item => item.target = getTaskInstances(item.target));
         const webServer = new WebServer(appInfo.webUiPort || Defaults.webUiPort);
 
         // 添加 UI 请求的处理回调

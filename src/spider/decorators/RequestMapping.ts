@@ -1,4 +1,4 @@
-import {getTaskInstances, requestMappingConfigs} from "./Launcher";
+import {requestMappingConfigs} from "./Launcher";
 import {RequestMappingConfig} from "../data/Types";
 
 export function RequestMapping(url: string, method: "" | "GET" | "POST" = "") {
@@ -6,7 +6,7 @@ export function RequestMapping(url: string, method: "" | "GET" | "POST" = "") {
         const requestMappingConfig: RequestMappingConfig = {
             url: url,
             httpMethod: method,
-            target: getTaskInstances(target.constructor),
+            target: target.constructor,
             method: key
         };
         requestMappingConfigs.push(requestMappingConfig);
