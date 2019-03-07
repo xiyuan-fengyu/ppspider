@@ -54,9 +54,9 @@ function getAddToQueueConfig(queueConfigs: AddToQueueConfig | AddToQueueConfig[]
  */
 export function AddToQueue(queueConfigs: AddToQueueConfig | AddToQueueConfig[]) {
     return function (target, key, descriptor) {
-        const targetIns = getTaskInstances(target.constructor);
         const oriFun = descriptor.value;
         descriptor.value = async (...args) => {
+            const targetIns = getTaskInstances(target.constructor);
             const res = await oriFun.apply(targetIns, args);
             if (res != null) {
                 // 在参数中找到当前job
