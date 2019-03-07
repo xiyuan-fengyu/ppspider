@@ -45,16 +45,30 @@
 # Puppeteer Doc
 https://github.com/GoogleChrome/puppeteer/blob/master/docs/api.md     
 ## Puppeteer 相关问题
-1. puppeteer 在安装过程中会自动下载 chromium 浏览器，如果下载不成功，  
+1. 在 napm install 安装 puppeteer 的过程中会自动下载 chromium 浏览器，如果下载不成功，可以尝试下面两种方案解决
+    1.1 更改 chromium 下载镜像源（国内用户推荐使用）
+    在命令行运行如下命令设置临时环境变量，然后 npm isntall 安装
+    ```
+    # win
+    set PUPPETEER_DOWNLOAD_HOST=https://npm.taobao.org/mirrors/
+    npm install
+    
+    # unix
+    export PUPPETEER_DOWNLOAD_HOST=https://npm.taobao.org/mirrors/
+    npm install
+    ```
+    
+    1.2 获取 chromium 下载地址和解压地址，手动下载和解压
     可以在执行npm install之前在命令行运行如下命令设置临时环境变量  
     ```
     # win
     set PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=1
+    npm install
+    
     # unix
     export PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=1
+    npm install
     ```
-    
-    重新运行"npm install"安装依赖  
     
     然后编写一个 src/temp.ts（ppspider_example/src/quickstart/App.ts中也有这段代码），内容如下  
     ```

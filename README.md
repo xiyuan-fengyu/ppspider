@@ -49,16 +49,28 @@ https://github.com/xiyuan-fengyu/ppspider/blob/master/README.cn.md
 # Puppeteer Doc
 https://github.com/GoogleChrome/puppeteer/blob/master/docs/api.md   
 ## Questions about puppeteer
-1. When installing puppeteer, it will download chromium by default. If download is fail, you 
-    can set temp environment variable in terminal before executing 'npm install'  
+1. When installing puppeteer, it will download chromium by default. If download is fail, there are two ways to solve it.
+    1.1 set temp environment PUPPETEER_DOWNLOAD_HOST (recommended for chinese)
+    ```
+    # win
+    set PUPPETEER_DOWNLOAD_HOST=https://npm.taobao.org/mirrors/
+    npm install
+    
+    # unix
+    export PUPPETEER_DOWNLOAD_HOST=https://npm.taobao.org/mirrors/
+    npm install
+    ```
+    
+    1.2 set temp environment PUPPETEER_SKIP_CHROMIUM_DOWNLOAD to skip chromium download  
     ```
     # win
     set PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=1
+    npm install 
+    
     # unix
     export PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=1
+    npm install
     ```
-    
-    Run "npm install".  
     
     Then write a typescript src/temp.ts with the following code:
     ```
