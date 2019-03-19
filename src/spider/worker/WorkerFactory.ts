@@ -4,8 +4,6 @@ export interface WorkerFactory<Worker> {
 
     release(worker: Worker): Promise<void>;
 
-    isBusy(): boolean;
-
     shutdown();
 
 }

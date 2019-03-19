@@ -1,4 +1,6 @@
-import { Component } from '@angular/core';
+import {Component, OnDestroy} from '@angular/core';
+import {SocketIOService} from "./service/socket-io.service";
+import {CommonService} from "./service/common.service";
 
 @Component({
   selector: 'app-root',
@@ -19,7 +21,27 @@ export class AppComponent {
     // {
     //   path: "icons",
     //   label: "Icons"
-    // },
+    // }
   ];
+
+  constructor(
+    private socketIOService: SocketIOService,
+    private commonService: CommonService,
+  ) {
+    this.socketIOService.request({
+      key: "dataUis",
+      data: null
+    }, res => {
+      const dataUis = {};
+      for (let dataUi of res) {
+        this.tabs.push({
+          path: "dataUi/" + dataUi.className,
+          label: dataUi.title
+        });
+        dataUis[dataUi.className] = dataUi;
+      }
+      this.commonService.setDataUis(dataUis);
+    });
+  }
 
 }

@@ -1,9 +1,5 @@
 
-import {DateUtil} from "../../common/util/DateUtil";
-
 export enum JobStatus {
-    // 新创建
-    Create,
     // 在队列中等待
     Waiting,
     // 被过滤器过滤掉了
@@ -12,10 +8,14 @@ export enum JobStatus {
     Running,
     // 任务成功
     Success,
-    // 等待重试
+    // 运行失败，等待重试
     RetryWaiting,
     // 超过最大重试次数，任务失败
-    Fail
+    Fail,
+    // 任务已关闭，队列在派发任务的时候会忽略这个任务
+    // Waiting,RetryWaiting状态的任务可以被关闭进入Closed状态
+    // OnTime 任务在到达执行时间的时候，如果队列处于不运行状态，则也会进入 Closed 状态
+    Closed,
 }
 
 export function instanceofJob(obj: any): obj is Job {
@@ -33,10 +33,6 @@ export function instanceofJob(obj: any): obj is Job {
         && typeof cast.tryNum == "function"
         && typeof cast.createTime == "function"
         && typeof cast.logs == "function";
-}
-
-export function formatLog(level: "debug" | "info" | "warn" | "error", msg: string) {
-    return DateUtil.toStr(new Date(), "yyyy-MM-dd HH:mm:ss.SSS") + " [" + level + "] " + msg;
 }
 
 export interface Job {
@@ -74,7 +70,7 @@ export interface Job {
     // 创建时间
     createTime(): number;
 
-    // 有参数：插入日志；无参数：返回所有日志；可以通过 formatLog 方法来构建标准格式的日志
+    // 有参数：插入日志；返回所有日志；可以通过 logger.format 方法来构建标准格式的日志
     logs(log?: string): string[];
 
 }

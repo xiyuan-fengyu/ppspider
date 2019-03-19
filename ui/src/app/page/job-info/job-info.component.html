@@ -111,7 +111,7 @@
           <ng-container *ngSwitchCase="'option'">
             <button
               *ngIf="job.status == 'Success' || job.status == 'Fail'"
-              (click)="jobManulRetry(job._id)"
+              (click)="reExecuteJob(job._id)"
               mat-icon-button color="primary">
               <mat-icon>refresh</mat-icon>
             </button>

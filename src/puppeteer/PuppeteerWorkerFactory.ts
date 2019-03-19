@@ -1,5 +1,5 @@
 import {Browser, launch, LaunchOptions, Page} from "puppeteer";
-import {WorkerFactory} from "./WorkerFactory";
+import {WorkerFactory} from "../spider/worker/WorkerFactory";
 
 export class PuppeteerWorkerFactory implements WorkerFactory<Page> {
 

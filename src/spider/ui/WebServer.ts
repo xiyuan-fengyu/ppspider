@@ -1,10 +1,9 @@
 import * as bodyParser from "body-parser";
 import {Server as HttpServer} from "http";
-import {Server as ScoketIOServer, Socket} from "socket.io";
-import {ClientRequest} from "../data/Types";
+import {Server as ScoketIOServer} from "socket.io";
 import {logger} from "../../common/util/logger";
-import {mainMessager, MainMessagerEvent, requestMappingConfigs} from "../decorators/Launcher";
 import {NextFunction, Request, Response} from "express-serve-static-core";
+import {IdKeyData, RequestMappingConfig} from "../Types";
 
 /**
  * 通过 express 提供web静态资源服务，静态资源是由 ui 项目发布到 lib/spider/ui/web 目录下
@@ -18,7 +17,7 @@ export class WebServer {
 
     private io: ScoketIOServer;
 
-    constructor(private port: number) {
+    constructor(private port: number, requestMappingConfigs: RequestMappingConfig[], onRequestCallback: (req: IdKeyData) => any) {
         if (this.http != null) return;
 
         const express = require("express");
@@ -38,7 +37,7 @@ export class WebServer {
                         await method.call(target, req, res, next);
                     }
                     catch (e) {
-                        logger.warn(e.stack);
+                        logger.warn(e);
                     }
                 };
                 if (config.httpMethod == "" || config.httpMethod == "GET") {
@@ -54,32 +53,25 @@ export class WebServer {
         this.http = require("http").Server(app);
         this.io = require("socket.io")(this.http);
 
-        const socketRequestMap = new Map<string, Socket>();
         this.io.on("connection", socket => {
-            socket.on("request", (request: ClientRequest) => {
-                socketRequestMap.set(request.id, socket);
-                mainMessager.emit(MainMessagerEvent.WebServer_Request_request, request);
+            socket.on("request", async (req: IdKeyData) => {
+                const res = await onRequestCallback(req);
+                socket.emit("response_" + req.id, res);
             });
             socket.on("error", (error: Error) => {
-                if (error) logger.warn("socket error: " + (error.message || "") + "\n" + (error.stack || ""));
+                if (error) {
+                    logger.warn("socket error", error);
+                }
             });
-        });
-
-        mainMessager.on(MainMessagerEvent.WebServer_Response_id_res, (id, res) => {
-            const socket = socketRequestMap.get(id);
-            if (socket) {
-                socketRequestMap.delete(id);
-                socket.emit("response_" + id, res);
-            }
-        });
-
-        mainMessager.on(MainMessagerEvent.WebServer_Push_key_data, (key: string, data: any) => {
-            this.io.clients().emit("push_" + key, data);
         });
 
         this.http.listen(port, () => {
             logger.info("The web ui server start at port: " + port);
         });
+    }
+
+    push(key: String, data: any) {
+        this.io.clients().emit("push_" + key, data);
     }
 
     shutdown() {

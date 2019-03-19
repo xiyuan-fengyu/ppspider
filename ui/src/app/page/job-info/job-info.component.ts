@@ -312,9 +312,9 @@ export class JobInfoComponent implements OnInit {
     });
   }
 
-  jobManulRetry(jobId: string) {
+  reExecuteJob(jobId: string) {
     this.socketIOService.request({
-      key: "jobManulRetry",
+      key: "reExecuteJob",
       data: {
         _id: jobId
       }

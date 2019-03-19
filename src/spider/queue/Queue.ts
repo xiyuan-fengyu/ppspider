@@ -1,6 +1,6 @@
 import {Job} from "../job/Job";
 import {Filter} from "../filter/Filter";
-import {FilterClass} from "../data/Types";
+import {Class_Filter} from "../Types";
 
 /**
  * 队列接口
@@ -39,10 +39,10 @@ export interface Queue {
 
     /**
      * 获取某种类型的 Filter 实例
-     * @param {FilterClass} filterType
+     * @param {Class_Filter} filterType
      * @returns {Filter}
      */
-    getFilter(filterType: FilterClass): Filter;
+    getFilter(filterType: Class_Filter): Filter;
 
     /**
      * 获取该队列的所有 Filter

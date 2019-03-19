@@ -45,6 +45,15 @@ export class QueueInfoComponent implements OnInit {
     });
   }
 
+  reExecuteOnStartJob(queueName: string) {
+    this.socketIOService.request({
+      key: "reExecuteOnStartJob",
+      data: queueName
+    }, res => {
+      this.toasterService.pop(res.success ? "success" : "warning", "Message", res.message);
+    });
+  }
+
   updateQueueConfig(queueName: string, field: string, newValue: any) {
     this.socketIOService.request({
       key: "updateQueueConfig",
@@ -64,6 +73,15 @@ export class QueueInfoComponent implements OnInit {
       data: value
     }, res => {
       this.toasterService.pop("success", "Message", value ? "Pause successfully" : "Resume successfully");
+    });
+  }
+
+  saveQueueCache() {
+    this.socketIOService.request({
+      key: "saveQueueCache",
+      data: null
+    }, res => {
+      this.toasterService.pop(res.success ? "success" : "warning", "Message", res.message);
     });
   }
 
@@ -179,13 +197,13 @@ export class ShutdownConfirmDialog implements OnInit {
   ngOnInit() {
   }
 
-  shutdown(saveState: boolean) {
+  shutdown(saveQueueCache: boolean) {
     this.dialogRef.disableClose = true;
     this.showShutdownProgress();
     this.socketIOService.request({
       key: "stopSystem",
       data: {
-        saveState: saveState
+        saveQueueCache: saveQueueCache
       }
     }, res => {
       this.shutdownSuccess = true;

@@ -1,9 +1,11 @@
 import "source-map-support/register";
-import {StringUtil} from "./StringUtil";
+import moment = require("moment");
 
-export interface LoggerSetting {
+export type LoggerSetting = {
 
-    format?: "yyyy-MM-dd HH:mm:ss.SSS [level] position message" | string;
+    datetimeFormat?: "YYYY-MM-DD HH:mm:ss.SSS" | string;
+
+    logFormat?: "datetime [level] position message" | string;
 
     level?: "debug" | "info" | "warn" | "error" | string;
 
@@ -14,12 +16,18 @@ export interface LoggerSetting {
  */
 export class logger {
 
-    private static _format = "yyyy-MM-dd HH:mm:ss.SSS [level] position message";
+    private static _datetimeFormat = "YYYY-MM-DD HH:mm:ss.SSS";
+
+    private static _logFormat = "datetime [level] position message";
 
     private static _level = 0;
 
-    static set format(value: string) {
-        if (value) this._format = value;
+    static set datetimeFormat(value: string) {
+        this._datetimeFormat = value;
+    }
+
+    static set logFormat(value: string) {
+        this._logFormat = value;
     }
 
     static set level(value: "debug" | "info" | "warn" | "error" | string) {
@@ -43,7 +51,8 @@ export class logger {
 
     static set setting(aSetting: LoggerSetting) {
         if (aSetting) {
-            this.format = aSetting.format;
+            this.datetimeFormat = aSetting.datetimeFormat;
+            this.logFormat = aSetting.logFormat;
             this.level = aSetting.level;
         }
     }
@@ -64,8 +73,8 @@ export class logger {
         return this._level <= 3;
     }
 
-    private static log(level: "debug" | "info" | "warn" | "error", ...msgs: any[]) {
-        const date = new Date();
+    public static format(level: "debug" | "info" | "warn" | "error", format: string, ...msgs: any[]): string {
+        const nowStr = moment(new Date()).format(this._datetimeFormat);
         const position = new Error().stack.split("\n")[3].trim().replace(/^at /, "");
         const msgsStr = (msgs || []).map(item => {
             if (item.constructor == Error) {
@@ -75,39 +84,20 @@ export class logger {
                 return typeof item === "object" ? JSON.stringify(item, null, 4) : "" + item;
             }
         }).join("\n");
-        const formatRes = this._format
-            .replace(/yyyy/, (substring, ...args) => {
-                return "" + date.getFullYear();
-            })
-            .replace(/MM/, (substring, ...args) => {
-                return StringUtil.preFill("" + (date.getMonth() + 1), 2, "0");
-            })
-            .replace(/dd/, (substring, ...args) => {
-                return StringUtil.preFill("" + date.getDate(), 2, "0");
-            })
-            .replace(/HH/, (substring, ...args) => {
-                return StringUtil.preFill("" + date.getHours(), 2, "0");
-            })
-            .replace(/mm/, (substring, ...args) => {
-                return StringUtil.preFill("" + date.getMinutes(), 2, "0");
-            })
-            .replace(/ss/, (substring, ...args) => {
-                return StringUtil.preFill("" + date.getSeconds(), 2, "0");
-            })
-            .replace(/SSS/, (substring, ...args) => {
-                return StringUtil.preFill("" + date.getMilliseconds(), 3, "0");
-            })
-            .replace(/level/, (substring, ...args) => {
-                return level;
-            })
-            .replace(/position/, (substring, ...args) => {
-                return position;
-            })
-            .replace(/message/, (substring, ...args) => {
-                return msgsStr;
-            })
-        ;
-        console[level](formatRes);
+        return format
+            .replace(/datetime/, nowStr)
+            .replace(/level/, level)
+            .replace(/position/, position)
+            .replace(/message/, msgsStr);
+    }
+
+    public static formatWithoutPos(level: "debug" | "info" | "warn" | "error", ...msgs: any[]): string {
+        return this.format(level, "datetime [level] message", ...msgs);
+    }
+
+    private static log(level: "debug" | "info" | "warn" | "error", ...msgs: any[]) {
+        const logStr = this.format(level, this._logFormat, ...msgs);
+        console[level](logStr);
     }
 
     static debug(...msgs: any[]) {

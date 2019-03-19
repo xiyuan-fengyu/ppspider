@@ -17,6 +17,12 @@
           style="color: #2c8aff">play_arrow</mat-icon>
       </button>
     </ng-container>
+    <button (click)="commonService.queues?.saving ? null : saveQueueCache()" mat-icon-button>
+      <mat-icon
+        matTooltip="Save queues cache"
+        [style.color]="commonService.queues?.saving ? '#cccccc' : '#1994ff'"
+        >save</mat-icon>
+    </button>
     <ng-container *ngIf="commonService.queues?.cacheExist">
       <button (click)="deleteQueueCache()" mat-icon-button>
         <mat-icon
@@ -70,7 +76,7 @@
         <mat-icon *ngIf="queue.type == 'FromQueue'" mat-card-avatar class="icon">queue_music</mat-icon>
         <mat-card-title>
           {{queue.name}}
-          <button (click)="queue.type == 'OnStart' ? updateQueueConfig(queue.name, 'execute', null) : null" [style.visibility]="queue.type == 'OnStart' ? 'visible' : 'hidden'" mat-icon-button>
+          <button (click)="queue.type == 'OnStart' ? reExecuteOnStartJob(queue.name) : null" [style.visibility]="queue.type == 'OnStart' ? 'visible' : 'hidden'" mat-icon-button>
             <mat-icon
               matTooltip="Execute this OnStart job again">refresh</mat-icon>
           </button>

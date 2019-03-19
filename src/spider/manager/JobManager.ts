@@ -1,14 +1,10 @@
 import {Job, JobStatus} from "../job/Job";
 import {SerializableUtil} from "../../common/serialize/Serialize";
-import {NedbDao, NedbModel, Pager} from "../../common/nedb/NedbDao";
+import {NedbDao, NedbModel, Pager, Sort} from "../../common/nedb/NedbDao";
 import {appInfo} from "../decorators/Launcher";
 import {ObjectUtil} from "../../common/util/ObjectUtil";
 import {DateUtil} from "../../common/util/DateUtil";
-import {FileUtil} from "../../common/util/FileUtil";
 import {logger} from "../../common/util/logger";
-import * as fs from "fs";
-import {QueueManager} from "./QueueManager";
-
 
 class JobWrapper extends NedbModel {
 
@@ -58,18 +54,12 @@ export class JobManager {
     private jobDao: JobDao;
 
     init() {
-        // 老数据库文件迁移
-        if (fs.existsSync(appInfo.workplace + "/db/jobs.db")) {
-            FileUtil.mkdirs(appInfo.workplace + "/nedb");
-            fs.renameSync(appInfo.workplace + "/db/jobs.db", appInfo.workplace + "/nedb/JobDao.db");
-        }
         this.jobDao = new JobDao(appInfo.workplace + "/nedb");
-        this.jobDao.waitNedbReady().then(res => this.autoReleaseLoop());
+        return this.jobDao.waitNedbReady().then(res => this.autoReleaseLoop());
     }
 
     /**
-     * 周期性删除需要自动清理的job信息，目前只有状态为 JobStatus.Filtered 的job 有这个标记
-     * 状态为 JobStatus.Filtered 的job 在nedb中最少会保留 10分钟，之后再一次清理行为执行后，就无法查询到了
+     * 周期性删除数据库中状态为 Filtered，创建时间在 10 分钟以前的job记录
      */
     private autoReleaseLoop() {
         const autoRelease = () => {
@@ -122,7 +112,7 @@ export class JobManager {
                     };
                     tempPager.sort = {
                         createTime: -1
-                    };
+                    } as Sort;
                     this.jobDao.page(tempPager).then(pagerRes => {
                         resolve(pagerRes);
                     });
@@ -204,7 +194,7 @@ export class JobManager {
         job["_parentId_justForParentFetch"] = job.parentId();
         return ObjectUtil.transform(job, value => {
             if (value.constructor == Number && ("" + value).length == 13) {
-                return DateUtil.toStr(new Date(value), "yyyy-MM-dd HH:mm:ss");
+                return DateUtil.toStr(new Date(value));
             }
             else return value;
         });
@@ -226,5 +216,3 @@ export class JobManager {
     }
 
 }
-
-export const jobManager = new JobManager();

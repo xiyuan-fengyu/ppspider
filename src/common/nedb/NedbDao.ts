@@ -1,5 +1,4 @@
 import * as Nedb from "nedb";
-import {logger} from "../util/logger";
 import {StringUtil} from "../util/StringUtil";
 
 export type Sort = {[by: string]: -1 | 1};
@@ -34,7 +33,7 @@ export class NedbModel {
         if (_idOrValues != null) {
             const t = typeof _idOrValues;
             if (t === "object") {
-                Object.assign(this, _idOrValues);
+                Object.assign(this as any, _idOrValues);
             }
             else if (t === "string" || t === "number") {
                 this._id = _idOrValues;
@@ -57,13 +56,13 @@ export class NedbDao<T extends NedbModel> {
 
     constructor(dbDir: string) {
         const dbFile = dbDir + "/" + this.constructor.name + ".db";
-        this.nedbP = new Promise<Nedb>(resolve => {
+        this.nedbP = new Promise<Nedb>((resolve, reject) => {
             const nedb = new Nedb({
                 filename: dbFile,
                 autoload: true,
                 onload: error => {
                     if (error) {
-                        throw new Error("nedb load fial: " + dbFile);
+                        reject(new Error("nedb load fial: " + dbFile));
                     }
                     else {
                         NedbDao.compact(nedb);
@@ -71,9 +70,6 @@ export class NedbDao<T extends NedbModel> {
                     }
                 }
             });
-        }).catch(error => {
-            logger.error("nedb failed to load from " + dbFile);
-            throw error;
         });
     }
 

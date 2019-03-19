@@ -1,41 +1,33 @@
 import {BrowserModule} from '@angular/platform-browser';
 import {NgModule} from '@angular/core';
 
+import {AppRoutingModule} from './app-routing.module';
 import {AppComponent} from './app.component';
+import {CommonModule, HashLocationStrategy, LocationStrategy} from "@angular/common";
+import {RuntimeComponentModule} from "./module/runtime-component/runtime-component.module";
+import {EditConfigDialog, QueueInfoComponent, ShutdownConfirmDialog} from "./page/queue-info/queue-info.component";
+import {ConfirmDialog} from "./widget/confirm-dialog/confirm.dialog";
+import {JobDetailDialog, JobInfoComponent} from "./page/job-info/job-info.component";
+import {LongToDateStrPipe} from "./pipe/long-to-date-str.pipe";
+import {IconsComponent} from "./page/icons/icons.component";
+import {JsonStringifyPipe} from "./pipe/json-stringify.pipe";
+import {ToasterModule, ToasterService} from "angular2-toaster";
 import {BrowserAnimationsModule} from "@angular/platform-browser/animations";
-import {rootRouter} from "./rootRouter";
+import {FormsModule} from "@angular/forms";
 import {
-  DateAdapter,
-  MAT_DATE_FORMATS,
-  MAT_DATE_LOCALE,
+  DateAdapter, MAT_DATE_FORMATS,
   MAT_DIALOG_DEFAULT_OPTIONS,
   MatButtonModule,
-  MatCardModule, MatDatepickerModule,
-  MatDialogModule,
-  MatFormFieldModule,
+  MatCardModule, MatDatepickerModule, MatDialogModule, MatFormFieldModule,
   MatGridListModule,
-  MatIconModule,
-  MatInputModule,
-  MatListModule, MatNativeDateModule,
-  MatPaginatorModule,
-  MatProgressBarModule,
-  MatSelectModule, MatSuffix,
-  MatTableModule,
-  MatTabsModule,
-  MatTooltipModule
+  MatIconModule, MatInputModule,
+  MatListModule, MatNativeDateModule, MatPaginatorModule, MatProgressBarModule, MatSelectModule, MatTableModule,
+  MatTabsModule, MatTooltipModule
 } from "@angular/material";
 import {SocketIOService} from "./service/socket-io.service";
-import {JobDetailDialog, JobInfoComponent} from './page/job-info/job-info.component';
-import {CommonModule, HashLocationStrategy, LocationStrategy} from "@angular/common";
-import {IconsComponent} from './page/icons/icons.component';
-import {FormsModule} from "@angular/forms";
-import {LongToDateStrPipe} from "./pipe/long-to-date-str.pipe";
-import {JsonStringifyPipe} from './pipe/json-stringify.pipe';
-import {ToasterModule, ToasterService} from "angular2-toaster";
-import {EditConfigDialog, QueueInfoComponent, ShutdownConfirmDialog} from "./page/queue-info/queue-info.component";
 import {CommonService} from "./service/common.service";
 import {MY_DATE_FORMATS, MyDateAdapter} from "./date.format";
-import {ConfirmDialog} from "./widget/confirm-dialog/confirm.dialog";
+import { DataUiComponent } from './page/data-ui/data-ui.component';
 
 @NgModule({
   declarations: [
@@ -50,9 +42,11 @@ import {ConfirmDialog} from "./widget/confirm-dialog/confirm.dialog";
     JobInfoComponent,
     IconsComponent,
     JsonStringifyPipe,
+    DataUiComponent,
   ],
   imports: [
-    rootRouter,
+    BrowserModule,
+    AppRoutingModule,
     ToasterModule.forRoot(),
     CommonModule,
     BrowserModule,

@@ -1,4 +1,4 @@
-import {queueManager} from "../manager/QueueManager";
+import {addJobOverrideConfig} from "./Launcher";
 
 /**
  * 在任务添加到队列之前，对任务做统一修改
@@ -9,7 +9,7 @@ import {queueManager} from "../manager/QueueManager";
  */
 export function JobOverride(queueName: string) {
     return function (target, key, descriptor) {
-        queueManager.addJobOverrideConfig(queueName, {
+        addJobOverrideConfig(queueName, {
             target: target,
             method: descriptor.value
         });

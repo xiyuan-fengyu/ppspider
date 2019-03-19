@@ -1,5 +1,5 @@
-import {requestMappingConfigs} from "./Launcher";
-import {RequestMappingConfig} from "../data/Types";
+import {RequestMappingConfig} from "../Types";
+import {addRequestMappingConfig} from "./Launcher";
 
 export function RequestMapping(url: string, method: "" | "GET" | "POST" = "") {
     return function (target, key, descriptor) {
@@ -9,7 +9,7 @@ export function RequestMapping(url: string, method: "" | "GET" | "POST" = "") {
             target: target.constructor,
             method: key
         };
-        requestMappingConfigs.push(requestMappingConfig);
+        addRequestMappingConfig(requestMappingConfig);
         return descriptor;
     }
 }
