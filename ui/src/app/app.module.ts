@@ -4,7 +4,6 @@ import {NgModule} from '@angular/core';
 import {AppRoutingModule} from './app-routing.module';
 import {AppComponent} from './app.component';
 import {CommonModule, HashLocationStrategy, LocationStrategy} from "@angular/common";
-import {RuntimeComponentModule} from "./module/runtime-component/runtime-component.module";
 import {EditConfigDialog, QueueInfoComponent, ShutdownConfirmDialog} from "./page/queue-info/queue-info.component";
 import {ConfirmDialog} from "./widget/confirm-dialog/confirm.dialog";
 import {JobDetailDialog, JobInfoComponent} from "./page/job-info/job-info.component";
@@ -15,19 +14,30 @@ import {ToasterModule, ToasterService} from "angular2-toaster";
 import {BrowserAnimationsModule} from "@angular/platform-browser/animations";
 import {FormsModule} from "@angular/forms";
 import {
-  DateAdapter, MAT_DATE_FORMATS,
+  DateAdapter,
+  MAT_DATE_FORMATS,
   MAT_DIALOG_DEFAULT_OPTIONS,
   MatButtonModule,
-  MatCardModule, MatDatepickerModule, MatDialogModule, MatFormFieldModule,
+  MatCardModule,
+  MatDatepickerModule,
+  MatDialogModule,
+  MatFormFieldModule,
   MatGridListModule,
-  MatIconModule, MatInputModule,
-  MatListModule, MatNativeDateModule, MatPaginatorModule, MatProgressBarModule, MatSelectModule, MatTableModule,
-  MatTabsModule, MatTooltipModule
+  MatIconModule,
+  MatInputModule,
+  MatListModule,
+  MatNativeDateModule,
+  MatPaginatorModule,
+  MatProgressBarModule,
+  MatSelectModule,
+  MatTableModule,
+  MatTabsModule,
+  MatTooltipModule
 } from "@angular/material";
 import {SocketIOService} from "./service/socket-io.service";
 import {CommonService} from "./service/common.service";
 import {MY_DATE_FORMATS, MyDateAdapter} from "./date.format";
-import { DataUiComponent } from './page/data-ui/data-ui.component';
+import {DataUiComponent} from './page/data-ui/data-ui.component';
 
 @NgModule({
   declarations: [

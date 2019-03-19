@@ -1,6 +1,5 @@
 import {NgModule} from '@angular/core';
 import {RouterModule, Routes} from '@angular/router';
-import {TestComponent} from "./page/test/test.component";
 import {QueueInfoComponent} from "./page/queue-info/queue-info.component";
 import {JobInfoComponent} from "./page/job-info/job-info.component";
 import {IconsComponent} from "./page/icons/icons.component";
