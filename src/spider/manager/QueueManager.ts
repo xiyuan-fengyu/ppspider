@@ -117,7 +117,7 @@ export class QueueManager {
         await PromiseUtil.wait(() => this.runningNum <= 0, 500, Defaults.shutdownTimeout);
         if (this.runningNum > 0) {
             // 发出强行终止任务的信号
-            appInfo.eventBus.emit(Events.QueueManager_InterruptJob);
+            appInfo.eventBus.emit(Events.QueueManager_InterruptJob, null, "system shutdown");
             await PromiseUtil.wait(() => this.runningNum <= 0, 500);
         }
         if (this.runningNum > 0) this.failNum += this.runningNum;
@@ -170,6 +170,37 @@ export class QueueManager {
                     success: false,
                     message: err.message
                 });
+            });
+        });
+    }
+
+    interrupteJob(data: any): Promise<any> {
+        return new Promise<any>(resolve => {
+            let interrupted = false;
+            PromiseUtil.wait(async () => {
+                if (interrupted) {
+                    return true;
+                }
+                else {
+                    const jobInfo = await appInfo.jobManager.job(data._id);
+                    const job = SerializableUtil.deserialize(jobInfo.serialize) as Job;
+                    const s = job.status();
+                    if (job.status() != JobStatus.Running) {
+                        return true;
+                    }
+                }
+            }, 500, 30000).then(() => {
+                resolve({
+                    success: interrupted,
+                    message: interrupted ? "interrupt job(" + data._id + ") successfully"
+                        : "job(" + data._id + ") isn't running"
+                });
+                appInfo.eventBus.removeAllListeners(Events.QueueManager_InterruptJobSuccess(data._id));
+            });
+            // 发出强行终止任务的信号
+            appInfo.eventBus.emit(Events.QueueManager_InterruptJob, data._id, "interrupt by user");
+            appInfo.eventBus.once(Events.QueueManager_InterruptJobSuccess(data._id), () => {
+                interrupted = true;
             });
         });
     }
@@ -792,12 +823,20 @@ export class QueueManager {
                        }, timeout);
                    }
 
-                    const listenInterrupt = reason => {
-                        // ppspider系统关闭，强制停止任务
-                        reject(new Error(Events.QueueManager_InterruptJob + ": " + reason));
+                    const listenInterrupt = (jobId, reason) => {
+                        if (jobId == null || jobId == job.id()) {
+                            // ppspider系统关闭，强制停止任务
+                            reject(new Error(Events.QueueManager_InterruptJob + ": " + reason));
+                            if (jobId) {
+                                // 这里必须要setTimeout才能通知成功，很奇怪
+                                setTimeout(() => {
+                                    appInfo.eventBus.emit(Events.QueueManager_InterruptJobSuccess(jobId));
+                                }, 0);
+                            }
+                        }
                     };
 
-                    appInfo.eventBus.once(Events.QueueManager_InterruptJob, listenInterrupt);
+                    appInfo.eventBus.on(Events.QueueManager_InterruptJob, listenInterrupt);
                     await method.call(target, worker, job);
                     appInfo.eventBus.removeListener(Events.QueueManager_InterruptJob, listenInterrupt);
 

@@ -111,9 +111,17 @@
           <ng-container *ngSwitchCase="'option'">
             <button
               *ngIf="job.status == 'Success' || job.status == 'Fail'"
+              title="re-execute this job"
               (click)="reExecuteJob(job._id)"
               mat-icon-button color="primary">
               <mat-icon>refresh</mat-icon>
+            </button>
+            <button
+              *ngIf="job.status == 'Running'"
+              title="interrupt this job"
+              (click)="interrupteJob(job._id)"
+              mat-icon-button color="primary">
+              <mat-icon style="color: #ff6356">stop</mat-icon>
             </button>
           </ng-container>
           <ng-container *ngSwitchDefault>{{job[col]}}</ng-container>

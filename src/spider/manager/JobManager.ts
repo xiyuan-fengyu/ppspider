@@ -118,8 +118,8 @@ export class JobManager {
                     });
                 }
                 else resolve();
-            }),
-        ]).then(results => {
+            })
+        ] as Promise<any>[]).then(results => {
             let status = null;
             if (pager.requires && pager.requires.status) {
                 status = this.jobStatus();

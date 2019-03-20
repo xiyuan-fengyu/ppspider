@@ -323,6 +323,17 @@ export class JobInfoComponent implements OnInit {
     });
   }
 
+  interrupteJob(jobId: string) {
+    this.socketIOService.request({
+      key: "interrupteJob",
+      data: {
+        _id: jobId
+      }
+    }, res => {
+      this.toasterService.pop(res.success ? "success" : "warning", "Message", res.message);
+    });
+  }
+
 }
 
 @Component({

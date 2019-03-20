@@ -289,6 +289,15 @@ export function Launcher(appConfig: AppConfig) {
                 return appInfo.queueManager.reExecuteJob(request.data);
             }
 
+            /**
+             * 手动终断一个任务的执行
+             * @param {ClientRequest} request
+             * @returns {Promise<any>}
+             */
+            static interrupteJob(request: IdKeyData): Promise<any> {
+                return appInfo.queueManager.interrupteJob(request.data);
+            }
+
             static dataUis(req: IdKeyData) {
                 return dataUiConfigs;
             }
