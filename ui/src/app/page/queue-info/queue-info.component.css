@@ -61,7 +61,7 @@
   font-weight: bold;
 }
 
-.row {
+.infoRow {
   display: flex;
   margin-bottom: 12px;
 }

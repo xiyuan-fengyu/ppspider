@@ -73,16 +73,15 @@ declare const G2: any;
 })
 class TestDataUi2 {
 
-    private data = [];
-
     private chart: any;
 
     ngAfterViewInit() {
         this.chart = new G2.Chart({
             container: 'chart',
-            forceFit: true
+            forceFit: true,
+            animate: false
         });
-        this.chart.source(this.data, {
+        this.chart.source([], {
             time: {
                 alias: '时间',
                 type: 'time',
@@ -99,23 +98,19 @@ class TestDataUi2 {
                 type: 'cat'
             }
         });
-        this.chart.line().position('time*temperature').color('type', ['#ff6627', '#2196ff']).shape('smooth').size(2);
+        this.chart.line().position('time*temperature').color('type', ['#ff6627', '#2196ff']).size(2);
         this.chart.render();
     }
 
-    onData(recode1, recode2) {
-        if (this.data.length >= 200) {
-            this.data.shift();
-            this.data.shift();
-        }
-        this.data.push(recode1);
-        this.data.push(recode2);
-        this.chart.changeData(this.data);
+    onData(data) {
+        this.chart.changeData(data);
     }
 
 }
 
 class TestTask {
+
+    private temperatureDatas = [];
 
     @DataUiRequest(TestDataUi.prototype.request)
     onRequest(id: number, name: string) {
@@ -148,15 +143,22 @@ class TestTask {
     async onTime(useless: any, job: Job) {
         logger.debug(DateUtil.toStr(new Date()));
         getInstance(TestDataUi).onData(DateUtil.toStr());
-        getInstance(TestDataUi2).onData({
+
+        while (this.temperatureDatas.length >= 200) {
+            this.temperatureDatas.shift();
+            this.temperatureDatas.shift();
+        }
+        this.temperatureDatas.push({
             time: new Date().getTime(),
             temperature: ~~(Math.random() * 5) + 22,
             type: '记录1'
-        }, {
+        });
+        this.temperatureDatas.push({
             time: new Date().getTime(),
             temperature: ~~(Math.random() * 7) + 17,
             type: '记录2'
         });
+        getInstance(TestDataUi2).onData(this.temperatureDatas);
     }
 
     @FromQueue({
