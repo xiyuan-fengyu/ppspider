@@ -47,7 +47,7 @@ export class DataUiComponent implements AfterViewInit, OnDestroy {
       const className = params.get("className");
       this.commonService.dataUis.then(dataUis => {
         const dataUi = dataUis[className];
-        const dataUiClass = eval(`(${dataUi.class})`);
+        const dataUiClass = eval(`${dataUi.debug ? 'debugger;\n' : ''}(${dataUi.class})\n//# sourceURL=data-ui:///${dataUi.className}.js`);
         const dynamicComponent = Component({template: dataUi.template})(dataUiClass);
         const dynamicModule = NgModule({
           declarations: [dynamicComponent],
@@ -97,6 +97,7 @@ export class DataUiComponent implements AfterViewInit, OnDestroy {
 
   ngOnDestroy() {
     this.subscription.unsubscribe();
+    this.dynamic.clear();
   }
 
 }

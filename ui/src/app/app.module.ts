@@ -39,6 +39,13 @@ import {CommonService} from "./service/common.service";
 import {MY_DATE_FORMATS, MyDateAdapter} from "./date.format";
 import {DataUiComponent} from './page/data-ui/data-ui.component';
 
+import { COMPILER_OPTIONS, CompilerFactory, Compiler } from '@angular/core';
+import { JitCompilerFactory } from '@angular/platform-browser-dynamic';
+
+export function createCompiler(fn: CompilerFactory): Compiler {
+  return fn.createCompiler();
+}
+
 @NgModule({
   declarations: [
     EditConfigDialog,
@@ -87,10 +94,12 @@ import {DataUiComponent} from './page/data-ui/data-ui.component';
   providers: [
     SocketIOService,
     CommonService,
+
     {
       provide: LocationStrategy,
       useClass: HashLocationStrategy
     },
+
     {
       provide: MAT_DIALOG_DEFAULT_OPTIONS,
       useValue: {hasBackdrop: true}
@@ -98,6 +107,24 @@ import {DataUiComponent} from './page/data-ui/data-ui.component';
 
     {provide: DateAdapter, useClass: MyDateAdapter},
     {provide: MAT_DATE_FORMATS, useValue: MY_DATE_FORMATS},
+
+    // 动态编译，支持发布后 ui/src/app/page/data-ui 的正常运行
+    // 必须设置 angular.json aot=false buildOptimizer=false，正式发布才能正常运行
+    {
+      provide: COMPILER_OPTIONS,
+      useValue: {},
+      multi: true
+    },
+    {
+      provide: CompilerFactory,
+      useClass: JitCompilerFactory,
+      deps: [COMPILER_OPTIONS]
+    },
+    {
+      provide: Compiler,
+      useFactory: createCompiler,
+      deps: [CompilerFactory]
+    },
 
     ToasterService,
   ],

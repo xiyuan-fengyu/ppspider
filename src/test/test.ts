@@ -33,7 +33,8 @@ import {getInstance} from "../spider/decorators/Launcher";
       </tbody>
     </table>
 </div>
-    `
+    `,
+    debug: false
 })
 class TestDataUi {
 

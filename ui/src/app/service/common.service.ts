@@ -11,6 +11,7 @@ type DataUi = {
   requestMethods: {
     [method: string]: string
   };
+  debug: boolean;
 }
 
 type DataUis = {[className: string]: DataUi}
