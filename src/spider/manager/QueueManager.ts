@@ -171,6 +171,9 @@ export class QueueManager {
                     message: err.message
                 });
             });
+        }).then(async res => {
+            res.data = await appInfo.jobManager.job(data._id);
+            return res;
         });
     }
 
@@ -190,10 +193,13 @@ export class QueueManager {
                     }
                 }
             }, 500, 30000).then(() => {
-                resolve({
-                    success: interrupted,
-                    message: interrupted ? "interrupt job(" + data._id + ") successfully"
-                        : "job(" + data._id + ") isn't running"
+                appInfo.jobManager.job(data._id).then(job => {
+                    resolve({
+                        success: interrupted,
+                        message: interrupted ? "interrupt job(" + data._id + ") successfully"
+                            : "job(" + data._id + ") isn't running",
+                        data: job
+                    });
                 });
                 appInfo.eventBus.removeAllListeners(Events.QueueManager_InterruptJobSuccess(data._id));
             });

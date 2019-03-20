@@ -129,17 +129,17 @@ class TestTask {
     })
     async onStart(useless: any, job: Job) {
         const arr = [];
-        for (let i = 0; i < 100; i++) {
+        for (let i = 0; i < 10; i++) {
             arr.push("job_" + i);
         }
         return arr;
     }
 
-    // @OnTime({
-    //     urls: "",
-    //     cron: "0/1 * * * *",
-    //     workerFactory: NoneWorkerFactory
-    // })
+    @OnTime({
+        urls: "",
+        cron: "0/1 * * * *",
+        workerFactory: NoneWorkerFactory
+    })
     async onTime(useless: any, job: Job) {
         logger.debug(DateUtil.toStr(new Date()));
         getInstance(TestDataUi).onData(DateUtil.toStr());
@@ -164,16 +164,13 @@ class TestTask {
     @FromQueue({
         name: "test",
         workerFactory: NoneWorkerFactory,
-        parallel: 1,
-        // parallel: {
-        //     "0/10 * * * * *": 0,
-        //     "5/10 * * * * *": 5
-        // },
-        exeInterval: 1000
+        parallel: {
+            "0/10 * * * * *": 0,
+            "5/10 * * * * *": 5
+        }
     })
     async test(useless: any, job: Job) {
-        // @TODO 这里莫名其妙卡住
-        await PromiseUtil.sleep(1000);
+        await PromiseUtil.sleep(10000);
         logger.debug(job.url());
     }
 

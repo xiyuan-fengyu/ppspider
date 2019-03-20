@@ -312,24 +312,28 @@ export class JobInfoComponent implements OnInit {
     });
   }
 
-  reExecuteJob(jobId: string) {
+  reExecuteJob(job: any) {
     this.socketIOService.request({
       key: "reExecuteJob",
       data: {
-        _id: jobId
+        _id: job._id
       }
     }, res => {
+      Object.assign(job, res.data);
+      job.status = this.jobsStatus.find(s => s.value == job.status).key;
       this.toasterService.pop(res.success ? "success" : "warning", "Message", res.message);
     });
   }
 
-  interrupteJob(jobId: string) {
+  interrupteJob(job: any) {
     this.socketIOService.request({
       key: "interrupteJob",
       data: {
-        _id: jobId
+        _id: job._id
       }
     }, res => {
+      Object.assign(job, res.data);
+      job.status = this.jobsStatus.find(s => s.value == job.status).key;
       this.toasterService.pop(res.success ? "success" : "warning", "Message", res.message);
     });
   }
