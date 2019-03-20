@@ -1,5 +1,5 @@
 import {
-    AddToQueue,
+    AddToQueue, DataUiRequest,
     DateUtil,
     FromQueue,
     Job,
@@ -10,36 +10,120 @@ import {
     OnTime,
     PromiseUtil
 } from "..";
-import {DataUi} from "../spider/decorators/DataUi";
+import {DataUi} from "..";
+import {getInstance} from "../spider/decorators/Launcher";
 
 @DataUi({
-    title: "DataUi测试",
+    label: "DataUi测试",
     template: `
-        <p>test data ui</p>
+<div class="container" style="margin-top: 12px">
+    <p>{{requestResMessage}}</p>
+    <table class="table table-bordered">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>datetime</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let data of datas;let i = index">
+          <th scope="row">{{i + 1}}</th>
+          <td>{{data}}</td>
+        </tr>
+      </tbody>
+    </table>
+</div>
     `
 })
 class TestDataUi {
 
+    requestResMessage: string;
+
+    datas: string[] = [];
+
     ngOnInit() {
-        console.log("test data ui: " + $("title").text());
+        this.request(123, "Tom").then(res => {
+            this.requestResMessage = res.message;
+        });
+    }
+
+    request(...args): Promise<any> {
+        // just a stub
+        return null;
+    }
+
+    onData(data: any) {
+        this.datas.splice(0, 0, data);
+        if (this.datas.length > 10) {
+            this.datas.splice(10, this.datas.length);
+        }
     }
 
 }
 
+declare const G2: any;
+
 @DataUi({
+    label: "动态折线图",
     template: `
-        <p>test data ui2</p>
+<div class="container">
+    <div id="chart"></div>
+</div>
     `
 })
 class TestDataUi2 {
 
-    ngOnInit() {
-        console.log("" + $("title").text());
+    private data = [];
+
+    private chart: any;
+
+    ngAfterViewInit() {
+        this.chart = new G2.Chart({
+            container: 'chart',
+            forceFit: true
+        });
+        this.chart.source(this.data, {
+            time: {
+                alias: '时间',
+                type: 'time',
+                mask: 'HH:mm:ss',
+                tickCount: 10,
+                nice: false
+            },
+            temperature: {
+                alias: '平均温度(°C)',
+                min: 10,
+                max: 35
+            },
+            type: {
+                type: 'cat'
+            }
+        });
+        this.chart.line().position('time*temperature').color('type', ['#ff6627', '#2196ff']).shape('smooth').size(2);
+        this.chart.render();
+    }
+
+    onData(recode1, recode2) {
+        if (this.data.length >= 200) {
+            this.data.shift();
+            this.data.shift();
+        }
+        this.data.push(recode1);
+        this.data.push(recode2);
+        this.chart.changeData(this.data);
     }
 
 }
 
 class TestTask {
+
+    @DataUiRequest(TestDataUi.prototype.request)
+    onRequest(id: number, name: string) {
+        return {
+            success: true,
+            message: "Hello, " + name + " ! Your id is " + id + " ."
+        };
+    }
 
     @OnStart({
         urls: "",
@@ -63,6 +147,16 @@ class TestTask {
     })
     async onTime(useless: any, job: Job) {
         logger.debug(DateUtil.toStr(new Date()));
+        getInstance(TestDataUi).onData(DateUtil.toStr());
+        getInstance(TestDataUi2).onData({
+            time: new Date().getTime(),
+            temperature: ~~(Math.random() * 5) + 22,
+            type: '记录1'
+        }, {
+            time: new Date().getTime(),
+            temperature: ~~(Math.random() * 7) + 17,
+            type: '记录2'
+        });
     }
 
     @FromQueue({

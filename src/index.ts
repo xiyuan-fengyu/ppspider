@@ -18,6 +18,7 @@ export {
     AppInfo,
 } from "./spider/Types";
 export {AddToQueue} from "./spider/decorators/AddToQueue";
+export {DataUi, DataUiRequest} from "./spider/decorators/DataUi";
 export {FromQueue} from "./spider/decorators/FromQueue";
 export {JobOverride} from "./spider/decorators/JobOverride";
 export {appInfo, Launcher} from "./spider/decorators/Launcher";

@@ -4,10 +4,13 @@ import {Subscription} from "rxjs/internal/Subscription";
 import {ObjectUtil} from "../util/ObjectUtil";
 
 type DataUi = {
-  title: string;
+  label: string;
   template: string;
   className: string;
   class: string;
+  requestMethods: {
+    [method: string]: string
+  };
 }
 
 type DataUis = {[className: string]: DataUi}

@@ -55,9 +55,8 @@ import {DataUiComponent} from './page/data-ui/data-ui.component';
     DataUiComponent,
   ],
   imports: [
-    BrowserModule,
-    AppRoutingModule,
     ToasterModule.forRoot(),
+    AppRoutingModule,
     CommonModule,
     BrowserModule,
     BrowserAnimationsModule,

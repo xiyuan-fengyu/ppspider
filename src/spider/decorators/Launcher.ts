@@ -7,7 +7,7 @@ import {Defaults} from "../Default";
 import {WebServer} from "../ui/WebServer";
 import {
     AppConfig,
-    AppInfo, DataUiConfig,
+    AppInfo, DataUiConfig, DataUiRequestConfig,
     IdKeyData,
     JobConfig,
     JobOverrideConfig,
@@ -18,7 +18,10 @@ import {EventEmitter} from "events";
 import {QueueManager} from "../manager/QueueManager";
 
 const instances = new Map<any, any>();
-export function getInstance(instanceClass) {
+export function getInstance<T>(instanceClass: new () => T): T {
+    if (typeof instanceClass === "object") {
+        instanceClass = (instanceClass as any).constructor;
+    }
     let ins = instances.get(instanceClass);
     if (!ins) {
         ins = new instanceClass();
@@ -43,8 +46,33 @@ export function addJobOverrideConfig(queueName: string, config: JobOverrideConfi
 }
 
 const dataUiConfigs: DataUiConfig[] = [];
-export function addDataUiConfig(dataUiConfig: DataUiConfig) {
-    dataUiConfigs.push(dataUiConfig);
+export function addDataUiConfig(config: DataUiConfig) {
+    const className = config["className"];
+    if (dataUiConfigs.find(item => item["className"] == className)) {
+        throw new Error("DataUi(" + className + ") is declared");
+    }
+    dataUiConfigs.push(config);
+}
+
+const dataUiRequestConfigs: DataUiRequestConfig[] = [];
+export function addDataUiRequestConfig(config: DataUiRequestConfig) {
+    const requestMethod = config.requestMethod;
+    if (dataUiRequestConfigs.find(item => item.requestMethod == requestMethod)) {
+        let uiTarget;
+        findUiTarget:
+        for (let dataUiConfig of dataUiConfigs) {
+            const target = dataUiConfig["target"];
+            for (let key of Object.getOwnPropertyNames(target.prototype)) {
+                const pro = target.prototype[key];
+                if (typeof pro === "function" && pro == requestMethod) {
+                    uiTarget = target;
+                    break findUiTarget;
+                }
+            }
+        }
+        throw new Error("DataUiRequest(" + uiTarget.name + ".prototype." + requestMethod.name + ") is handled");
+    }
+    dataUiRequestConfigs.push(config);
 }
 
 export const appInfo: AppInfo = {} as any;
@@ -74,6 +102,60 @@ export function Launcher(appConfig: AppConfig) {
         // 如果用户没有添加 NoneWorkerFactory, 则自动添加这个 factory
         if (!instances.get(NoneWorkerFactory)) {
             instances[NoneWorkerFactory as any] = new NoneWorkerFactory();
+        }
+
+        // DataUi 实例方法增强
+        // 1.后台系统对实例方法的调用会转换为前台页面实例对该方法的调用，用于数据主动推送
+        // 2. @DataUiRequest 注入，使得前台实例对该方法的调用变为对后台数据的主动请求
+        const dataUiRequests: {
+            [targetMethod: string]: {
+                handlerTarget: new () => any;
+                handlerMethod: string;
+            }
+        } = {};
+        const dataUiMethodTargets = new Map<(...args) => any, new () => any>();
+        for (let dataUiConfig of dataUiConfigs) {
+            const target = dataUiConfig["target"];
+            for (let key of Object.getOwnPropertyNames(target.prototype)) {
+                const pro = target.prototype[key];
+                if (typeof pro === "function") {
+                    dataUiMethodTargets.set(pro, target);
+                }
+            }
+        }
+        for (let dataUiRequestConfig of dataUiRequestConfigs) {
+            const requestMethodTarget = dataUiMethodTargets.get(dataUiRequestConfig.requestMethod);
+            if (requestMethodTarget) {
+                dataUiRequests[requestMethodTarget.name + "." + dataUiRequestConfig.requestMethod.name] = {
+                    handlerTarget: dataUiRequestConfig.handleTarget,
+                    handlerMethod: dataUiRequestConfig.handleMethod
+                };
+                const dataUiConfig = dataUiConfigs.find(item => item["target"] === requestMethodTarget);
+                if (dataUiConfig) {
+                    let requestMethods = dataUiConfig["requestMethods"];
+                    if (!requestMethods) {
+                        dataUiConfig["requestMethods"] = requestMethods = {};
+                    }
+                    requestMethods[dataUiRequestConfig.requestMethod.name] = true;
+                }
+            }
+        }
+        // 将 DataUi 标记类中除了 DataUiRequest 标注的方法增强为数据主动推送方法
+        for (let dataUiConfig of dataUiConfigs) {
+            const target = dataUiConfig["target"];
+            const targetIns = getInstance(target);
+            for (let key of Object.getOwnPropertyNames(target.prototype)) {
+                const methodName = key;
+                const pro = target.prototype[methodName];
+                if (typeof pro === "function" && dataUiRequests[target.name + "." + methodName] == null) {
+                    targetIns[methodName] = (...args) => {
+                        appInfo.webServer.push(target.name, {
+                            method: methodName,
+                            args: args
+                        });
+                    };
+                }
+            }
         }
 
         // 等待 jobManager 初始化完成， 实际上是等待 nedb 数据库加载完成
@@ -228,10 +310,18 @@ export function Launcher(appConfig: AppConfig) {
                         }
                     }
                     else {
-                        resolve({
-                            success: false,
-                            message: "method not found"
-                        });
+                        // 检查是否是 DataUiRequest
+                        const dataUiRequest = dataUiRequests[req.key];
+                        if (dataUiRequest) {
+                            const res = await getInstance(dataUiRequest.handlerTarget)[dataUiRequest.handlerMethod](...req.data);
+                            resolve(res);
+                        }
+                        else {
+                            resolve({
+                                success: false,
+                                message: "method not found"
+                            });
+                        }
                     }
                 });
             }

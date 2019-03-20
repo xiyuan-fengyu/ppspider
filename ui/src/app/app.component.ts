@@ -36,7 +36,7 @@ export class AppComponent {
       for (let dataUi of res) {
         this.tabs.push({
           path: "dataUi/" + dataUi.className,
-          label: dataUi.title
+          label: dataUi.label
         });
         dataUis[dataUi.className] = dataUi;
       }

@@ -23,6 +23,7 @@
               "src/assets"
             ],
             "styles": [
+              "node_modules/bootstrap/dist/css/bootstrap.css",
               "src/styles.css"
             ],
             "scripts": [
@@ -32,7 +33,9 @@
               "node_modules/codemirror/addon/comment/comment.js",
               "node_modules/codemirror/mode/javascript/javascript.js",
               "node_modules/jquery/dist/jquery.min.js",
-              "node_modules/jquery.json-viewer/json-viewer/jquery.json-viewer.js"
+              "node_modules/jquery.json-viewer/json-viewer/jquery.json-viewer.js",
+              "node_modules/bootstrap/dist/js/bootstrap.js",
+              "node_modules/@antv/g2/dist/g2.min.js"
             ]
           },
           "configurations": {

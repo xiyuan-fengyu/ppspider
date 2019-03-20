@@ -62,8 +62,14 @@ export type RequestMappingConfig = {
 }
 
 export type DataUiConfig = {
-    title?: string;
+    label?: string;
     template: string;
+}
+
+export type DataUiRequestConfig = {
+    requestMethod: (...args) => any; // 可以是 @DataUi 标记类中的方法
+    handleTarget: any; // 处理请求的target类
+    handleMethod: string; // 处理请求的method名字
 }
 
 export type AppConfig = {

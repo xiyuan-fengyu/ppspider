@@ -769,7 +769,7 @@ export class QueueManager {
         queueInfo.curParallel = (queueInfo.curParallel || 0) + 1;
         queueInfo.lastExeTime = new Date().getTime();
 
-        const workerFactory = getInstance(queueInfo.config.workerFactory) as WorkerFactory<any>;
+        const workerFactory = getInstance<WorkerFactory<any>>(queueInfo.config.workerFactory);
         return workerFactory.get().then(async worker => {
             const target = queueInfo.config["target"];
             const method = target[queueInfo.config["method"]];
