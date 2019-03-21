@@ -64,7 +64,6 @@ export type RequestMappingConfig = {
 export type DataUiConfig = {
     label?: string;
     template: string;
-    debug?: boolean;
 }
 
 export type DataUiRequestConfig = {

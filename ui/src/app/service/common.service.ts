@@ -1,20 +1,7 @@
-import {Injectable, OnDestroy} from '@angular/core';
+import {Compiler, Injectable, Injector, NgModuleRef, OnDestroy} from '@angular/core';
 import {SocketIOService} from "./socket-io.service";
 import {Subscription} from "rxjs/internal/Subscription";
 import {ObjectUtil} from "../util/ObjectUtil";
-
-type DataUi = {
-  label: string;
-  template: string;
-  className: string;
-  class: string;
-  requestMethods: {
-    [method: string]: string
-  };
-  debug: boolean;
-}
-
-type DataUis = {[className: string]: DataUi}
 
 @Injectable()
 export class CommonService implements OnDestroy{
@@ -25,11 +12,10 @@ export class CommonService implements OnDestroy{
 
   public queues: any = {};
 
-  private dataUisResolve;
-
-  public readonly dataUis = new Promise<DataUis>(resolve => this.dataUisResolve = resolve);
-
   constructor(
+    private compiler: Compiler,
+    private injector: Injector,
+    private module: NgModuleRef<any>,
     private socketIOService: SocketIOService,
   ) {
     this.subscription.add(socketIOService.connectObserver().subscribe(data => {
@@ -46,10 +32,6 @@ export class CommonService implements OnDestroy{
       ObjectUtil.copy(data, this.queues);
       this.running = true;
     }));
-  }
-
-  setDataUis(dataUis: DataUis) {
-    this.dataUisResolve(dataUis);
   }
 
   ngOnDestroy(): void {
