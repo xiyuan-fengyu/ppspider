@@ -3,14 +3,18 @@ import {WorkerFactory} from "../spider/worker/WorkerFactory";
 
 export class PuppeteerWorkerFactory implements WorkerFactory<Page> {
 
-    private browser: Browser;
+    private browser: Promise<Browser>;
 
     constructor(launchOptions?: LaunchOptions) {
-        launch(launchOptions).then(browser => this.browser = browser);
+        this.browser = launch(launchOptions);
     }
 
     get(): Promise<Page> {
-        return this.browser.newPage().then(page => this.exPage(page));
+        return new Promise<Page>(resolve => {
+            this.browser.then(browser => {
+                browser.newPage().then(page => resolve(this.exPage(page)));
+            });
+        });
     }
 
     /**
@@ -82,11 +86,7 @@ export class PuppeteerWorkerFactory implements WorkerFactory<Page> {
 
     shutdown() {
         if (!this.browser) return;
-        return this.browser.close();
-    }
-
-    isBusy(): boolean {
-        return this.browser == null;
+        return this.browser.then(browser => browser.close);
     }
 
 }

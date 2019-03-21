@@ -23,11 +23,11 @@ export class logger {
     private static _level = 0;
 
     static set datetimeFormat(value: string) {
-        this._datetimeFormat = value;
+        if (value) this._datetimeFormat = value;
     }
 
     static set logFormat(value: string) {
-        this._logFormat = value;
+        if (value) this._logFormat = value;
     }
 
     static set level(value: "debug" | "info" | "warn" | "error" | string) {
