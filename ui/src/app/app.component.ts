@@ -1,6 +1,6 @@
-import {Component, OnDestroy} from '@angular/core';
+import {Component} from '@angular/core';
 import {SocketIOService} from "./service/socket-io.service";
-import {CommonService} from "./service/common.service";
+import {DataUis, DynamicService} from "./service/dynamic.service";
 
 @Component({
   selector: 'app-root',
@@ -26,21 +26,16 @@ export class AppComponent {
 
   constructor(
     private socketIOService: SocketIOService,
-    private commonService: CommonService,
+    private dynamicService: DynamicService
   ) {
-    this.socketIOService.request({
-      key: "dataUis",
-      data: null
-    }, res => {
-      const dataUis = {};
-      for (let dataUi of res) {
+    this.dynamicService.dataUis.then((dataUris: DataUis) => {
+      for (let className of Object.keys(dataUris)) {
+        const dataUi = dataUris[className];
         this.tabs.push({
           path: "dataUi/" + dataUi.className,
           label: dataUi.label
         });
-        dataUis[dataUi.className] = dataUi;
       }
-      this.commonService.setDataUis(dataUis);
     });
   }
 

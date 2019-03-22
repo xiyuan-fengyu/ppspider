@@ -41,6 +41,7 @@ import {DataUiComponent} from './page/data-ui/data-ui.component';
 
 import { COMPILER_OPTIONS, CompilerFactory, Compiler } from '@angular/core';
 import { JitCompilerFactory } from '@angular/platform-browser-dynamic';
+import {DynamicService} from "./service/dynamic.service";
 
 export function createCompiler(fn: CompilerFactory): Compiler {
   return fn.createCompiler();
@@ -94,6 +95,7 @@ export function createCompiler(fn: CompilerFactory): Compiler {
   providers: [
     SocketIOService,
     CommonService,
+    DynamicService,
 
     {
       provide: LocationStrategy,
