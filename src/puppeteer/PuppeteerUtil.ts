@@ -1,9 +1,10 @@
 import * as os from "os";
-import {Page, Request, Response} from "puppeteer";
+import {Page, Request, Response, SetCookie} from "puppeteer";
 import * as fs from "fs";
 import {DownloadUtil} from "../common/util/DownloadUtil";
 import {logger} from "../common/util/logger";
 import {FileUtil} from "../common/util/FileUtil";
+import * as moment from "moment";
 
 export type ResponseListener = (response: Response) => any;
 
@@ -590,6 +591,32 @@ export class PuppeteerUtil {
             };
             scrollAndCheck();
         });
+    }
+
+    /**
+     * 解析cookies
+     * @param cookiesStr 通过 chrome -> 按下F12打开开发者面板 -> Application面板 -> Storage:Cookies:<SomeUrl> -> 右侧cookie详情面板 -> 鼠标选中所有，Ctrl+c 复制所有
+     */
+    static parseCookies(cookiesStr: string) {
+        // cna=UPTOFFzzDzMCAXJUt1Tpjl9W; hng=CN%7Czh-CN%7CCNY%7C156
+        const cookieLines = cookiesStr.split("\n");
+        const cookies: SetCookie[] = [];
+        cookieLines.forEach(cookieLine => {
+            if (cookieLine) {
+                const [name, value, domain, path, expires, size, http, secure, sameSite] = cookieLine.split("\t");
+                cookies.push({
+                    name: name,
+                    value: value,
+                    domain: domain,
+                    path: path,
+                    expires: moment(expires).toDate().getTime(),
+                    httpOnly: http === "✓",
+                    secure: secure === "✓",
+                    sameSite: sameSite
+                } as SetCookie);
+            }
+        });
+        return cookies;
     }
 
 }

@@ -1,12 +1,17 @@
 import {Browser, launch, LaunchOptions, Page} from "puppeteer";
 import {WorkerFactory} from "../spider/worker/WorkerFactory";
+import {logger} from "..";
 
 export class PuppeteerWorkerFactory implements WorkerFactory<Page> {
 
     private browser: Promise<Browser>;
 
     constructor(launchOptions?: LaunchOptions) {
-        this.browser = launch(launchOptions);
+        logger.info("init " + PuppeteerWorkerFactory.name + " ...");
+        this.browser = launch(launchOptions).then(browser => {
+            logger.info("init " + PuppeteerWorkerFactory.name + " successfully");
+            return browser;
+        });
     }
 
     get(): Promise<Page> {
@@ -86,7 +91,7 @@ export class PuppeteerWorkerFactory implements WorkerFactory<Page> {
 
     shutdown() {
         if (!this.browser) return;
-        return this.browser.then(browser => browser.close);
+        return this.browser.then(browser => browser.close());
     }
 
 }

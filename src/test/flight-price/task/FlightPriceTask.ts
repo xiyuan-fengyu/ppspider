@@ -1,4 +1,5 @@
 import {
+    appInfo,
     DateUtil,
     DefaultJob,
     Job,
@@ -11,6 +12,7 @@ import {
 import * as moment from "moment";
 import 'moment/locale/zh-cn';
 import {Page} from "puppeteer";
+import {cookies} from "../cookie";
 
 export class FlightPriceTask {
 
@@ -28,9 +30,21 @@ export class FlightPriceTask {
     };
 
     @OnStart({
+        urls: "https://www.fliggy.com/?spm=181.1108777.a1z68.1.NZCsUl&ttid=seo.000000574",
+        workerFactory: PuppeteerWorkerFactory,
+        description: "系统启动后设置Cookie"
+    })
+    async setCookie(page: Page, job: Job) {
+        await page.setCookie(...cookies);
+        await page.goto(job.url());
+        appInfo.queueManager.setQueueRunning(".*", true);
+    }
+
+    @OnStart({
         urls: "",
         workerFactory: NoneWorkerFactory,
-        description: "生成最近93天内抓取星期(5,7,1)的机票价格的任务"
+        running: false, // setCookie 完成后再运行
+        description: "生成最近93天内抓取星期(5,7,1)的机票价格的任务",
     })
     async recentJobs(useless: any, job: Job) {
         const res = [];
@@ -57,19 +71,6 @@ export class FlightPriceTask {
             }
         }
         return res;
-    }
-
-    @OnStart({
-        urls: "https://www.baidu.com",
-        workerFactory: PuppeteerWorkerFactory
-    })
-    async baidu(page: Page, job: Job) {
-        await PuppeteerUtil.defaultViewPort(page);
-        await page.goto(job.url());
-        await PuppeteerUtil.addJquery(page);
-        const title = await page.$$eval("title", ele => $(ele).text());
-        console.log(title);
-        await PromiseUtil.sleep(10000);
     }
 
 }

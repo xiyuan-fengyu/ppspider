@@ -7,7 +7,9 @@ import {Defaults} from "../Default";
 import {WebServer} from "../ui/WebServer";
 import {
     AppConfig,
-    AppInfo, DataUiConfig, DataUiRequestConfig,
+    AppInfo,
+    DataUiConfig,
+    DataUiRequestConfig,
     IdKeyData,
     JobConfig,
     JobOverrideConfig,
@@ -96,12 +98,12 @@ export function Launcher(appConfig: AppConfig) {
         let shutdownResolve;
 
         for (let workerFactory of appInfo.workerFactorys) {
-            instances[workerFactory.constructor as any] = workerFactory;
+            instances.set(workerFactory.constructor, workerFactory);
         }
 
         // 如果用户没有添加 NoneWorkerFactory, 则自动添加这个 factory
         if (!instances.get(NoneWorkerFactory)) {
-            instances[NoneWorkerFactory as any] = new NoneWorkerFactory();
+            instances.set(NoneWorkerFactory, new NoneWorkerFactory());
         }
 
         // DataUi 实例方法增强

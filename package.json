@@ -22,7 +22,7 @@
     "express": "^4.16.4",
     "later": "^1.2.0",
     "nedb": "^1.8.0",
-    "puppeteer": "1.13.0",
+    "puppeteer": "1.12.2",
     "request": "^2.88.0",
     "socket.io": "^2.2.0",
     "source-map-support": "^0.5.11",
