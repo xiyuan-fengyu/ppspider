@@ -171,7 +171,7 @@ export class PuppeteerUtil {
                                 request.respond({
                                     status: 200,
                                     contentType: "image/webp",
-                                    body: new Buffer(onePxBuffer)
+                                    body: Buffer.from(onePxBuffer)
                                 });
                             }
                         }
@@ -181,14 +181,14 @@ export class PuppeteerUtil {
                             request.respond({
                                 status: 200,
                                 contentType: "application/javascript",
-                                body: new Buffer([])
+                                body: Buffer.from([])
                             });
                         }
                         else request.continue(); // 其他请求，直接放行
                     }
                 };
             }
-            (page as any).on("request", page[kRequestInterception_ImgLoad]);
+            page.on("request", page[kRequestInterception_ImgLoad]);
         }
     }
 
@@ -226,7 +226,7 @@ export class PuppeteerUtil {
                     responseCheckUrls.splice(responseCheckUrls.indexOf(remove), 1);
                 }
             };
-            (page as any).on("response", responseListener);
+            page.on("response", responseListener);
         }
     }
 

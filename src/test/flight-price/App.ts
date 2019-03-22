@@ -1,6 +1,8 @@
-import {Launcher, PuppeteerWorkerFactory} from "../..";
+import {appInfo, Launcher, PuppeteerWorkerFactory} from "../..";
 import {config} from "./config";
 import {FlightPriceTask} from "./task/FlightPriceTask";
+import {ResponseDao} from "./nedb/ResponseDao";
+import {FlightPriceDao} from "./nedb/FlightPriceDao";
 
 @Launcher({
     workplace: __dirname + "/workplace",
@@ -13,4 +15,4 @@ import {FlightPriceTask} from "./task/FlightPriceTask";
     logger: config.logger,
     webUiPort: 9000
 })
-class App {}
+export class App {}
