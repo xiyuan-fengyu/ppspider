@@ -1,6 +1,6 @@
 import {
     AddToQueue,
-    appInfo,
+    appInfo, Bean,
     DefaultJob,
     FromQueue,
     Job,
@@ -16,8 +16,8 @@ import {Page} from "puppeteer";
 import {cookies} from "../cookie";
 import {ResponseDao, ResponseModel} from "../nedb/ResponseDao";
 import {FlightPriceDao, FlightPriceModel} from "../nedb/FlightPriceDao";
-import {App} from "../App";
 
+@Bean()
 export class FlightPriceTask {
 
     @Transient()
@@ -33,9 +33,13 @@ export class FlightPriceTask {
         }
     };
 
-    // responseDao = new ResponseDao(appInfo.workplace + "/nedb");
-    //
-    // flightPriceDao = new FlightPriceDao(appInfo.workplace + "/nedb");
+    @Transient()
+    @Bean()
+    responseDao = new ResponseDao(appInfo.workplace + "/nedb");
+
+    @Transient()
+    @Bean()
+    flightPriceDao = new FlightPriceDao(appInfo.workplace + "/nedb");
 
     @OnStart({
         urls: "https://www.fliggy.com/?spm=181.1108777.a1z68.1.NZCsUl&ttid=seo.000000574",
@@ -100,11 +104,11 @@ export class FlightPriceTask {
         await waitSearchRes;
 
         // 存储接口数据
-        // await App.responseDao.save(new ResponseModel(job.id(), searchRes));
+        await this.responseDao.save(new ResponseModel(job.id(), searchRes));
 
         // 存储航班数据
         for (let flight of searchRes.data.flight) {
-            // await App.flightPriceDao.save(new FlightPriceModel(job.id(), flight));
+            await this.flightPriceDao.save(new FlightPriceModel(job.id(), flight));
         }
     }
 

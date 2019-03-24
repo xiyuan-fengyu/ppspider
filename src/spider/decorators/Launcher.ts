@@ -1,4 +1,3 @@
-import "source-map-support/register";
 import {FileUtil} from "../../common/util/FileUtil";
 import {logger} from "../../common/util/logger";
 import {NoneWorkerFactory} from "../worker/NoneWorkerFactory";
@@ -18,19 +17,7 @@ import {
 } from "../Types";
 import {EventEmitter} from "events";
 import {QueueManager} from "../manager/QueueManager";
-
-const instances = new Map<any, any>();
-export function getInstance<T>(instanceClass: new () => T): T {
-    if (typeof instanceClass === "object") {
-        instanceClass = (instanceClass as any).constructor;
-    }
-    let ins = instances.get(instanceClass);
-    if (!ins) {
-        ins = new instanceClass();
-        instances.set(instanceClass, ins);
-    }
-    return ins;
-}
+import {existBean, getBean, registeBean} from "../..";
 
 const jobConfigs: JobConfig[] = [];
 export function addJobConfig(config: JobConfig) {
@@ -98,12 +85,12 @@ export function Launcher(appConfig: AppConfig) {
         let shutdownResolve;
 
         for (let workerFactory of appInfo.workerFactorys) {
-            instances.set(workerFactory.constructor, workerFactory);
+            registeBean(workerFactory.constructor as any, workerFactory);
         }
 
         // 如果用户没有添加 NoneWorkerFactory, 则自动添加这个 factory
-        if (!instances.get(NoneWorkerFactory)) {
-            instances.set(NoneWorkerFactory, new NoneWorkerFactory());
+        if (!existBean(NoneWorkerFactory)) {
+            registeBean(NoneWorkerFactory, new NoneWorkerFactory());
         }
 
         // DataUi 实例方法增强
@@ -118,6 +105,7 @@ export function Launcher(appConfig: AppConfig) {
         const dataUiMethodTargets = new Map<(...args) => any, new () => any>();
         for (let dataUiConfig of dataUiConfigs) {
             const target = dataUiConfig["target"];
+            registeBean(target, new target());
             for (let key of Object.getOwnPropertyNames(target.prototype)) {
                 const pro = target.prototype[key];
                 if (typeof pro === "function") {
@@ -145,7 +133,7 @@ export function Launcher(appConfig: AppConfig) {
         // 将 DataUi 标记类中除了 DataUiRequest 标注的方法增强为数据主动推送方法
         for (let dataUiConfig of dataUiConfigs) {
             const target = dataUiConfig["target"];
-            const targetIns = getInstance(target);
+            const targetIns = getBean(target);
             for (let key of Object.getOwnPropertyNames(target.prototype)) {
                 const methodName = key;
                 const pro = target.prototype[methodName];
@@ -168,7 +156,7 @@ export function Launcher(appConfig: AppConfig) {
 
         // 启动 QueueManager
         logger.info("init QueueManager ...");
-        jobConfigs.forEach(item => item["target"] = getInstance(item["target"]));
+        jobConfigs.forEach(item => item["target"] = getBean(item["target"]));
         appInfo.queueManager = new QueueManager({
             jobOverrideConfigs: jobOverrideConfigs,
             jobConfigs: jobConfigs
@@ -324,7 +312,7 @@ export function Launcher(appConfig: AppConfig) {
                         // 检查是否是 DataUiRequest
                         const dataUiRequest = dataUiRequests[req.key];
                         if (dataUiRequest) {
-                            const res = await getInstance(dataUiRequest.handlerTarget)[dataUiRequest.handlerMethod](...req.data);
+                            const res = await getBean(dataUiRequest.handlerTarget)[dataUiRequest.handlerMethod](...req.data);
                             resolve(res);
                         }
                         else {
@@ -340,7 +328,7 @@ export function Launcher(appConfig: AppConfig) {
         }
 
         // 启动UI界面的web服务器
-        requestMappingConfigs.forEach(item => item.target = getInstance(item.target));
+        requestMappingConfigs.forEach(item => item.target = getBean(item.target));
         appInfo.webServer = new WebServer(appInfo.webUiPort || Defaults.webUiPort,
             requestMappingConfigs, WebRequestHandler.dispatch);
 

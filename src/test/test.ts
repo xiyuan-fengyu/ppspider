@@ -1,7 +1,7 @@
 import {
-    AddToQueue, DataUiRequest,
+    AddToQueue, Bean, DataUiRequest,
     DateUtil,
-    FromQueue,
+    FromQueue, getBean,
     Job,
     Launcher,
     logger,
@@ -11,7 +11,6 @@ import {
     PromiseUtil
 } from "..";
 import {DataUi} from "..";
-import {getInstance} from "../spider/decorators/Launcher";
 
 @DataUi({
     label: "DataUi测试",
@@ -108,6 +107,7 @@ class TestDataUi2 {
 
 }
 
+@Bean()
 class TestTask {
 
     private temperatureDatas = [];
@@ -142,7 +142,7 @@ class TestTask {
     })
     async onTime(useless: any, job: Job) {
         logger.debug(DateUtil.toStr(new Date()));
-        getInstance(TestDataUi).onData(DateUtil.toStr());
+        getBean(TestDataUi).onData(DateUtil.toStr());
 
         while (this.temperatureDatas.length >= 200) {
             this.temperatureDatas.shift();
@@ -158,7 +158,7 @@ class TestTask {
             temperature: ~~(Math.random() * 7) + 17,
             type: '记录2'
         });
-        getInstance(TestDataUi2).onData(this.temperatureDatas);
+        getBean(TestDataUi2).onData(this.temperatureDatas);
     }
 
     @FromQueue({
@@ -182,7 +182,6 @@ class TestTask {
         TestTask
     ],
     workerFactorys: [
-
     ],
     webUiPort: 9000
 })

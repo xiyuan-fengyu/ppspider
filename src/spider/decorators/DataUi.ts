@@ -31,7 +31,7 @@ export function DataUiRequest(method: (...args) => any) {
         }
         addDataUiRequestConfig({
             requestMethod: method,
-            handleTarget: target,
+            handleTarget: target.constructor,
             handleMethod: key
         });
         return descriptor;

@@ -12,7 +12,7 @@ import {
     UpdateQueueConfigData
 } from "../Types";
 import {instanceofJob, Job, JobStatus} from "../job/Job";
-import {appInfo, getInstance} from "../decorators/Launcher";
+import {appInfo} from "../decorators/Launcher";
 import {WorkerFactory} from "../worker/WorkerFactory";
 import {logger} from "../../common/util/logger";
 import {Defaults} from "../Default";
@@ -25,6 +25,7 @@ import {Filter} from "../filter/Filter";
 import {DefaultJob} from "../job/DefaultJob";
 import {BloonFilter} from "../filter/BloonFilter";
 import {PromiseUtil} from "../../common/util/PromiseUtil";
+import {getBean} from "../..";
 
 type QueueInfo = {
 
@@ -806,7 +807,7 @@ export class QueueManager {
         queueInfo.curParallel = (queueInfo.curParallel || 0) + 1;
         queueInfo.lastExeTime = new Date().getTime();
 
-        const workerFactory = getInstance<WorkerFactory<any>>(queueInfo.config.workerFactory);
+        const workerFactory = getBean<WorkerFactory<any>>(queueInfo.config.workerFactory);
         return workerFactory.get().then(async worker => {
             const target = queueInfo.config["target"];
             const method = target[queueInfo.config["method"]];

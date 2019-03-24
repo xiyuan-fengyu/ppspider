@@ -1,3 +1,4 @@
+export {Autowired, Bean, getBean, registeBean, existBean} from "./common/bean/Bean";
 export {Serialize, Transient} from "./common/serialize/Serialize";
 export {Sort, Pager, NedbModel, NedbDao} from "./common/nedb/NedbDao";
 export {DateUtil} from "./common/util/DateUtil";
