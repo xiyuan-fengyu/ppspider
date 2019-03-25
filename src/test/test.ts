@@ -11,6 +11,7 @@ import {
     PromiseUtil
 } from "..";
 import {DataUi} from "..";
+import {NedbHelper} from "../spider/data-ui/NedbHelper";
 
 @DataUi({
     label: "DataUi测试",
@@ -179,6 +180,9 @@ class TestTask {
     workplace: __dirname + "/workplace",
     tasks: [
         TestTask
+    ],
+    imports: [
+        NedbHelper
     ],
     workerFactorys: [
     ],

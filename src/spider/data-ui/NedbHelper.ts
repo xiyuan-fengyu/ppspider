@@ -1,12 +1,11 @@
-import {Autowired, Bean, DataUi, DataUiRequest, NedbDao, Pager} from "../../..";
-import {ResponseDao} from "../nedb/ResponseDao";
-import {FlightPriceDao} from "../nedb/FlightPriceDao";
-import {FlightNoDao} from "../nedb/FlightNoDao";
+import {DataUi, DataUiRequest} from "../decorators/DataUi";
+import {Bean} from "../../common/bean/Bean";
+import {NedbDao, Pager} from "../../common/nedb/NedbDao";
 
 declare const CodeMirror: any;
 
 @DataUi({
-    label: "nedb查询工具",
+    label: "Nedb Helper",
     style: `
 #searchResultViewer {
     overflow-y: auto;
@@ -116,27 +115,14 @@ export class NedbHelperUi {
 @Bean()
 export class NedbHelper {
 
-    @Autowired()
-    responseDao: ResponseDao;
-
-    @Autowired()
-    flightPriceDao: FlightPriceDao;
-
-    @Autowired()
-    flightNoDao: FlightNoDao;
-
     @DataUiRequest(NedbHelperUi.prototype.dbList)
     dbList() {
-        return [
-            "responseDao",
-            "flightPriceDao",
-            "flightNoDao"
-        ];
+        return NedbDao.dbs();
     }
 
     @DataUiRequest(NedbHelperUi.prototype.dbSearch)
     dbSearch(db: string, searchExp: Pager<any>) {
-        return (this[db] as NedbDao<any>).page(searchExp);
+        return (NedbDao.db(db)).page(searchExp);
     }
 
 }

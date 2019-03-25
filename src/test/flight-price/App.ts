@@ -1,7 +1,6 @@
-import {Launcher, PuppeteerWorkerFactory} from "../..";
+import {Launcher, NedbHelper, PuppeteerWorkerFactory} from "../..";
 import {config} from "./config";
 import {FlightPriceTask} from "./task/FlightPriceTask";
-import {NedbHelper} from "./data-ui/NedbHelper";
 import {FlightPriceHelper} from "./data-ui/FlightPriceHelper";
 
 @Launcher({
