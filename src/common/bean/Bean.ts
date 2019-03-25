@@ -18,6 +18,12 @@ type AutowiredInfo = {
     paramName?: string; // 方法参数名
 }
 
+export interface AfterInit {
+
+    afterInit();
+
+}
+
 function idStr(id: BeanId<any>) {
     return typeof id === "string" ? id : id.name;
 }
@@ -195,8 +201,11 @@ function initBean<T>(id: BeanId<T>): T {
             for (let autowiredInfo of autowiredArr) {
                 if (autowiredInfo.paramIndex == null) {
                     // 字段
-                    ins[autowiredInfo.fieldOrMethod] = getBean(
-                        autowiredInfo.id != null ? autowiredInfo.id : autowiredInfo.fieldOrMethod);
+                    const autowiredId = autowiredInfo.id != null ? autowiredInfo.id : autowiredInfo.fieldOrMethod;
+                    Object.defineProperty(ins, autowiredInfo.fieldOrMethod, {
+                        get: () => getBean(autowiredId),
+                        set: value => beans.set(autowiredId, value)
+                    });
                 }
                 else {
                     // 方法
@@ -240,7 +249,12 @@ function initBean<T>(id: BeanId<T>): T {
             const tempDefinition = entry[1];
             if (tempDefinition.target === beanDefinition.target) {
                 if (tempDefinition.field) {
-                    registeBean(tempDefinition.id != null ? tempDefinition.id : tempDefinition.field, ins[tempDefinition.field]);
+                    const beanId = tempDefinition.id != null ? tempDefinition.id : tempDefinition.field;
+                    registeBean(beanId, ins[tempDefinition.field]);
+                    Object.defineProperty(ins, tempDefinition.field, {
+                        get: () => getBean(beanId),
+                        set: value => beans.set(beanId, value)
+                    });
                 }
                 else if (tempDefinition.method) {
                     const oldM = ins[tempDefinition.method];
@@ -256,6 +270,9 @@ function initBean<T>(id: BeanId<T>): T {
             }
         }
 
+        if (typeof ins["afterInit"] === "function") {
+            ins["afterInit"]();
+        }
         return ins;
     }
 }

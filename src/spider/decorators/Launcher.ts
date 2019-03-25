@@ -165,6 +165,16 @@ export function Launcher(appConfig: AppConfig) {
         });
         logger.info("init QueueManager successfully");
 
+        // 初始化 imports 中的 Bean
+        appInfo.imports.forEach(item => {
+            try {
+                getBean(item);
+            }
+            catch (e) {
+                logger.warn(e);
+            }
+        });
+
         // 开始派发任务的循环
         appInfo.queueManager.startDispatchLoop();
 

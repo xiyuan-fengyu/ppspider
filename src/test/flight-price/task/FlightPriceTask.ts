@@ -2,10 +2,10 @@ import {
     AddToQueue,
     appInfo, Bean,
     DefaultJob,
-    FromQueue,
+    FromQueue, getBean,
     Job,
     NoneWorkerFactory,
-    OnStart,
+    OnStart, OnTime,
     PuppeteerUtil,
     PuppeteerWorkerFactory,
     Transient
@@ -13,9 +13,11 @@ import {
 import * as moment from "moment";
 import 'moment/locale/zh-cn';
 import {Page} from "puppeteer";
-import {cookies} from "../cookie";
 import {ResponseDao, ResponseModel} from "../nedb/ResponseDao";
 import {FlightPriceDao, FlightPriceModel} from "../nedb/FlightPriceDao";
+import {cookies} from "../cookie";
+import {FlightNo, FlightNoDao} from "../nedb/FlightNoDao";
+import {FlightPriceHelper} from "../data-ui/FlightPriceHelper";
 
 export class FlightPriceTask {
 
@@ -40,21 +42,36 @@ export class FlightPriceTask {
     @Bean()
     flightPriceDao = new FlightPriceDao(appInfo.workplace + "/nedb");
 
-    // @OnStart({
-    //     urls: "https://www.fliggy.com/?spm=181.1108777.a1z68.1.NZCsUl&ttid=seo.000000574",
-    //     workerFactory: PuppeteerWorkerFactory,
-    //     description: "系统启动后设置Cookie"
-    // })
+    @Transient()
+    @Bean()
+    flightNoDao = new FlightNoDao(appInfo.workplace + "/nedb");
+
+    @OnStart({
+        urls: "https://www.fliggy.com/?spm=181.1108777.a1z68.1.NZCsUl&ttid=seo.000000574",
+        workerFactory: PuppeteerWorkerFactory,
+        description: "系统启动后设置Cookie"
+    })
     async setCookie(page: Page, job: Job) {
         await page.setCookie(...cookies);
         await page.goto(job.url());
         appInfo.queueManager.setQueueRunning(".*", true);
     }
 
-    @OnStart({
+    // @OnStart({
+    //     urls: "",
+    //     workerFactory: NoneWorkerFactory,
+    //     running: false, // setCookie 完成后再运行
+    //     description: "生成最近93天内抓取星期(5,7,1)的机票价格的任务",
+    // })
+    @OnTime({
         urls: "",
+        cron: "0 0/5 * * *",
         workerFactory: NoneWorkerFactory,
         running: false, // setCookie 完成后再运行
+        parallel: {
+            "0 0 8 * *": 1,
+            "0 0 20 * *": 0
+        },
         description: "生成最近93天内抓取星期(5,7,1)的机票价格的任务",
     })
     @AddToQueue({
@@ -90,7 +107,8 @@ export class FlightPriceTask {
         name: "flight_price_search",
         workerFactory: PuppeteerWorkerFactory,
         description: "抓取机票价格",
-        exeInterval: 99999999
+        parallel: 2,
+        exeInterval: 2000
     })
     async search(page: Page, job: Job) {
         await PuppeteerUtil.defaultViewPort(page);
@@ -107,6 +125,8 @@ export class FlightPriceTask {
 
         // 存储航班数据
         for (let flight of searchRes.data.flight) {
+            getBean(FlightPriceHelper).addFlightNo(flight.flightNo);
+            await this.flightNoDao.save(new FlightNo(flight.flightNo));
             await this.flightPriceDao.save(new FlightPriceModel(job.id(), flight));
         }
     }

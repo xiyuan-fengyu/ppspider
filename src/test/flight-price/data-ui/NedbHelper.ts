@@ -1,6 +1,7 @@
 import {Autowired, Bean, DataUi, DataUiRequest, NedbDao, Pager} from "../../..";
 import {ResponseDao} from "../nedb/ResponseDao";
 import {FlightPriceDao} from "../nedb/FlightPriceDao";
+import {FlightNoDao} from "../nedb/FlightNoDao";
 
 declare const CodeMirror: any;
 
@@ -121,11 +122,15 @@ export class NedbHelper {
     @Autowired()
     flightPriceDao: FlightPriceDao;
 
+    @Autowired()
+    flightNoDao: FlightNoDao;
+
     @DataUiRequest(NedbHelperUi.prototype.dbList)
     dbList() {
         return [
             "responseDao",
-            "flightPriceDao"
+            "flightPriceDao",
+            "flightNoDao"
         ];
     }
 

@@ -2,6 +2,7 @@ import {Launcher, PuppeteerWorkerFactory} from "../..";
 import {config} from "./config";
 import {FlightPriceTask} from "./task/FlightPriceTask";
 import {NedbHelper} from "./data-ui/NedbHelper";
+import {FlightPriceHelper} from "./data-ui/FlightPriceHelper";
 
 @Launcher({
     workplace: __dirname + "/workplace",
@@ -9,7 +10,8 @@ import {NedbHelper} from "./data-ui/NedbHelper";
         FlightPriceTask
     ],
     imports: [
-        NedbHelper
+        NedbHelper,
+        FlightPriceHelper
     ],
     workerFactorys: [
         new PuppeteerWorkerFactory(config.puppeteer)
