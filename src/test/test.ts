@@ -1,167 +1,177 @@
-import {OnStart} from "../spider/decorators/OnStart";
-import {PuppeteerWorkerFactory} from "../spider/worker/PuppeteerWorkerFactory";
-import {AddToQueue} from "../spider/decorators/AddToQueue";
-import {Page} from "puppeteer";
-import {Job} from "../spider/job/Job";
-import {AddToQueueData} from "../spider/data/Types";
-import {FromQueue} from "../spider/decorators/FromQueue";
-import {Launcher} from "../spider/decorators/Launcher";
-import {PuppeteerUtil} from "../spider/util/PuppeteerUtil";
-import {logger} from "../common/util/logger";
-import {NoneWorkerFactory} from "../spider/worker/NoneWorkerFactory";
-import {mainMessager, MainMessagerEvent, NoFilter, OnTime, PromiseUtil} from "..";
-import {RequestMapping} from "../spider/decorators/RequestMapping";
-import {Request, Response} from "express";
+import {
+    AddToQueue, Bean, DataUiRequest,
+    DateUtil,
+    FromQueue, getBean,
+    Job,
+    Launcher,
+    logger,
+    NoneWorkerFactory,
+    OnStart,
+    OnTime,
+    PromiseUtil
+} from "..";
+import {DataUi} from "..";
+
+@DataUi({
+    label: "DataUi测试",
+    template: `
+<div class="container" style="margin-top: 12px">
+    <p>{{requestResMessage}}</p>
+    <table class="table table-bordered">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>datetime</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let data of datas;let i = index">
+          <th scope="row">{{i + 1}}</th>
+          <td>{{data}}</td>
+        </tr>
+      </tbody>
+    </table>
+</div>
+    `
+})
+class TestDataUi {
+
+    requestResMessage: string;
+
+    datas: string[] = [];
+
+    ngOnInit() {
+        this.request(123, "Tom").then(res => {
+            this.requestResMessage = res.message;
+        });
+    }
+
+    request(...args): Promise<any> {
+        // just a stub
+        return null;
+    }
+
+    onData(data: any) {
+        this.datas.splice(0, 0, data);
+        if (this.datas.length > 10) {
+            this.datas.splice(10, this.datas.length);
+        }
+    }
+
+}
+
+declare const G2: any;
+
+@DataUi({
+    label: "动态折线图",
+    template: `
+<div class="container">
+    <div id="chart"></div>
+</div>
+    `
+})
+class TestDataUi2 {
+
+    private chart: any;
+
+    ngAfterViewInit() {
+        this.chart = new G2.Chart({
+            container: 'chart',
+            forceFit: true,
+            animate: false
+        });
+        this.chart.source([], {
+            time: {
+                alias: '时间',
+                type: 'time',
+                mask: 'HH:mm:ss',
+                tickCount: 10,
+                nice: false
+            },
+            temperature: {
+                alias: '平均温度(°C)',
+                min: 10,
+                max: 35
+            },
+            type: {
+                type: 'cat'
+            }
+        });
+        this.chart.line().position('time*temperature').color('type', ['#ff6627', '#2196ff']).size(2);
+        this.chart.render();
+    }
+
+    onData(data) {
+        this.chart.changeData(data);
+    }
+
+}
 
 class TestTask {
 
-    // @OnStart({
-    //     urls: "http://www.baidu.com",
-    //     workerFactory: PuppeteerWorkerFactory
-    // })
-    // async index(page: Page, job: Job) {
-    //     await page.goto(job.url());
-    //     const title = await page.title();
-    //     console.log(title);
-    // }
+    private temperatureDatas = [];
 
+    @DataUiRequest(TestDataUi.prototype.request)
+    onRequest(id: number, name: string) {
+        return {
+            success: true,
+            message: "Hello, " + name + " ! Your id is " + id + " ."
+        };
+    }
 
+    @OnStart({
+        urls: "",
+        workerFactory: NoneWorkerFactory
+    })
+    @AddToQueue({
+        name: "test"
+    })
+    async onStart(useless: any, job: Job) {
+        const arr = [];
+        for (let i = 0; i < 10; i++) {
+            arr.push("job_" + i);
+        }
+        return arr;
+    }
 
-    // @OnTime({
-    //     urls: "",
-    //     cron: "*/5 * * * * *",
-    //     workerFactory: NoneWorkerFactory
-    // })
-    // async onTime(useless: any, job: Job) {
-    //     logger.debug("just test: " + new Date().getTime());
-    // }
-    //
-    //
-    //
-    // @OnStart({
-    //     urls: "http://www.baidu.com",
-    //     workerFactory: PuppeteerWorkerFactory,
-    //     parallel: {
-    //         "0/20 * * * * ?": 1,
-    //         "10/20 * * * * ?": 2
-    //     }
-    // })
-    // // @OnTime({
-    // //     urls: "http://www.baidu.com",
-    // //     cron: "*/30 * * * * ?",
-    // //     workerFactory: PuppeteerWorkerFactory
-    // // })
-    // @AddToQueue({
-    //     name: "test",
-    // })
-    // async index(page: Page, job: Job): AddToQueueData {
-    //     // logger.info(new Error("just test"));
-    //     await PuppeteerUtil.defaultViewPort(page);
-    //     await PuppeteerUtil.setImgLoad(page, false);
-    //     await page.goto(job.url());
-    //     return PuppeteerUtil.links(page, {
-    //         "test": "http.*"
-    //     });
-    // }
-    //
-    // @RequestMapping("/addJob/test")
-    // @AddToQueue({
-    //     name: "test"
-    // })
-    // async addJobTest(req: Request, res: Response, next: any): AddToQueueData {
-    //     res.send({
-    //         success: true
-    //     });
-    //     return req.query.url;
-    // }
-    //
-    // @OnStart({
-    //     urls: "",
-    //     workerFactory: NoneWorkerFactory
-    // })
-    // async delayToStartPrintUrl(useless: any, job: Job) {
-    //     await PromiseUtil.sleep(5000);
-    //     logger.debug("toggle test queue to running");
-    //     mainMessager.emit(MainMessagerEvent.QueueManager_QueueToggle_queueNameRegex_running, "test", true);
-    // }
-    //
-    // @FromQueue({
-    //     name: "test",
-    //     workerFactory: NoneWorkerFactory,
-    //     running: false,
-    //     parallel: 1,
-    //     exeInterval: 1000
-    // })
-    // async printUrl(useless: any, job: Job) {
-    //     logger.debug(job.url());
-    // }
+    @OnTime({
+        urls: "",
+        cron: "0/1 * * * *",
+        workerFactory: NoneWorkerFactory
+    })
+    async onTime(useless: any, job: Job) {
+        logger.debug(DateUtil.toStr(new Date()));
+        getBean(TestDataUi).onData(DateUtil.toStr());
 
+        while (this.temperatureDatas.length >= 200) {
+            this.temperatureDatas.shift();
+            this.temperatureDatas.shift();
+        }
+        this.temperatureDatas.push({
+            time: new Date().getTime(),
+            temperature: ~~(Math.random() * 5) + 22,
+            type: '记录1'
+        });
+        this.temperatureDatas.push({
+            time: new Date().getTime(),
+            temperature: ~~(Math.random() * 7) + 17,
+            type: '记录2'
+        });
+        getBean(TestDataUi2).onData(this.temperatureDatas);
+    }
 
-    // @OnStart({
-    //     urls: "http://www.baidu.com",
-    //     workerFactory: PuppeteerWorkerFactory,
-    //     parallel: 1
-    // })
-    // async index(page: Page, job: Job) {
-    //     await new Promise<any>(resolve => {
-    //         setTimeout(() => resolve(true), 30000);
-    //     });
-    //     console.log(job.url());
-    // }
-
-
-    // @OnStart({
-    //     urls: "http://www.baidu.com",
-    //     workerFactory: PuppeteerWorkerFactory,
-    //     parallel: 1,
-    //     exeInterval: 10000
-    // })
-    // async index(page: Page, job: Job) {
-    //     // await page.goto(job.url());
-    //     // await PuppeteerUtil.addJquery(page);
-    //     await page.evaluate(() => new Promise(resolve => {
-    //         const test = () => {
-    //             console.log($);
-    //         };
-    //         test();
-    //         resolve(true);
-    //     }));
-    // }
-
-    // @OnStart({
-    //     urls: "http://www.baidu.com",
-    //     workerFactory: PuppeteerWorkerFactory,
-    //     parallel: 1,
-    //     exeInterval: 10000
-    // })
-    // async index(page: Page, job: Job) {
-    //     await PuppeteerUtil.setImgLoad(page, false);
-    //     await page.goto("http://www.baidu.com");
-    //     const lgImg = await PuppeteerUtil.specifyIdByJquery(page, "#lg img:eq(0)");
-    //     const downloadImgRes = await PuppeteerUtil.downloadImg(page, "#" + lgImg[0], __dirname);
-    //     console.log(downloadImgRes);
-    // }
-
-    // @OnStart({
-    //     urls: "",
-    //     workerFactory: NoneWorkerFactory,
-    //     parallel: 1,
-    //     exeInterval: 10000
-    // })
-    // async noneWorkerTest(worker: any, job: Job) {
-    //     console.log("noneWorkerTest", worker, job);
-    // }
-
-    // @OnStart({
-    //     urls: "http://car.bitauto.com/tree_chexing/mb_9/",
-    //     workerFactory: PuppeteerWorkerFactory
-    // })
-    // async test(page: Page, job: Job) {
-    //     // 研究 page.goto 操作一直loading的问题
-    //     await PuppeteerUtil.setImgLoad(page, false);
-    //     await page.goto(job.url(), {waitUntil: 'load', timeout: 0});
-    //     console.log();
-    // }
+    @FromQueue({
+        name: "test",
+        workerFactory: NoneWorkerFactory,
+        parallel: {
+            "0/10 * * * * *": 0,
+            "5/10 * * * * *": 5
+        }
+    })
+    async test(useless: any, job: Job) {
+        await PromiseUtil.sleep(10000);
+        logger.debug(job.url());
+    }
 
 }
 
@@ -171,14 +181,7 @@ class TestTask {
         TestTask
     ],
     workerFactorys: [
-        new PuppeteerWorkerFactory({
-            headless: false,
-            devtools: true
-        })
     ],
-    logger: {
-        level: "debug"
-    },
     webUiPort: 9000
 })
 class App {}

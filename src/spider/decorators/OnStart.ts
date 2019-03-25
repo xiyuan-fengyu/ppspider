@@ -1,5 +1,5 @@
-import {OnStartConfig} from "../data/Types";
-import {jobConfigs} from "./Launcher";
+import {OnStartConfig} from "../Types";
+import {addJobConfig} from "./Launcher";
 
 /**
  * 添加一个系统启动后立即执行的任务配置
@@ -12,8 +12,7 @@ export function OnStart(config: OnStartConfig) {
         config["type"] = "OnStart";
         config["target"] = target.constructor;
         config["method"] = key;
-        jobConfigs.push(config);
-        // queueManager.addOnStartConfig(config);
+        addJobConfig(config);
         return descriptor;
     }
 }

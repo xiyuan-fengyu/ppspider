@@ -17,6 +17,12 @@
           style="color: #2c8aff">play_arrow</mat-icon>
       </button>
     </ng-container>
+    <button (click)="commonService.queues?.saving ? null : saveQueueCache()" mat-icon-button>
+      <mat-icon
+        matTooltip="Save queues cache"
+        [style.color]="commonService.queues?.saving ? '#cccccc' : '#1994ff'"
+        >save</mat-icon>
+    </button>
     <ng-container *ngIf="commonService.queues?.cacheExist">
       <button (click)="deleteQueueCache()" mat-icon-button>
         <mat-icon
@@ -70,7 +76,7 @@
         <mat-icon *ngIf="queue.type == 'FromQueue'" mat-card-avatar class="icon">queue_music</mat-icon>
         <mat-card-title>
           {{queue.name}}
-          <button (click)="queue.type == 'OnStart' ? updateQueueConfig(queue.name, 'execute', null) : null" [style.visibility]="queue.type == 'OnStart' ? 'visible' : 'hidden'" mat-icon-button>
+          <button (click)="queue.type == 'OnStart' ? reExecuteOnStartJob(queue.name) : null" [style.visibility]="queue.type == 'OnStart' ? 'visible' : 'hidden'" mat-icon-button>
             <mat-icon
               matTooltip="Execute this OnStart job again">refresh</mat-icon>
           </button>
@@ -82,7 +88,7 @@
         <mat-card-subtitle *ngIf="queue.description">{{queue.description}}</mat-card-subtitle>
       </mat-card-header>
       <mat-card-content>
-        <div *ngIf="queue.type == 'OnStart' || queue.type == 'OnTime'" class="row">
+        <div *ngIf="queue.type == 'OnStart' || queue.type == 'OnTime'" class="infoRow">
           <label class="key">urls</label>
           <div class="value">
             <div *ngFor="let url of queue.urls" class="url">
@@ -90,7 +96,7 @@
             </div>
           </div>
         </div>
-        <div *ngIf="queue.type == 'FromQueue'" class="row">
+        <div *ngIf="queue.type == 'FromQueue'" class="infoRow">
           <label class="key">queue</label>
           <div class="value">
             <div class="url">
@@ -99,12 +105,12 @@
           </div>
         </div>
 
-        <div class="row">
+        <div class="infoRow">
           <label class="key">workerFactory</label>
           <div class="value">{{queue.workerFactory}}</div>
         </div>
 
-        <div class="row">
+        <div class="infoRow">
           <label class="key">maxParallelConfig</label>
           <div class="value">
               <span (click)="openEditConfig(queue, 'parallel', queue.parallel)" class="editable">
@@ -113,7 +119,7 @@
           </div>
         </div>
 
-        <div class="row">
+        <div class="infoRow">
           <div class="grid">
             <label class="key">exeInterval</label>
             <div class="value">
@@ -141,7 +147,7 @@
           </ng-container>
         </div>
 
-        <div class="row">
+        <div class="infoRow">
           <div class="grid">
             <label class="key">curMaxParallel</label>
             <div class="value">

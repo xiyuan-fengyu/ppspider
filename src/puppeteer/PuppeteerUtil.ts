@@ -1,11 +1,10 @@
-import {DownloadUtil} from "../../common/util/DownloadUtil";
 import * as os from "os";
-import {Page, Request, Response} from "puppeteer";
-import {FileUtil} from "../../common/util/FileUtil";
+import {Page, Request, Response, SetCookie} from "puppeteer";
 import * as fs from "fs";
-import {Defaults} from "../data/Defaults";
-import {LinkPredictMap} from "../data/Types";
-import {logger} from "../../common/util/logger";
+import {DownloadUtil} from "../common/util/DownloadUtil";
+import {logger} from "../common/util/logger";
+import {FileUtil} from "../common/util/FileUtil";
+import * as moment from "moment";
 
 export type ResponseListener = (response: Response) => any;
 
@@ -46,6 +45,15 @@ type ResponseCheckUrlInfo = {
     resolve: (checkResult: ResponseCheckUrlResult) => any;
     fireInfo: FireInfo;
     timeout: number;
+}
+
+export type Selector = string;
+export type Href = string;
+export type HrefRegex = string | RegExp;
+export type ElementTransformer = (ele: Element) => Href | void;
+export type LinkPredict = HrefRegex | ElementTransformer | [Selector, HrefRegex | ElementTransformer];
+export type LinkPredictMap = {
+    [groupName: string]: LinkPredict
 }
 
 const kRequestInterceptionNum = "_requestInterceptionNum";
@@ -116,7 +124,7 @@ export class PuppeteerUtil {
             return eval(evalStr);
         }
         catch (e) {
-            logger.warn(e.stack);
+            logger.warn(e);
             return {};
         }
     }
@@ -242,7 +250,7 @@ export class PuppeteerUtil {
      * @param {number} timeout
      * @returns {Promise<ResponseCheckUrlResult>}
      */
-    static onResponse(page: Page, url: string | RegExp, listener: ResponseListener, fireMax: number = -1, timeout: number = Defaults.responseTimeout): Promise<ResponseCheckUrlResult> {
+    static onResponse(page: Page, url: string | RegExp, listener: ResponseListener, fireMax: number = -1, timeout: number = 30000): Promise<ResponseCheckUrlResult> {
         fireMax = parseInt("" + fireMax);
         return new Promise<ResponseCheckUrlResult>(resolve => {
             const fireInfo: FireInfo = {
@@ -270,7 +278,7 @@ export class PuppeteerUtil {
                     setTimeout(() => {
                         responseCheckUrlRes.isTimeout = true;
                         resolve(responseCheckUrlRes);
-                    }, timeout < Defaults.responseTimeoutMin ? Defaults.responseTimeoutMin : timeout);
+                    }, timeout < 1000 ? 1000 : timeout);
                 }
                 else {
                     resolve(responseCheckUrlRes);
@@ -319,11 +327,11 @@ export class PuppeteerUtil {
      * @param {number} timeout 超时时间
      * @returns {Promise<DownloadImgResult>}
      */
-    static downloadImg(page: Page, selectorOrSrc: string, saveDir: string, timeout: number = Defaults.responseTimeout): Promise<DownloadImgResult> {
+    static downloadImg(page: Page, selectorOrSrc: string, saveDir: string, timeout: number = 30000): Promise<DownloadImgResult> {
         const time = new Date().getTime();
         return new Promise<DownloadImgResult>(async resolve => {
             const imgId = "img_" + time + parseInt("" + Math.random() * 10000);
-            const imgSrc = await page.evaluate((selectorOrSrc, imgId) => {
+            const imgSrc: string = await page.evaluate((selectorOrSrc, imgId) => {
                 try {
                     const isSrc = selectorOrSrc.startsWith("http") || selectorOrSrc.startsWith("//");
                     if (isSrc) {
@@ -345,12 +353,12 @@ export class PuppeteerUtil {
                 catch (e) {
                     console.warn(e.stack);
                 }
-                return false;
+                return null;
             }, selectorOrSrc, imgId);
 
             if (imgSrc) {
                 const newImgSrc = imgSrc + (imgSrc.indexOf("?") == -1 ? "?" : "&") + new Date().getTime() + "_" + (Math.random() * 10000).toFixed(0);
-                const waitRespnse = this.onceResponse(page, newImgSrc, async (response: Response) => {
+                const waitRespnse = PuppeteerUtil.onceResponse(page, newImgSrc, async (response: Response) => {
                     if (response.ok()) {
                         let saveName = null;
                         let suffix = "png";
@@ -583,6 +591,32 @@ export class PuppeteerUtil {
             };
             scrollAndCheck();
         });
+    }
+
+    /**
+     * 解析cookies
+     * @param cookiesStr 通过 chrome -> 按下F12打开开发者面板 -> Application面板 -> Storage:Cookies:<SomeUrl> -> 右侧cookie详情面板 -> 鼠标选中所有，Ctrl+c 复制所有
+     */
+    static parseCookies(cookiesStr: string) {
+        // cna=UPTOFFzzDzMCAXJUt1Tpjl9W; hng=CN%7Czh-CN%7CCNY%7C156
+        const cookieLines = cookiesStr.split("\n");
+        const cookies: SetCookie[] = [];
+        cookieLines.forEach(cookieLine => {
+            if (cookieLine) {
+                const [name, value, domain, path, expires, size, http, secure, sameSite] = cookieLine.split("\t");
+                cookies.push({
+                    name: name,
+                    value: value,
+                    domain: domain,
+                    path: path,
+                    expires: moment(expires).toDate().getTime(),
+                    httpOnly: http === "✓",
+                    secure: secure === "✓",
+                    sameSite: sameSite
+                } as SetCookie);
+            }
+        });
+        return cookies;
     }
 
 }

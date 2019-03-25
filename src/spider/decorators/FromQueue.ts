@@ -1,5 +1,5 @@
-import {FromQueueConfig} from "../data/Types";
-import {jobConfigs} from "./Launcher";
+import {addJobConfig} from "./Launcher";
+import {FromQueueConfig} from "../Types";
 
 /**
  * 从一个任务队列中获取任务并执行
@@ -13,8 +13,7 @@ export function FromQueue(config: FromQueueConfig) {
         config["type"] = "FromQueue";
         config["target"] = target.constructor;
         config["method"] = key;
-        jobConfigs.push(config);
-        // queueManager.addFromQueueConfig(config);
+        addJobConfig(config);
         return descriptor;
     }
 }

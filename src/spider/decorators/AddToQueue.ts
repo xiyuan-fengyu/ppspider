@@ -1,8 +1,8 @@
-import {AddToQueueConfig, AddToQueueInfo} from "../data/Types";
 import {instanceofJob, Job} from "../job/Job";
-import {queueManager} from "../manager/QueueManager";
-import {getTaskInstances} from "./Launcher";
+import {appInfo} from "./Launcher";
 import {logger} from "../../common/util/logger";
+import {AddToQueueConfig, AddToQueueInfo} from "../Types";
+import {getBean} from "../..";
 
 function getAddToQueueConfig(queueConfigs: AddToQueueConfig | AddToQueueConfig[], queueName: string): AddToQueueConfig {
     let config: AddToQueueConfig = null;
@@ -56,7 +56,7 @@ export function AddToQueue(queueConfigs: AddToQueueConfig | AddToQueueConfig[]) 
     return function (target, key, descriptor) {
         const oriFun = descriptor.value;
         descriptor.value = async (...args) => {
-            const targetIns = getTaskInstances(target.constructor);
+            const targetIns = getBean(target.constructor);
             const res = await oriFun.apply(targetIns, args);
             if (res != null) {
                 // 在参数中找到当前job
@@ -95,7 +95,7 @@ export function AddToQueue(queueConfigs: AddToQueueConfig | AddToQueueConfig[]) 
                         });
                     }
                 }
-                queueManager.addToQueue(curJob, addToQueueDatas);
+                appInfo.queueManager.addToQueue(curJob, addToQueueDatas);
             }
             return res;
         };

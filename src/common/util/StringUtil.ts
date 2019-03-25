@@ -44,7 +44,7 @@ export class StringUtil {
             this.lastIdIndex = 0;
         }
 
-        return DateUtil.toStr(now, "yyyyMMdd_HHmmss_SSS_")
+        return DateUtil.toStr(now, "YYYYMMDD_HHmmss_SSS_")
             + this.preFill("" + this.lastIdIndex, 4, '0');
     }
 

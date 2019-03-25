@@ -1,3 +1,4 @@
+export {Autowired, Bean, getBean, registeBean, existBean} from "./common/bean/Bean";
 export {Serialize, Transient} from "./common/serialize/Serialize";
 export {Sort, Pager, NedbModel, NedbDao} from "./common/nedb/NedbDao";
 export {DateUtil} from "./common/util/DateUtil";
@@ -13,19 +14,15 @@ export {
     JobOverrideConfig,
     AddToQueueData,
     AddToQueueConfig,
+    RequestMappingConfig,
+    DataUiConfig,
     AppInfo,
-    Selector,
-    Href,
-    HrefRegex,
-    ElementTransformer,
-    LinkPredict,
-    LinkPredictMap
-} from "./spider/data/Types";
+} from "./spider/Types";
 export {AddToQueue} from "./spider/decorators/AddToQueue";
+export {DataUi, DataUiRequest} from "./spider/decorators/DataUi";
 export {FromQueue} from "./spider/decorators/FromQueue";
 export {JobOverride} from "./spider/decorators/JobOverride";
-export {appInfo, mainMessager, MainMessagerEvent, Launcher} from "./spider/decorators/Launcher";
-export {Looper, LooperTask} from "./spider/decorators/LooperTask";
+export {appInfo, Launcher} from "./spider/decorators/Launcher";
 export {OnStart} from "./spider/decorators/OnStart";
 export {OnTime} from "./spider/decorators/OnTime";
 export {RequestMapping} from "./spider/decorators/RequestMapping";
@@ -33,19 +30,25 @@ export {BloonFilter} from "./spider/filter/BloonFilter";
 export {Filter} from "./spider/filter/Filter";
 export {NoFilter} from "./spider/filter/NoFilter";
 export {DefaultJob} from "./spider/job/DefaultJob";
-export {JobStatus, instanceofJob, Job, formatLog} from "./spider/job/Job";
+export {JobStatus, instanceofJob, Job} from "./spider/job/Job";
 export {DefaultPriorityQueue} from "./spider/queue/DefaultPriorityQueue";
 export {DefaultQueue} from "./spider/queue/DefaultQueue";
 export {AbsQueue} from "./spider/queue/AbsQueue";
 export {Queue} from "./spider/queue/Queue";
+export {NoneWorkerFactory} from "./spider/worker/NoneWorkerFactory";
+export {WorkerFactory} from "./spider/worker/WorkerFactory";
 export {
     ResponseListener,
     DownloadImgError,
     FireInfo,
     DownloadImgResult,
     ResponseCheckUrlResult,
+    Selector,
+    Href,
+    HrefRegex,
+    ElementTransformer,
+    LinkPredict,
+    LinkPredictMap,
     PuppeteerUtil
-} from "./spider/util/PuppeteerUtil";
-export {PuppeteerWorkerFactory} from "./spider/worker/PuppeteerWorkerFactory";
-export {NoneWorkerFactory} from "./spider/worker/NoneWorkerFactory";
-export {WorkerFactory} from "./spider/worker/WorkerFactory";
+} from "./puppeteer/PuppeteerUtil";
+export {PuppeteerWorkerFactory} from "./puppeteer/PuppeteerWorkerFactory";

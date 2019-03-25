@@ -96,7 +96,7 @@ export class SerializableUtil {
         else {
             let classInfo = classInfos.get(objConstructor);
             if (classInfo && classInfo.customSerialize) {
-                res = obj.serialize(); // 调用用户自定义序列化方法
+                res = (obj as any).serialize(); // 调用用户自定义序列化方法
                 res.serializeClassId = classInfo.id; // 设置 classId，在反序列化时获取类信息
             }
 
@@ -141,7 +141,7 @@ export class SerializableUtil {
                         deserializedCache = deserializedCaches[refPath] = eval(refPath); // 根据绝对路径计算引用表达式的值
                     }
                     catch (e) {
-                        logger.warn(e.stack);
+                        logger.warn(e);
                         return str; // 根据路径获取值失败，当做普通 string 返回
                     }
                 }
@@ -158,7 +158,7 @@ export class SerializableUtil {
             });
         }
         else {
-            const serializeClassId = obj.serializeClassId;
+            const serializeClassId = (obj as any).serializeClassId;
             const serializeClassInfo = serializeClassId ? getClassInfoById(serializeClassId) : null;
             if (serializeClassInfo) {
                 const serializeClass = serializeClassInfo.type;
@@ -262,4 +262,20 @@ export function Transient() {
         if (!existed.transients) existed.transients = {};
         existed.transients[field] = true;
     };
+}
+
+export function Assign(target, source) {
+    if (source && target && typeof source == "object" && typeof target == "object") {
+        let existed = classInfos.get(source.constructor);
+        if (existed && existed.transients) {
+            for (let field of Object.keys(source)) {
+                if (!existed.transients[field]) {
+                    target[field] = source[field];
+                }
+            }
+        }
+        else {
+            Object.assign(target, source);
+        }
+    }
 }

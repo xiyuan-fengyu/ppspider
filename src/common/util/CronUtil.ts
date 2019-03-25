@@ -1,5 +1,3 @@
-import {ParallelConfig} from "../../spider/data/Types";
-
 const later: any = require('later');
 later.date.localTime();
 
@@ -20,25 +18,18 @@ export class CronUtil {
     } = {};
 
     private static getCronSchedule(cronStr: string): CronSchedule {
-        let cronSchedule;
-        if (!CronUtil.cronSchedules.hasOwnProperty(cronStr)) {
-            try {
-                const cron = later.parse.cron(cronStr, true);
-                CronUtil.cronSchedules[cronStr] = cronSchedule = {
-                    cron: cron,
-                    schedule: later.schedule(cron)
-                };
-            }
-            catch (e) {
-                console.warn(e.stack);
-                CronUtil.cronSchedules[cronStr] = cronSchedule = null;
-            }
+        let cronSchedule = CronUtil.cronSchedules[cronStr];
+        if (!cronSchedule) {
+            const cron = later.parse.cron(cronStr, true);
+            this.cronSchedules[cronStr] = cronSchedule = {
+                cron: cron,
+                schedule: later.schedule(cron)
+            };
         }
-        else cronSchedule = CronUtil.cronSchedules[cronStr];
         return cronSchedule;
     }
 
-    static next(cron: string, num: number = 10, point: Date = null): Date[] {
+    static next(cron: string, num: number = 10, point: Date = null): Date | Date[] {
         if (!point) {
             point = new Date();
             point.setTime(point.getTime() + 1000); // 防止OnTime队列最后一个任务（记为A）执行之后，新添加的OnTime任务中第一个任务的执行时间和A执行时间重复

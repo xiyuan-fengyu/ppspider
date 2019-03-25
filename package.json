@@ -2,14 +2,12 @@
   "name": "ppspider",
   "author": "xiyuan_fengyu <xiyuan_fengyu@163.com> (https://github.com/xiyuan-fengyu)",
   "homepage": "github.com/xiyuan-fengyu/ppspider",
-  "version": "0.1.23",
-  "description": "spider build with puppeteer",
+  "version": "2.0.0",
+  "description": "web spider build with puppeteer, include task queue manager and dispatcher",
   "main": "./lib/index.js",
   "types": "./lib/index.d.ts",
   "scripts": {
     "auto build": "tsc",
-    "国内用户安装依赖(windows)": "set PUPPETEER_DOWNLOAD_HOST='https://npm.taobao.org/mirrors/' & npm install",
-    "国内用户安装依赖(unix)": "export PUPPETEER_DOWNLOAD_HOST='https://npm.taobao.org/mirrors/' & npm install",
     "generate README toc": "markdown-toc -i ./README.cn.md && markdown-toc -i ./README.md"
   },
   "keywords": [
@@ -27,17 +25,19 @@
     "puppeteer": "1.12.2",
     "request": "^2.88.0",
     "socket.io": "^2.2.0",
-    "source-map-support": "^0.5.10",
-    "typescript": "^3.3.3"
+    "source-map-support": "^0.5.11",
+    "typescript": "^3.3.3",
+    "moment": "^2.24.0"
   },
   "devDependencies": {
     "@types/express": "^4.16.1",
     "@types/jquery": "^3.3.29",
     "@types/nedb": "^1.8.5",
     "@types/node": "^11.9.4",
-    "@types/puppeteer": "^1.12.1",
+    "@types/puppeteer": "^1.12.3",
     "@types/request": "^2.48.1",
     "@types/socket.io": "^2.1.2",
+    "@types/moment": "^2.13.0",
     "markdown-toc": "^1.2.0"
   }
 }

@@ -8,10 +8,6 @@ export class NoneWorkerFactory implements WorkerFactory<any> {
         });
     }
 
-    isBusy(): boolean {
-        return false;
-    }
-
     release(worker: any): Promise<void> {
         return;
     }

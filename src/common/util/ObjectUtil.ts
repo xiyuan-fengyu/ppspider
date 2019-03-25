@@ -19,4 +19,37 @@ export class ObjectUtil {
     return trans(obj);
   }
 
+  static deepClone(source, copied = new Map<any, any>()) {
+    if (source == null) {
+      return source;
+    }
+    else {
+      if (typeof source === "object") {
+        const exist = copied[source];
+        if (exist) {
+          return exist;
+        }
+        else {
+            if (source instanceof Array) {
+                const newArr = [];
+                copied[source as any] = newArr;
+                (source as any[]).forEach((value, index) => newArr[index] = value);
+                return newArr;
+            }
+            else {
+                const newObj = {};
+                copied[source] = newObj;
+                for (let key of Object.keys(source)) {
+                    newObj[key] = this.deepClone(source[key]);
+                }
+                return newObj;
+            }
+        }
+      }
+      else {
+        return source;
+      }
+    }
+  }
+
 }
