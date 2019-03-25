@@ -1,6 +1,6 @@
 import {
     AddToQueue,
-    appInfo, Bean,
+    appInfo, Autowired, Bean,
     DefaultJob,
     FromQueue, getBean,
     Job,
@@ -45,6 +45,10 @@ export class FlightPriceTask {
     @Transient()
     @Bean()
     flightNoDao = new FlightNoDao(appInfo.workplace + "/nedb");
+
+    @Transient()
+    @Autowired(FlightPriceHelper)
+    flightPriceHelper: FlightPriceHelper;
 
     @OnStart({
         urls: "https://www.fliggy.com/?spm=181.1108777.a1z68.1.NZCsUl&ttid=seo.000000574",
@@ -125,7 +129,7 @@ export class FlightPriceTask {
 
         // 存储航班数据
         for (let flight of searchRes.data.flight) {
-            getBean(FlightPriceHelper).addFlightNo(flight.flightNo);
+            this.flightPriceHelper.addFlightNo(flight.flightNo);
             await this.flightNoDao.save(new FlightNo(flight.flightNo));
             await this.flightPriceDao.save(new FlightPriceModel(job.id(), flight));
         }

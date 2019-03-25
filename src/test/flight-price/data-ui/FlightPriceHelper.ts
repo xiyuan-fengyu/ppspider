@@ -111,6 +111,9 @@ export class FlightPriceUi {
 @Bean()
 export class FlightPriceHelper implements AfterInit {
 
+    @Autowired(FlightPriceUi)
+    private flightPriceUi: FlightPriceUi;
+
     @Autowired()
     flightNoDao: FlightNoDao;
 
@@ -127,7 +130,7 @@ export class FlightPriceHelper implements AfterInit {
     addFlightNo(flightNo: string) {
         if (!this.flightNos[flightNo]) {
             this.flightNos[flightNo] = true;
-            getBean(FlightPriceUi).updateFlightNos(this.flightNos);
+            this.flightPriceUi.updateFlightNos(this.flightNos);
         }
     }
 
@@ -153,7 +156,7 @@ export class FlightPriceHelper implements AfterInit {
     afterInit() {
         this.flightNoDao.findList({}, {_id: 1}).then(res => {
             res.forEach(item => this.flightNos[item._id] = true);
-            getBean(FlightPriceUi).updateFlightNos(this.flightNos);
+            this.flightPriceUi.updateFlightNos(this.flightNos);
         });
     }
 
