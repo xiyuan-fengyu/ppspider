@@ -44,6 +44,13 @@
   line-height: 40px;
 }
 
+.queueNotRunning {
+  margin-left: 4px;
+  color: #999999;
+  font-size: 0.8rem;
+  font-style: italic;
+}
+
 .OnStart mat-card-header {
   color: #2ce6ff;
 }

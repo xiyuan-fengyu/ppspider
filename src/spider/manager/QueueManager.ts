@@ -241,6 +241,7 @@ export class QueueManager {
                 method: queueInfo.config['method'],
                 type: taskType,
                 workerFactory: queueInfo.config.workerFactory.name,
+                running: queueInfo.config.running,
                 parallel: queueInfo.config.parallel == null ? Defaults.maxParallel : queueInfo.config.parallel,
                 exeInterval: queueInfo.config.exeInterval,
                 exeIntervalJitter: queueInfo.config.exeIntervalJitter,

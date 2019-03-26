@@ -1,32 +1,56 @@
-import {Autowired, Bean, DataUi, DataUiRequest, getBean} from "../../..";
+import {Autowired, Bean, DataUi, DataUiRequest} from "../../..";
 import {AfterInit} from "../../../common/bean/Bean";
-import {FlightNoDao} from "../nedb/FlightNoDao";
 import {FlightPriceDao} from "../nedb/FlightPriceDao";
 
 declare const G2: any;
 
 @DataUi({
     label: "机票价格",
-    style: ``,
-    template: `
+    style: `
+#flightPriceChart {
+    height: calc(100vh - 90px);
+}    
+    `,
+    template:
+    `
 <div class="container-fluid" style="margin-top: 12px">
     <div class="row">
-        <div class="col-sm-3">
-            <form>
+        <div class="col-sm-2">
+            <p *ngIf="!depArrDates" class="form-control-static">
+                loading ...
+            </p>
+            <form *ngIf="depArrDates">
                   <div class="form-group">
-                        <label for="selectedFlights">Flight</label>
-                        <select [(ngModel)]="selectedFlights" id="selectedFlights" name="selectedFlights" multiple="multiple" class="form-control">
-                            <option *ngFor="let item of flights" [ngValue]="item">{{item}}</option>
+                        <label for="depArr">出发 -> 到达</label>
+                        <select [(ngModel)]="depArrDate" (change)="checkForm(); depDate = null" id="depArr" name="depArr" class="form-control">
+                            <option [ngValue]="null">--请选择--</option>
+                            <option *ngFor="let item of depArrDates" [ngValue]="item">{{item[0]}}</option>
                         </select>
                   </div>
                   <div class="form-group">
-                        <label for="date">Dep Date</label>
-                        <input [(ngModel)]="date" id="date" name="date" type="date" class="form-control">
+                        <label for="depDate">出发日期</label>
+                        <select [(ngModel)]="depDate" (change)="checkForm()" id="depDate" name="depDate" class="form-control">
+                            <ng-container *ngIf="depArrDate">
+                                <option [ngValue]="null">--请选择--</option>
+                                <option *ngFor="let item of depArrDate[1]" [ngValue]="item">{{item}}</option>
+                            </ng-container>
+                        </select>
                   </div>
-                  <button (click)="showFlightPrices()" [disabled]="selectedFlights && selectedFlights.length && date ? null : true" class="btn btn-primary">Submit</button>
+                  <div class="form-group">
+                        <label>出发时间区间(HH:mm)</label>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <input [(ngModel)]="depTimeMin" (change)="checkForm()" pattern="(0[0-9]|1[0-9]|2[0-3]):([0-5][0-9]|60)" id="depTimeMin" name="depTimeMin" type="text" class="form-control">
+                            </div>
+                            <div class="col-md-6">
+                                <input [(ngModel)]="depTimeMax" (change)="checkForm()" pattern="(0[0-9]|1[0-9]|2[0-3]):([0-5][0-9]|60)" id="depTimeMax" name="depTimeMax" type="text" class="form-control">
+                            </div>
+                        </div>
+                  </div>
+                  <button (click)="showFlightPrices()" [disabled]="isFormValid ? null : true" class="btn btn-primary">查询</button>
             </form>
         </div>
-        <div class="col-sm-9">
+        <div class="col-sm-8">
             <div id="flightPriceChart"></div>
         </div>
     </div>
@@ -35,19 +59,25 @@ declare const G2: any;
 })
 export class FlightPriceUi {
 
-    selectedFlights: string[] = [];
-
-    date: string;
-
-    flights: string[] = [];
-
     private flightPriceChart: any;
 
-    private flightPriceChartData: any;
+    private flightPriceChartData: any[];
+
+    depArrDates: [string, string[]][];
+
+    depArrDate: [string, string[]];
+
+    depDate: string;
+
+    depTimeMin: string = "19:00";
+
+    depTimeMax: string = "21:00";
+
+    isFormValid = false;
 
     ngOnInit() {
-        this.getFlightNos().then(res => {
-            this.updateFlightNos(res);
+        this.getDepArrDates().then(res => {
+            this.depArrDates = res;
         });
     }
 
@@ -55,7 +85,8 @@ export class FlightPriceUi {
         this.flightPriceChart = new G2.Chart({
             container: 'flightPriceChart',
             forceFit: true,
-            animate: false
+            animate: false,
+            height: $("#flightPriceChart").height()
         });
         this.flightPriceChart.source([], {
             time: {
@@ -77,33 +108,35 @@ export class FlightPriceUi {
         this.flightPriceChart.render();
     }
 
-    getFlightNos(): Promise<any> {
+    checkForm() {
+        this.isFormValid = !!(this.depArrDate && this.depDate
+            && this.depTimeMin && this.depTimeMin.match("(0[0-9]|1[0-9]|2[0-3]):([0-5][0-9])")
+            && this.depTimeMax && this.depTimeMax.match("(0[0-9]|1[0-9]|2[0-3]):([0-5][0-9])"));
+    }
+
+    getDepArrDates() {
         return null;
     }
 
-    getFlightPrices(flightNos: string[], date: string): Promise<any> {
+    getFlightPrices(depCityName: string, arrCityName: string, depTimeMin: string, depTimeMax: string) {
         return null;
-    }
-
-    updateFlightNos(flightNos: any) {
-        this.flights = Object.keys(flightNos);
-        this.selectedFlights = [];
     }
 
     showFlightPrices() {
-        if (this.selectedFlights && this.selectedFlights.length && this.date) {
-            this.getFlightPrices(this.selectedFlights, this.date).then(res => {
-                this.flightPriceChartData = [];
-                for (let item of res) {
-                    this.flightPriceChartData.push({
-                        time: item.createTime,
-                        price: item.data.cabin.bestPrice,
-                        flight: item.data.flightNo
-                    });
-                }
-                this.flightPriceChart.changeData(this.flightPriceChartData);
-            });
-        }
+        const [depCityName, arrCityName] = this.depArrDate[0].split(" -> ");
+        const depTimeMin = this.depDate + " " + this.depTimeMin;
+        const depTimeMax = this.depDate + " " + this.depTimeMax;
+        this.getFlightPrices(depCityName, arrCityName, depTimeMin, depTimeMax).then(res => {
+            this.flightPriceChartData = [];
+            for (let item of res) {
+                this.flightPriceChartData.push({
+                    time: item.createTime,
+                    price: item.data.cabin.bestPrice,
+                    flight: item.data.flightNo
+                });
+            }
+            this.flightPriceChart.changeData(this.flightPriceChartData);
+        });
     }
 
 }
@@ -115,33 +148,21 @@ export class FlightPriceHelper implements AfterInit {
     private flightPriceUi: FlightPriceUi;
 
     @Autowired()
-    flightNoDao: FlightNoDao;
-
-    @Autowired()
     flightPriceDao: FlightPriceDao;
 
-    flightNos: any = {};
-
-    @DataUiRequest(FlightPriceUi.prototype.getFlightNos)
-    getFlightNos() {
-        return this.flightNos;
-    }
-
-    addFlightNo(flightNo: string) {
-        if (!this.flightNos[flightNo]) {
-            this.flightNos[flightNo] = true;
-            this.flightPriceUi.updateFlightNos(this.flightNos);
-        }
+    @DataUiRequest(FlightPriceUi.prototype.getDepArrDates)
+    getDepArrDates() {
+        return this.flightPriceDao.depArrDates();
     }
 
     @DataUiRequest(FlightPriceUi.prototype.getFlightPrices)
-    getFlightPrices(selectedFlights: string[], date: string) {
+    getFlightPrices(depCityName: string, arrCityName: string, depTimeMin: string, depTimeMax: string) {
         return this.flightPriceDao.findList({
-            "data.flightNo": {
-                "$in": selectedFlights
-            },
+            "data.depCityName": depCityName,
+            "data.arrCityName": arrCityName,
             "data.depTime": {
-                "$regex": "^" + date + ".*"
+                "$gte": depTimeMin,
+                "$lte": depTimeMax
             },
             "createTime": {
                 "$gte": new Date().getTime() - 3600000 * 24 * 5
@@ -149,15 +170,13 @@ export class FlightPriceHelper implements AfterInit {
         }, {
             "data.flightNo": 1,
             "data.cabin.bestPrice": 1,
+            "data.depTime": 1,
             "createTime": 1
         });
     }
 
     afterInit() {
-        this.flightNoDao.findList({}, {_id: 1}).then(res => {
-            res.forEach(item => this.flightNos[item._id] = true);
-            this.flightPriceUi.updateFlightNos(this.flightNos);
-        });
+
     }
 
 }

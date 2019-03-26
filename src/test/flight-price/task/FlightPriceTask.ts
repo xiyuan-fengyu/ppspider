@@ -1,11 +1,13 @@
 import {
     AddToQueue,
-    appInfo, Autowired, Bean,
+    appInfo,
+    Bean,
     DefaultJob,
-    FromQueue, getBean,
+    FromQueue,
     Job,
     NoneWorkerFactory,
-    OnStart, OnTime,
+    OnStart,
+    OnTime,
     PuppeteerUtil,
     PuppeteerWorkerFactory,
     Transient
@@ -16,8 +18,6 @@ import {Page} from "puppeteer";
 import {ResponseDao, ResponseModel} from "../nedb/ResponseDao";
 import {FlightPriceDao, FlightPriceModel} from "../nedb/FlightPriceDao";
 import {cookies} from "../cookie";
-import {FlightNo, FlightNoDao} from "../nedb/FlightNoDao";
-import {FlightPriceHelper} from "../data-ui/FlightPriceHelper";
 
 export class FlightPriceTask {
 
@@ -41,14 +41,6 @@ export class FlightPriceTask {
     @Transient()
     @Bean()
     flightPriceDao = new FlightPriceDao(appInfo.workplace + "/nedb");
-
-    @Transient()
-    @Bean()
-    flightNoDao = new FlightNoDao(appInfo.workplace + "/nedb");
-
-    @Transient()
-    @Autowired(FlightPriceHelper)
-    flightPriceHelper: FlightPriceHelper;
 
     @OnStart({
         urls: "https://www.fliggy.com/?spm=181.1108777.a1z68.1.NZCsUl&ttid=seo.000000574",
@@ -100,6 +92,7 @@ export class FlightPriceTask {
                         depCityName: depCityName,
                         arrCityName: arrCityName
                     });
+                    subJob.key(subJob.url() + "&createTime=" + start);
                     res.push(subJob);
                 }
             }
@@ -117,21 +110,24 @@ export class FlightPriceTask {
     async search(page: Page, job: Job) {
         await PuppeteerUtil.defaultViewPort(page);
         await PuppeteerUtil.setImgLoad(page, false);
-        let searchRes;
+        let searchRes = null;
         const waitSearchRes = PuppeteerUtil.onceResponse(page, "^https://sjipiao.fliggy.com/searchow/search.htm.*", async response => {
             searchRes = PuppeteerUtil.jsonp(await response.text());
         });
         page.goto(job.url()).catch(e => {});
         await waitSearchRes;
 
-        // 存储接口数据
-        await this.responseDao.save(new ResponseModel(job.id(), searchRes));
+        if (searchRes) {
+            // 存储接口数据
+            await this.responseDao.save(new ResponseModel(job.id(), searchRes));
 
-        // 存储航班数据
-        for (let flight of searchRes.data.flight) {
-            this.flightPriceHelper.addFlightNo(flight.flightNo);
-            await this.flightNoDao.save(new FlightNo(flight.flightNo));
-            await this.flightPriceDao.save(new FlightPriceModel(job.id(), flight));
+            // 存储航班数据
+            for (let flight of searchRes.data.flight) {
+                await this.flightPriceDao.save(new FlightPriceModel(job.id(), flight, searchRes.data));
+            }
+        }
+        else {
+            throw new Error("机票价格数据抓取失败");
         }
     }
 
