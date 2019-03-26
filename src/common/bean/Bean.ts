@@ -203,8 +203,7 @@ function initBean<T>(id: BeanId<T>): T {
                     // 字段
                     const autowiredId = autowiredInfo.id != null ? autowiredInfo.id : autowiredInfo.fieldOrMethod;
                     Object.defineProperty(ins, autowiredInfo.fieldOrMethod, {
-                        get: () => getBean(autowiredId),
-                        set: value => beans.set(autowiredId, value)
+                        get: () => getBean(autowiredId)
                     });
                 }
                 else {
