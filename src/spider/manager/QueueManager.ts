@@ -118,7 +118,9 @@ export class QueueManager {
         await PromiseUtil.wait(() => this.runningNum <= 0, 500, Defaults.shutdownTimeout);
         if (this.runningNum > 0) {
             // 发出强行终止任务的信号
-            appInfo.eventBus.emit(Events.QueueManager_InterruptJob, null, "system shutdown");
+            setTimeout(() => {
+                appInfo.eventBus.emit(Events.QueueManager_InterruptJob, null, "system shutdown");
+            }, 0);
             await PromiseUtil.wait(() => this.runningNum <= 0, 500);
         }
         if (this.runningNum > 0) this.failNum += this.runningNum;
@@ -241,6 +243,7 @@ export class QueueManager {
                 method: queueInfo.config['method'],
                 type: taskType,
                 workerFactory: queueInfo.config.workerFactory.name,
+                running: queueInfo.config.running,
                 parallel: queueInfo.config.parallel == null ? Defaults.maxParallel : queueInfo.config.parallel,
                 exeInterval: queueInfo.config.exeInterval,
                 exeIntervalJitter: queueInfo.config.exeIntervalJitter,
@@ -881,8 +884,7 @@ export class QueueManager {
             }
 
             if (job.status() == JobStatus.RetryWaiting) {
-                // 重新添加到任务队列 @TODO
-                // QueueManager.addJobToQueue(job, null, job.queue(), this.queues[job.queue()].queue, null);
+                QueueManager.addJobToQueue(job, null, job.queue(), queueInfo[job.queue()].queue, null);
             }
 
             appInfo.jobManager.save(job);

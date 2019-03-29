@@ -48,6 +48,8 @@ export class NedbModel {
 
 export class NedbDao<T extends NedbModel> {
 
+    private static _instances = {};
+
     protected nedbP: Promise<Nedb>;
 
     private actionCount = 0;
@@ -55,6 +57,7 @@ export class NedbDao<T extends NedbModel> {
     private compactRateForSave = 10000;
 
     constructor(dbDir: string) {
+        NedbDao._instances[this.constructor.name] = this;
         const dbFile = dbDir + "/" + this.constructor.name + ".db";
         this.nedbP = new Promise<Nedb>((resolve, reject) => {
             const nedb = new Nedb({
@@ -71,6 +74,14 @@ export class NedbDao<T extends NedbModel> {
                 }
             });
         });
+    }
+
+    public static dbs(): string[] {
+        return Object.keys(NedbDao._instances);
+    }
+
+    public static db(dbName: string): NedbDao<any> {
+        return NedbDao._instances[dbName];
     }
 
     waitNedbReady() {

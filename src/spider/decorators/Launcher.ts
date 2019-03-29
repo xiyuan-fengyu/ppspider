@@ -18,6 +18,7 @@ import {
 import {EventEmitter} from "events";
 import {QueueManager} from "../manager/QueueManager";
 import {existBean, getBean, registeBean} from "../..";
+import {ArrayUtil} from "../../common/util/ArrayUtil";
 
 const jobConfigs: JobConfig[] = [];
 export function addJobConfig(config: JobConfig) {
@@ -105,7 +106,7 @@ export function Launcher(appConfig: AppConfig) {
         const dataUiMethodTargets = new Map<(...args) => any, new () => any>();
         for (let dataUiConfig of dataUiConfigs) {
             const target = dataUiConfig["target"];
-            registeBean(target, new target());
+            getBean(target, true);
             for (let key of Object.getOwnPropertyNames(target.prototype)) {
                 const pro = target.prototype[key];
                 if (typeof pro === "function") {
@@ -156,12 +157,23 @@ export function Launcher(appConfig: AppConfig) {
 
         // 启动 QueueManager
         logger.info("init QueueManager ...");
-        jobConfigs.forEach(item => item["target"] = getBean(item["target"]));
+        ArrayUtil.removeIf(jobConfigs, item => appInfo.tasks.indexOf(item["target"]) == -1);
+        jobConfigs.forEach(item => item["target"] = getBean(item["target"], true));
         appInfo.queueManager = new QueueManager({
             jobOverrideConfigs: jobOverrideConfigs,
             jobConfigs: jobConfigs
         });
         logger.info("init QueueManager successfully");
+
+        // 初始化 imports 中的 Bean
+        appInfo.imports.forEach(item => {
+            try {
+                getBean(item);
+            }
+            catch (e) {
+                logger.warn(e);
+            }
+        });
 
         // 开始派发任务的循环
         appInfo.queueManager.startDispatchLoop();
@@ -312,7 +324,7 @@ export function Launcher(appConfig: AppConfig) {
                         // 检查是否是 DataUiRequest
                         const dataUiRequest = dataUiRequests[req.key];
                         if (dataUiRequest) {
-                            const res = await getBean(dataUiRequest.handlerTarget)[dataUiRequest.handlerMethod](...req.data);
+                            const res = await getBean(dataUiRequest.handlerTarget, true)[dataUiRequest.handlerMethod](...req.data);
                             resolve(res);
                         }
                         else {
@@ -328,7 +340,7 @@ export function Launcher(appConfig: AppConfig) {
         }
 
         // 启动UI界面的web服务器
-        requestMappingConfigs.forEach(item => item.target = getBean(item.target));
+        requestMappingConfigs.forEach(item => item.target = getBean(item.target, true));
         appInfo.webServer = new WebServer(appInfo.webUiPort || Defaults.webUiPort,
             requestMappingConfigs, WebRequestHandler.dispatch);
 

@@ -1,11 +1,16 @@
-import {Launcher, PuppeteerWorkerFactory} from "../..";
+import {Launcher, NedbHelper, PuppeteerWorkerFactory} from "../..";
 import {config} from "./config";
 import {FlightPriceTask} from "./task/FlightPriceTask";
+import {FlightPriceHelper} from "./data-ui/FlightPriceHelper";
 
 @Launcher({
     workplace: __dirname + "/workplace",
     tasks: [
-      FlightPriceTask
+        FlightPriceTask
+    ],
+    imports: [
+        NedbHelper,
+        FlightPriceHelper
     ],
     workerFactorys: [
         new PuppeteerWorkerFactory(config.puppeteer)

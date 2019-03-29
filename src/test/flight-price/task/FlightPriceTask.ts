@@ -1,11 +1,13 @@
 import {
     AddToQueue,
-    appInfo, Bean,
+    appInfo,
+    Bean,
     DefaultJob,
     FromQueue,
     Job,
     NoneWorkerFactory,
     OnStart,
+    OnTime,
     PuppeteerUtil,
     PuppeteerWorkerFactory,
     Transient
@@ -13,11 +15,10 @@ import {
 import * as moment from "moment";
 import 'moment/locale/zh-cn';
 import {Page} from "puppeteer";
-import {cookies} from "../cookie";
 import {ResponseDao, ResponseModel} from "../nedb/ResponseDao";
 import {FlightPriceDao, FlightPriceModel} from "../nedb/FlightPriceDao";
+import {cookies} from "../cookie";
 
-@Bean()
 export class FlightPriceTask {
 
     @Transient()
@@ -52,10 +53,21 @@ export class FlightPriceTask {
         appInfo.queueManager.setQueueRunning(".*", true);
     }
 
-    @OnStart({
+    // @OnStart({
+    //     urls: "",
+    //     workerFactory: NoneWorkerFactory,
+    //     running: false, // setCookie 完成后再运行
+    //     description: "生成最近93天内抓取星期(5,7,1)的机票价格的任务",
+    // })
+    @OnTime({
         urls: "",
+        cron: "0 0/5 * * *",
         workerFactory: NoneWorkerFactory,
         running: false, // setCookie 完成后再运行
+        parallel: {
+            "0 0 8 * *": 1,
+            "0 0 20 * *": 0
+        },
         description: "生成最近93天内抓取星期(5,7,1)的机票价格的任务",
     })
     @AddToQueue({
@@ -80,6 +92,7 @@ export class FlightPriceTask {
                         depCityName: depCityName,
                         arrCityName: arrCityName
                     });
+                    subJob.key(subJob.url() + "&createTime=" + start);
                     res.push(subJob);
                 }
             }
@@ -91,24 +104,30 @@ export class FlightPriceTask {
         name: "flight_price_search",
         workerFactory: PuppeteerWorkerFactory,
         description: "抓取机票价格",
-        exeInterval: 99999999
+        parallel: 2,
+        exeInterval: 2000
     })
     async search(page: Page, job: Job) {
         await PuppeteerUtil.defaultViewPort(page);
         await PuppeteerUtil.setImgLoad(page, false);
-        let searchRes;
+        let searchRes = null;
         const waitSearchRes = PuppeteerUtil.onceResponse(page, "^https://sjipiao.fliggy.com/searchow/search.htm.*", async response => {
             searchRes = PuppeteerUtil.jsonp(await response.text());
         });
         page.goto(job.url()).catch(e => {});
         await waitSearchRes;
 
-        // 存储接口数据
-        await this.responseDao.save(new ResponseModel(job.id(), searchRes));
+        if (searchRes) {
+            // 存储接口数据
+            await this.responseDao.save(new ResponseModel(job.id(), searchRes));
 
-        // 存储航班数据
-        for (let flight of searchRes.data.flight) {
-            await this.flightPriceDao.save(new FlightPriceModel(job.id(), flight));
+            // 存储航班数据
+            for (let flight of searchRes.data.flight) {
+                await this.flightPriceDao.save(new FlightPriceModel(job.id(), flight, searchRes.data));
+            }
+        }
+        else {
+            throw new Error("机票价格数据抓取失败");
         }
     }
 

@@ -1,4 +1,4 @@
-export {Autowired, Bean, getBean, registeBean, existBean} from "./common/bean/Bean";
+export {Autowired, Bean, AfterInit, getBean, registeBean, existBean} from "./common/bean/Bean";
 export {Serialize, Transient} from "./common/serialize/Serialize";
 export {Sort, Pager, NedbModel, NedbDao} from "./common/nedb/NedbDao";
 export {DateUtil} from "./common/util/DateUtil";
@@ -18,6 +18,7 @@ export {
     DataUiConfig,
     AppInfo,
 } from "./spider/Types";
+export {NedbHelper} from "./spider/data-ui/NedbHelper";
 export {AddToQueue} from "./spider/decorators/AddToQueue";
 export {DataUi, DataUiRequest} from "./spider/decorators/DataUi";
 export {FromQueue} from "./spider/decorators/FromQueue";

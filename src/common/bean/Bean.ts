@@ -18,6 +18,12 @@ type AutowiredInfo = {
     paramName?: string; // 方法参数名
 }
 
+export interface AfterInit {
+
+    afterInit();
+
+}
+
 function idStr(id: BeanId<any>) {
     return typeof id === "string" ? id : id.name;
 }
@@ -38,10 +44,18 @@ function addBeanDefinition(beanDefinition: BeanDefinition) {
         }
     }
 
-    if (beanDefinitions.has(id)) {
-        throw new Error("duplicate Bean(" + idStr(id) + ")");
+    const existedBeanDefinition = beanDefinitions.get(id);
+    if (existedBeanDefinition) {
+        if (existedBeanDefinition.id !== beanDefinition.id
+            || existedBeanDefinition.target !== beanDefinition.target
+            || existedBeanDefinition.field !== beanDefinition.field
+            || existedBeanDefinition.method !== beanDefinition.method) {
+            throw new Error("duplicate Bean(" + idStr(id) + ")");
+        }
     }
-    beanDefinitions.set(id, beanDefinition);
+    else {
+        beanDefinitions.set(id, beanDefinition);
+    }
 }
 
 export function Bean(id?: string) {
@@ -126,19 +140,28 @@ export function Autowired(id?: BeanId<any>) {
 
 
 const beans = new Map<BeanId<any>, any>();
-export function getBean<T>(id: BeanId<T>): T {
+export function getBean<T>(id: BeanId<T>, createBeanDefinitionIfNotExisted: boolean = false): T {
     let bean = beans.get(id);
     if (bean === undefined) {
-        bean = initBean(id);
+        if (beanDefinitions.has(id)) {
+            bean = initBean(id);
+        }
+        else if (createBeanDefinitionIfNotExisted && typeof id === "function") {
+            addBeanDefinition({
+                id: id,
+                target: id
+            });
+            bean = initBean(id);
+        }
+        else {
+            throw new Error("Bean(" + idStr(id) + ") is not defined");
+        }
     }
     return bean;
 }
 
 function initBean<T>(id: BeanId<T>): T {
     let beanDefinition = beanDefinitions.get(id);
-    if (beanDefinition == null) {
-        throw new Error("Bean(" + idStr(id) + ") is not defined");
-    }
 
     if (beanDefinition.method || beanDefinition.field) {
         // 方法或字段
@@ -178,8 +201,10 @@ function initBean<T>(id: BeanId<T>): T {
             for (let autowiredInfo of autowiredArr) {
                 if (autowiredInfo.paramIndex == null) {
                     // 字段
-                    ins[autowiredInfo.fieldOrMethod] = getBean(
-                        autowiredInfo.id != null ? autowiredInfo.id : autowiredInfo.fieldOrMethod);
+                    const autowiredId = autowiredInfo.id != null ? autowiredInfo.id : autowiredInfo.fieldOrMethod;
+                    Object.defineProperty(ins, autowiredInfo.fieldOrMethod, {
+                        get: () => getBean(autowiredId)
+                    });
                 }
                 else {
                     // 方法
@@ -223,7 +248,12 @@ function initBean<T>(id: BeanId<T>): T {
             const tempDefinition = entry[1];
             if (tempDefinition.target === beanDefinition.target) {
                 if (tempDefinition.field) {
-                    registeBean(tempDefinition.id != null ? tempDefinition.id : tempDefinition.field, ins[tempDefinition.field]);
+                    const beanId = tempDefinition.id != null ? tempDefinition.id : tempDefinition.field;
+                    registeBean(beanId, ins[tempDefinition.field]);
+                    Object.defineProperty(ins, tempDefinition.field, {
+                        get: () => getBean(beanId),
+                        set: value => beans.set(beanId, value)
+                    });
                 }
                 else if (tempDefinition.method) {
                     const oldM = ins[tempDefinition.method];
@@ -239,6 +269,9 @@ function initBean<T>(id: BeanId<T>): T {
             }
         }
 
+        if (typeof ins["afterInit"] === "function") {
+            ins["afterInit"]();
+        }
         return ins;
     }
 }
@@ -247,8 +280,14 @@ export function existBean(id: BeanId<any>) {
     return beans.has(id);
 }
 
-export function registeBean<T>(id: BeanId<T>, ins: T, forceOverwrite: boolean = false) {
-    if (!beans.has(id) || forceOverwrite) {
+export function registeBean<T>(id: BeanId<T>, ins: T, beanDefinition?: BeanDefinition) {
+    if (!beans.has(id)) {
+        if (!beanDefinitions.has(id)) {
+            addBeanDefinition(beanDefinition || {
+                id: id,
+                target: ins.constructor as Constructor<T>
+            });
+        }
         beans.set(id, ins);
     }
     else {

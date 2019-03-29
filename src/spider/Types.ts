@@ -64,6 +64,7 @@ export type RequestMappingConfig = {
 export type DataUiConfig = {
     label?: string;
     template: string;
+    style?: string;
 }
 
 export type DataUiRequestConfig = {
@@ -75,7 +76,8 @@ export type DataUiRequestConfig = {
 export type AppConfig = {
     workplace: string; // 系统的工作目录
     queueCache?: string; // 运行状态保存文件的路径，默认为 this.workplace + "/queueCache.json"
-    tasks: any[]; // 注入task类的列表
+    tasks: any[]; // 任务类
+    imports?: any[]; // 需要引入的依赖类、实例
     workerFactorys: WorkerFactory<any>[]; // 工厂类实例
     webUiPort?: 9000 | number; // UI管理界面的web服务器端口，默认9000
     logger?: LoggerSetting; // 日志配置

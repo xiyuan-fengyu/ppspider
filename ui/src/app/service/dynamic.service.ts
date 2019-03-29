@@ -19,6 +19,7 @@ import {FormsModule} from "@angular/forms";
 export type DataUi = {
   label: string;
   template: string;
+  style: string;
   className: string;
   class: string;
   requestMethods: {
@@ -90,7 +91,7 @@ export class DynamicService {
         this.dataUis.then(dataUis => {
           const dataUi = dataUis[className];
           const dataUiClass = eval(`(${dataUi.class})\n//# sourceURL=data-ui:///${dataUi.className}.js`);
-          const dynamicComponent = Component({template: dataUi.template})(dataUiClass);
+          const dynamicComponent = Component({template: dataUi.template, styles: [dataUi.style || ""]})(dataUiClass);
           const dynamicModule = NgModule({
             declarations: [dynamicComponent],
             imports: [CommonModule, BrowserModule, BrowserAnimationsModule, FormsModule]

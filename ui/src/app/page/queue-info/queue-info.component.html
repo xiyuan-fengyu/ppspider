@@ -76,6 +76,7 @@
         <mat-icon *ngIf="queue.type == 'FromQueue'" mat-card-avatar class="icon">queue_music</mat-icon>
         <mat-card-title>
           {{queue.name}}
+          <span *ngIf="!queue.running" class="queueNotRunning">is not running !</span>
           <button (click)="queue.type == 'OnStart' ? reExecuteOnStartJob(queue.name) : null" [style.visibility]="queue.type == 'OnStart' ? 'visible' : 'hidden'" mat-icon-button>
             <mat-icon
               matTooltip="Execute this OnStart job again">refresh</mat-icon>

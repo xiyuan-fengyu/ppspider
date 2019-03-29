@@ -10,7 +10,7 @@ export class DateUtil {
     // YYYY-MM-DD HH:mm:ss
     // YYYY-MM-DD HH:mm:ss.SSS
     static toStr(date: Date = new Date(), format: string = "YYYY-MM-DD HH:mm:ss"): string {
-        return moment(new Date()).format(format);
+        return moment(date).format(format);
     }
 
 }
