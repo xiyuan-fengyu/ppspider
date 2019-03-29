@@ -597,14 +597,20 @@ ascp -v -i ~/.aspera/connect/etc/asperaweb_id_dsa.openssh -k 1 -T -l200m anonftp
     label: "导出gsm数据",
     template: `
     <div class="container" style="margin-top: 12px">
-        <button (click)="exportGsm()" class="btn btn-primary">导出gsm数据</button>
+        <button (click)="doExportGsm()" class="btn btn-primary">导出gsm数据</button>
     </div>
     `
 })
 class GsmUi {
 
     exportGsm() {
+        return null;
+    }
 
+    doExportGsm() {
+        this.exportGsm().then(res => {
+            alert("数据已经导出到目录：" + res);
+        });
     }
 
 }
@@ -709,6 +715,7 @@ export class GeoTask {
         }
         FileUtil.write(appInfo.workplace + "/export/gsms.txt", gsmsStr);
         FileUtil.write(appInfo.workplace + "/export/srrs.txt", srrsStr);
+        return appInfo.workplace + "/export";
     }
 
 }
