@@ -1,4 +1,4 @@
-import {Injectable, OnDestroy} from '@angular/core';
+import {Compiler, Injectable, Injector, NgModuleRef, OnDestroy} from '@angular/core';
 import {SocketIOService} from "./socket-io.service";
 import {Subscription} from "rxjs/internal/Subscription";
 import {ObjectUtil} from "../util/ObjectUtil";
@@ -13,6 +13,9 @@ export class CommonService implements OnDestroy{
   public queues: any = {};
 
   constructor(
+    private compiler: Compiler,
+    private injector: Injector,
+    private module: NgModuleRef<any>,
     private socketIOService: SocketIOService,
   ) {
     this.socketIOService.request({

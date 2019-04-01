@@ -29,6 +29,8 @@ import {getBean} from "../..";
 
 type QueueInfo = {
 
+    name: string;
+
     queue: Queue;
 
     config?: JobConfig;
@@ -425,10 +427,16 @@ export class QueueManager {
             }
         }
         else if (data.field == "exeInterval") {
+            const rate = queueInfo.config.exeIntervalJitter / (queueInfo.config.exeInterval || 1);
             queueInfo.config.exeInterval = data.value;
+            if (queueInfo.config.exeIntervalJitter > queueInfo.config.exeInterval) {
+                queueInfo.config.exeIntervalJitter = queueInfo.config.exeInterval * rate;
+            }
+            this.fixParallelNextExeTime(queueInfo);
         }
         else if (data.field == "exeIntervalJitter") {
             queueInfo.config.exeIntervalJitter = data.value;
+            this.fixParallelNextExeTime(queueInfo);
         }
         else if (data.field == "curMaxParallel") {
             queueInfo.curMaxParallel = data.value;
@@ -439,6 +447,17 @@ export class QueueManager {
             success: true,
             message: "update success: " + data.field
         };
+    }
+
+    private fixParallelNextExeTime(queueInfo: QueueInfo) {
+        const maxNexExeTime = new Date().getTime() + queueInfo.config.exeInterval + queueInfo.config.exeIntervalJitter;
+        let nextExeTimea = this.queueParallelNextExeTimes[queueInfo.name];
+        for (let key of Object.keys(nextExeTimea)) {
+            const time = nextExeTimea[key];
+            if (time > maxNexExeTime) {
+                nextExeTimea[key] = maxNexExeTime;
+            }
+        }
     }
 
     /**
@@ -537,6 +556,7 @@ export class QueueManager {
         let queueInfo = this.queueInfos[queueName];
         if (!queueInfo) {
             this.queueInfos[queueName] = queueInfo = {
+                name: queueName,
                 queue: null
             };
         }
@@ -628,6 +648,7 @@ export class QueueManager {
 
                 if (!queueInfo) {
                     this.queueInfos[queueName] = queueInfo = {
+                        name: queueName,
                         queue: null
                     };
                 }
