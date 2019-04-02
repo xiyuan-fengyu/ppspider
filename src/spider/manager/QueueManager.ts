@@ -905,7 +905,7 @@ export class QueueManager {
             }
 
             if (job.status() == JobStatus.RetryWaiting) {
-                QueueManager.addJobToQueue(job, null, job.queue(), queueInfo[job.queue()].queue, null);
+                QueueManager.addJobToQueue(job, null, job.queue(), queueInfo.queue, null);
             }
 
             appInfo.jobManager.save(job);
