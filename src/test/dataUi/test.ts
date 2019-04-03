@@ -1,17 +1,18 @@
 import {
-    AddToQueue, Bean, DataUiRequest,
+    AddToQueue,
+    DataUi,
+    DataUiRequest,
     DateUtil,
-    FromQueue, getBean,
+    FromQueue,
+    getBean,
     Job,
     Launcher,
-    logger,
+    logger, NedbHelperUi,
     NoneWorkerFactory,
     OnStart,
     OnTime,
     PromiseUtil
-} from "..";
-import {DataUi} from "..";
-import {NedbHelper} from "../spider/data-ui/NedbHelper";
+} from "../..";
 
 @DataUi({
     label: "DataUi测试",
@@ -181,8 +182,10 @@ class TestTask {
     tasks: [
         TestTask
     ],
-    imports: [
-        NedbHelper
+    dataUis: [
+        NedbHelperUi,
+        TestDataUi,
+        TestDataUi2
     ],
     workerFactorys: [
     ],

@@ -113,7 +113,7 @@ export class NedbHelperUi {
 }
 
 @Bean()
-export class NedbHelper {
+class NedbHelper {
 
     @DataUiRequest(NedbHelperUi.prototype.dbList)
     dbList() {

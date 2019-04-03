@@ -97,6 +97,9 @@ export function Launcher(appConfig: AppConfig) {
         // DataUi 实例方法增强
         // 1.后台系统对实例方法的调用会转换为前台页面实例对该方法的调用，用于数据主动推送
         // 2. @DataUiRequest 注入，使得前台实例对该方法的调用变为对后台数据的主动请求
+        dataUiConfigs.forEach(item => {
+            item["imported"] = (appInfo.dataUis || []).indexOf(item["target"]) > -1;
+        });
         const dataUiRequests: {
             [targetMethod: string]: {
                 handlerTarget: new () => any;
@@ -107,22 +110,25 @@ export function Launcher(appConfig: AppConfig) {
         for (let dataUiConfig of dataUiConfigs) {
             const target = dataUiConfig["target"];
             getBean(target, true);
-            for (let key of Object.getOwnPropertyNames(target.prototype)) {
-                const pro = target.prototype[key];
-                if (typeof pro === "function") {
-                    dataUiMethodTargets.set(pro, target);
+            if (dataUiConfig["imported"]) {
+                for (let key of Object.getOwnPropertyNames(target.prototype)) {
+                    const pro = target.prototype[key];
+                    if (typeof pro === "function") {
+                        dataUiMethodTargets.set(pro, target);
+                    }
                 }
             }
         }
         for (let dataUiRequestConfig of dataUiRequestConfigs) {
             const requestMethodTarget = dataUiMethodTargets.get(dataUiRequestConfig.requestMethod);
             if (requestMethodTarget) {
-                dataUiRequests[requestMethodTarget.name + "." + dataUiRequestConfig.requestMethod.name] = {
-                    handlerTarget: dataUiRequestConfig.handleTarget,
-                    handlerMethod: dataUiRequestConfig.handleMethod
-                };
                 const dataUiConfig = dataUiConfigs.find(item => item["target"] === requestMethodTarget);
-                if (dataUiConfig) {
+                if (dataUiConfig && dataUiConfig["imported"]) {
+                    dataUiRequests[requestMethodTarget.name + "." + dataUiRequestConfig.requestMethod.name] = {
+                        handlerTarget: dataUiRequestConfig.handleTarget,
+                        handlerMethod: dataUiRequestConfig.handleMethod
+                    };
+
                     let requestMethods = dataUiConfig["requestMethods"];
                     if (!requestMethods) {
                         dataUiConfig["requestMethods"] = requestMethods = {};
@@ -133,18 +139,20 @@ export function Launcher(appConfig: AppConfig) {
         }
         // 将 DataUi 标记类中除了 DataUiRequest 标注的方法增强为数据主动推送方法
         for (let dataUiConfig of dataUiConfigs) {
-            const target = dataUiConfig["target"];
-            const targetIns = getBean(target);
-            for (let key of Object.getOwnPropertyNames(target.prototype)) {
-                const methodName = key;
-                const pro = target.prototype[methodName];
-                if (typeof pro === "function" && dataUiRequests[target.name + "." + methodName] == null) {
-                    targetIns[methodName] = (...args) => {
-                        appInfo.webServer.push(target.name, {
-                            method: methodName,
-                            args: args
-                        });
-                    };
+            if (dataUiConfig["imported"]) {
+                const target = dataUiConfig["target"];
+                const targetIns = getBean(target);
+                for (let key of Object.getOwnPropertyNames(target.prototype)) {
+                    const methodName = key;
+                    const pro = target.prototype[methodName];
+                    if (typeof pro === "function" && dataUiRequests[target.name + "." + methodName] == null) {
+                        targetIns[methodName] = (...args) => {
+                            appInfo.webServer.push(target.name, {
+                                method: methodName,
+                                args: args
+                            });
+                        };
+                    }
                 }
             }
         }
@@ -164,16 +172,6 @@ export function Launcher(appConfig: AppConfig) {
             jobConfigs: jobConfigs
         });
         logger.info("init QueueManager successfully");
-
-        // 初始化 imports 中的 Bean
-        appInfo.imports.forEach(item => {
-            try {
-                getBean(item);
-            }
-            catch (e) {
-                logger.warn(e);
-            }
-        });
 
         // 开始派发任务的循环
         appInfo.queueManager.startDispatchLoop();
@@ -301,7 +299,7 @@ export function Launcher(appConfig: AppConfig) {
             }
 
             static dataUis(req: IdKeyData) {
-                return dataUiConfigs;
+                return dataUiConfigs.filter(item => item["imported"]);
             }
 
             static dispatch(req: IdKeyData): Promise<any> {
@@ -341,7 +339,7 @@ export function Launcher(appConfig: AppConfig) {
 
         // 启动UI界面的web服务器
         requestMappingConfigs.forEach(item => item.target = getBean(item.target, true));
-        appInfo.webServer = new WebServer(appInfo.webUiPort || Defaults.webUiPort,
+        appInfo.webServer = new WebServer(appInfo.webUiPort || Defaults.webUiPort, appInfo.workplace,
             requestMappingConfigs, WebRequestHandler.dispatch);
 
         // 等待系统停止

@@ -3,7 +3,7 @@ import {
     DefaultJob, FileUtil, FromQueue,
     Job,
     Launcher,
-    NedbHelper,
+    NedbHelperUi,
     NoneWorkerFactory,
     OnStart, PuppeteerUtil,
     PuppeteerWorkerFactory
@@ -725,8 +725,9 @@ export class GeoTask {
     tasks: [
         GeoTask
     ],
-    imports: [
-        NedbHelper,
+    dataUis: [
+        NedbHelperUi,
+        GsmUi
     ],
     workerFactorys: [
         new PuppeteerWorkerFactory({

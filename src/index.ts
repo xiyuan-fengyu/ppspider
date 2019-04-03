@@ -15,10 +15,11 @@ export {
     AddToQueueData,
     AddToQueueConfig,
     RequestMappingConfig,
+    ViewEncapsulation,
     DataUiConfig,
     AppInfo,
 } from "./spider/Types";
-export {NedbHelper} from "./spider/data-ui/NedbHelper";
+export {NedbHelperUi} from "./spider/data-ui/NedbHelper";
 export {AddToQueue} from "./spider/decorators/AddToQueue";
 export {DataUi, DataUiRequest} from "./spider/decorators/DataUi";
 export {FromQueue} from "./spider/decorators/FromQueue";

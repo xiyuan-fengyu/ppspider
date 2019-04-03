@@ -75,7 +75,7 @@ export class logger {
 
     public static format(level: "debug" | "info" | "warn" | "error", format: string, ...msgs: any[]): string {
         const nowStr = moment(new Date()).format(this._datetimeFormat);
-        const position = new Error().stack.split("\n")[3].trim().replace(/^at /, "");
+        const position = new Error().stack.split("\n")[4].trim().replace(/^at /, "");
         const msgsStr = (msgs || []).map(item => {
             if (item.constructor == Error) {
                 return "\n" + item.stack;

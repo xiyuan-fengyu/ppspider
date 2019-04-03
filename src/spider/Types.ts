@@ -31,7 +31,7 @@ export type OnStartConfig = {
 
 export type OnTimeConfig = {
     urls: string | string[];
-    cron: string; // cron表达式，描述了周期性执行的时间
+    cron: string; // cron表达式，描述了周期性执行的时刻；不清楚cron表达式的可以参考这里：http://cron.qqe2.com/
     workerFactory: Class_WorkerFactory;
     running?: boolean;
     parallel?: ParallelConfig;
@@ -61,10 +61,19 @@ export type RequestMappingConfig = {
     method: string;
 }
 
+// 参考 https://angular.io/api/core/ViewEncapsulation
+export enum ViewEncapsulation {
+    Emulated = 0,
+    Native = 1,
+    None = 2,
+    ShadowDom = 3
+}
+
 export type DataUiConfig = {
     label?: string;
     template: string;
     style?: string;
+    encapsulation?: ViewEncapsulation
 }
 
 export type DataUiRequestConfig = {
@@ -77,7 +86,7 @@ export type AppConfig = {
     workplace: string; // 系统的工作目录
     queueCache?: string; // 运行状态保存文件的路径，默认为 this.workplace + "/queueCache.json"
     tasks: any[]; // 任务类
-    imports?: any[]; // 需要引入的依赖类、实例
+    dataUis?: any[]; // 需要引入的DataUi
     workerFactorys: WorkerFactory<any>[]; // 工厂类实例
     webUiPort?: 9000 | number; // UI管理界面的web服务器端口，默认9000
     logger?: LoggerSetting; // 日志配置
@@ -118,7 +127,7 @@ export type AddToQueueInfo = {
     jobs: CanCastToJob;
     queueType: Class_Queue;
     filterType: Class_Filter;
-    _?: any; // 额外信息，用于
+    _?: any; // 额外信息，会保存到 job.datas._ 字段上
 }
 
 export type AddToQueueInfos = AddToQueueInfo | AddToQueueInfo[];

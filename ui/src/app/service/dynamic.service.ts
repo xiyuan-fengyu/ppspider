@@ -7,7 +7,7 @@ import {
   Injector,
   NgModule,
   NgModuleRef,
-  ViewContainerRef
+  ViewContainerRef, ViewEncapsulation
 } from '@angular/core';
 import {SocketIOService} from "./socket-io.service";
 import {Subscription} from "rxjs";
@@ -25,7 +25,7 @@ export type DataUi = {
   requestMethods: {
     [method: string]: string
   };
-  debug: boolean;
+  encapsulation?: ViewEncapsulation;
 }
 
 export type DataUis = {[className: string]: DataUi}
@@ -91,7 +91,11 @@ export class DynamicService {
         this.dataUis.then(dataUis => {
           const dataUi = dataUis[className];
           const dataUiClass = eval(`(${dataUi.class})\n//# sourceURL=data-ui:///${dataUi.className}.js`);
-          const dynamicComponent = Component({template: dataUi.template, styles: [dataUi.style || ""]})(dataUiClass);
+          const dynamicComponent = Component({
+            styles: [dataUi.style || ""],
+            template: dataUi.template,
+            encapsulation: dataUi.encapsulation || 0
+          })(dataUiClass);
           const dynamicModule = NgModule({
             declarations: [dynamicComponent],
             imports: [CommonModule, BrowserModule, BrowserAnimationsModule, FormsModule]

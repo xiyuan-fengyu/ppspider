@@ -512,7 +512,7 @@ export class QueueManager {
             this.lastDelayPushTime = new Date().getTime();
             setTimeout(() => {
                 this.lastDelayPushTime = 0;
-                appInfo.webServer.push("queues", this.info());
+                appInfo.webServer && appInfo.webServer.push("queues", this.info());
             }, 50);
         }
     }
@@ -856,7 +856,7 @@ export class QueueManager {
 
                     const listenInterrupt = (jobId, reason) => {
                         if (jobId == null || jobId == job.id()) {
-                            // ppspider系统关闭，强制停止任务
+                            // 强制停止任务
                             reject(new Error(Events.QueueManager_InterruptJob + ": " + reason));
                             if (jobId) {
                                 // 这里必须要setTimeout才能通知成功，很奇怪

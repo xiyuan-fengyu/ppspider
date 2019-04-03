@@ -17,7 +17,7 @@ export class WebServer {
 
     private io: ScoketIOServer;
 
-    constructor(private port: number, requestMappingConfigs: RequestMappingConfig[], onRequestCallback: (req: IdKeyData) => any) {
+    constructor(private port: number, workplace: string, requestMappingConfigs: RequestMappingConfig[], onRequestCallback: (req: IdKeyData) => any) {
         if (this.http != null) return;
 
         const express = require("express");
@@ -25,6 +25,7 @@ export class WebServer {
         app.use(bodyParser.json({limit: '10mb'}));
         app.use(bodyParser.urlencoded({limit: '10mb', extended: true}));
         app.use(express.static(this.webRoot));
+        app.use(express.static(workplace));
 
         // 添加 RequestMapping
         {
