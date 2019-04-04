@@ -868,10 +868,14 @@ export class QueueManager {
                     };
 
                     appInfo.eventBus.on(Events.QueueManager_InterruptJob, listenInterrupt);
-                    await method.call(target, worker, job);
+                    try {
+                        await method.call(target, worker, job);
+                        resolve();
+                    }
+                    catch (e) {
+                        reject(e);
+                    }
                     appInfo.eventBus.removeListener(Events.QueueManager_InterruptJob, listenInterrupt);
-
-                    resolve();
                 });
 
                 job.status(JobStatus.Success);
