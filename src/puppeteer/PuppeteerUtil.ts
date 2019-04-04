@@ -598,7 +598,6 @@ export class PuppeteerUtil {
      * @param cookiesStr 通过 chrome -> 按下F12打开开发者面板 -> Application面板 -> Storage:Cookies:<SomeUrl> -> 右侧cookie详情面板 -> 鼠标选中所有，Ctrl+c 复制所有
      */
     static parseCookies(cookiesStr: string) {
-        // cna=UPTOFFzzDzMCAXJUt1Tpjl9W; hng=CN%7Czh-CN%7CCNY%7C156
         const cookieLines = cookiesStr.split("\n");
         const cookies: SetCookie[] = [];
         cookieLines.forEach(cookieLine => {

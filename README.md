@@ -1,3 +1,52 @@
+[English document](https://github.com/xiyuan-fengyu/ppspider/blob/master/README.en.md)
+
+<!-- toc -->
+
+- [快速起步](#%E5%BF%AB%E9%80%9F%E8%B5%B7%E6%AD%A5)
+  * [安装nodejs](#%E5%AE%89%E8%A3%85nodejs)
+  * [安装typescript](#%E5%AE%89%E8%A3%85typescript)
+  * [准备开发环境](#%E5%87%86%E5%A4%87%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83)
+  * [下载运行 ppspider_example](#%E4%B8%8B%E8%BD%BD%E8%BF%90%E8%A1%8C-ppspider_example)
+    + [在IDEA中clone ppspider_example](#%E5%9C%A8idea%E4%B8%ADclone-ppspider_example)
+    + [安装项目的npm依赖](#%E5%AE%89%E8%A3%85%E9%A1%B9%E7%9B%AE%E7%9A%84npm%E4%BE%9D%E8%B5%96)
+    + [运行 tsc](#%E8%BF%90%E8%A1%8C-tsc)
+    + [启动爬虫](#%E5%90%AF%E5%8A%A8%E7%88%AC%E8%99%AB)
+- [系统介绍](#%E7%B3%BB%E7%BB%9F%E4%BB%8B%E7%BB%8D)
+  * [装饰器](#%E8%A3%85%E9%A5%B0%E5%99%A8)
+    + [@Launcher](#launcher)
+    + [@OnStart](#onstart)
+    + [@OnTime](#ontime)
+    + [@AddToQueue @FromQueue](#addtoqueue-fromqueue)
+    + [@JobOverride](#joboverride)
+    + [@Serialize Serializable @Transient](#serialize-serializable-transient)
+    + [@RequestMapping](#requestmapping)
+    + [@Bean @Autowired](#bean-autowired)
+    + [@DataUi @DataUiRequest](#dataui-datauirequest)
+  * [工具类 PuppeteerUtil](#%E5%B7%A5%E5%85%B7%E7%B1%BB-puppeteerutil)
+    + [PuppeteerUtil.defaultViewPort](#puppeteerutildefaultviewport)
+    + [PuppeteerUtil.addJquery](#puppeteerutiladdjquery)
+    + [PuppeteerUtil.jsonp](#puppeteerutiljsonp)
+    + [PuppeteerUtil.setImgLoad](#puppeteerutilsetimgload)
+    + [PuppeteerUtil.onResponse](#puppeteerutilonresponse)
+    + [PuppeteerUtil.onceResponse](#puppeteerutilonceresponse)
+    + [PuppeteerUtil.downloadImg](#puppeteerutildownloadimg)
+    + [PuppeteerUtil.links](#puppeteerutillinks)
+    + [PuppeteerUtil.count](#puppeteerutilcount)
+    + [PuppeteerUtil.specifyIdByJquery](#puppeteerutilspecifyidbyjquery)
+    + [PuppeteerUtil.scrollToBottom](#puppeteerutilscrolltobottom)
+    + [PuppeteerUtil.parseCookies](#puppeteerutilparsecookies)
+    + [PuppeteerUtil 例子](#puppeteerutil-%E4%BE%8B%E5%AD%90)
+  * [日志](#%E6%97%A5%E5%BF%97)
+- [调试](#%E8%B0%83%E8%AF%95)
+- [相关知识](#%E7%9B%B8%E5%85%B3%E7%9F%A5%E8%AF%86)
+  * [jQuery](#jquery)
+  * [puppeteer](#puppeteer)
+  * [nedb](#nedb)
+  * [Angular](#angular)
+- [控制界面](#%E6%8E%A7%E5%88%B6%E7%95%8C%E9%9D%A2)
+- [更新日志](#%E6%9B%B4%E6%96%B0%E6%97%A5%E5%BF%97)
+
+<!-- tocstop -->
 
 # 快速起步
 ## 安装nodejs
@@ -82,9 +131,9 @@ export function Launcher(appConfig: AppConfig)
 ```
 export type AppConfig = {
     workplace: string; // 系统的工作目录
-    queueCache?: string; // 运行状态保存文件的路径，默认为 this.workplace + "/queueCache.json"
+    queueCache?: string; // 运行状态保存文件的路径，默认为 workplace + "/queueCache.json"
     tasks: any[]; // 任务类
-    imports?: any[]; // 需要引入的依赖类、实例
+    dataUis?: any[]; // 需要引入的DataUi
     workerFactorys: WorkerFactory<any>[]; // 工厂类实例
     webUiPort?: 9000 | number; // UI管理界面的web服务器端口，默认9000
     logger?: LoggerSetting; // 日志配置
@@ -229,125 +278,79 @@ export function RequestMapping(url: string, method: "" | "GET" | "POST" = "") {}
 ### @DataUi @DataUiRequest
 在控制界面定制动态界面的功能，为数据可视化、用户交互提供了扩展支持，通过 Angular 动态编译组件实现，简化了数据通信（主动请求数据和被动接受推送数据）      
 需要在 @Launcher appConfig.dataUis 中导入 DataUi 定义类  
+
+系统内置了一个NedbHelperUi，引入这个DataUi后，在UI界面上添加一个名为“Nedb Helper”的tab页，可以辅助查询nedb中的数据    
   
-在 @Launcher appConfig.dataUis 中注入 NedbHelperUi，即可在UI界面上添加一个名为“Nedb Helper”的tab页，用于辅助查询nedb中的数据  
-[example 1](https://github.com/xiyuan-fengyu/ppspider/blob/master/src/spider/data-ui/NedbHelper.ts)         
-
-DataUi 基本测试  
-[example 2](https://github.com/xiyuan-fengyu/ppspider/blob/master/src/test/dataUi/test.ts)  
-
-演示UI界面动态添加任务的例子  
-[example 3](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/dataUi/App.ts)
+[example 1 DataUi 基本功能演示](https://github.com/xiyuan-fengyu/ppspider/blob/master/src/test/dataUi/test.ts)  
+![nedbHelper.png](https://i.loli.net/2019/04/04/5ca5c313d92c4.png)  
+![dataUiTest1.png](https://i.loli.net/2019/04/04/5ca5c380b5c04.png)  
+![dataUiTest2.png](https://i.loli.net/2019/04/04/5ca5c3d152c72.png)  
   
-网页截图工具（支持超长网页截图）      
-[example 4](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/dataUi/ScreenshotApp.ts)
-
+[example 2 演示UI界面动态添加任务的例子](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/dataUi/App.ts)  
+![动态任务.png](https://i.loli.net/2019/04/04/5ca5c060b5462.png)  
+  
+[example 3 网页截图工具](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/dataUi/ScreenshotApp.ts)  
+支持超长网页截图  
+![网页截图.png](https://i.loli.net/2019/04/04/5ca5c172afff3.png)
 
 ## 工具类 PuppeteerUtil
 ### PuppeteerUtil.defaultViewPort
 将 page 的窗口分辨率设置为 1920 * 1080  
 
 ### PuppeteerUtil.addJquery
-向 page 中注入 jquery，页面刷新或跳转后失效，所以这个方法必须在 page 加载完成之后调用  
+向 page 中注入 jquery，页面刷新或跳转后失效，所以这个方法必须在 page 加载完成之后调用   
 
 ### PuppeteerUtil.jsonp
-用于解析jsonp数据中的json
+用于解析jsonp数据中的json  
 
 ### PuppeteerUtil.setImgLoad
-禁止或启用图片加载
+禁止或启用图片加载  
 
 ### PuppeteerUtil.onResponse
-用于监听接口的返回结果，可以设置监听次数
+用于监听接口的返回结果，可以设置监听次数  
 
 ### PuppeteerUtil.onceResponse
-用于监听接口的返回结果，仅监听一次
+用于监听接口的返回结果，仅监听一次  
 
 ### PuppeteerUtil.downloadImg
-下载图片
+下载图片  
 
 ### PuppeteerUtil.links
-获取连接
+获取网页中的连接  
 
 ### PuppeteerUtil.count
-获取满足 selector 的元素个数
+获取满足 selector 的元素个数，不支持jQuery的selector  
 
 ### PuppeteerUtil.specifyIdByJquery
 使用 jQuery(selector) 查找节点， 并为其中没有 id 的节点添加随机 id，
 最后返回一个所有节点 id 的数组  
 使用场景：  
 Page 中所有涉及到使用selector查找节点的方法都是使用 document.querySelector / document.querySelectorAll  
-但是有些 css selector， document.querySelector / document.querySelectorAll 不支持， jQuery 支持  
+但是document.querySelector / document.querySelectorAll 不支持jQuery的高级selector    
 例如  "#someId a:eq(0)", "#someId a:contains('next')"  
-可以通过这个方法为这些元素添加特殊的id，然后在通过 #specialId 去操作对应的节点   
+这时候可以通过这个方法为这些元素添加特殊的id，然后在通过 #specialId 去操作对应的节点   
 
 ### PuppeteerUtil.scrollToBottom
 页面滚动到最底部  
 
+### PuppeteerUtil.parseCookies
+将cookie字符串解析为 SetCookie 数组，然后就可以通过 page.setCookie(...cookieArr) 来设置cookie    
+cookie字符串获取方式  
+通过 chrome -> 按下F12打开开发者面板 -> Application面板 -> Storage:Cookies:<SomeUrl> -> 右侧cookie详情面板 -> 鼠标选中所有，Ctrl+c 复制所有  
+得到的cookie字符串形式如下  
+```
+PHPSESSID	ifmn12345678	sm.ms	/	N/A	35				
+cid	sasdasdada	.sm.ms	/	2037-12-31T23:55:55.900Z	27			
+```
+
 ### PuppeteerUtil 例子
 [PuppeteerUtil example](https://github.com/xiyuan-fengyu/ppspider_example/tree/master/src/puppeteerUtil)
-```
-import {appInfo, Job, OnStart, PuppeteerUtil, PuppeteerWorkerFactory} from "ppspider";
-import {Page} from "puppeteer";
 
-export class TestTask {
-
-    @OnStart({
-        urls: "http://www.baidu.com",
-        workerFactory: PuppeteerWorkerFactory
-    })
-    async index(page: Page, job: Job) {
-        await PuppeteerUtil.defaultViewPort(page);
-
-        await PuppeteerUtil.setImgLoad(page, false);
-
-        const hisResWait = PuppeteerUtil.onceResponse(page, "https://www.baidu.com/his\\?.*", async response => {
-            const resStr = await response.text();
-            console.log(resStr);
-            const resJson = PuppeteerUtil.jsonp(resStr);
-            console.log(resJson);
-        });
-
-        await page.goto("http://www.baidu.com");
-        await PuppeteerUtil.scrollToBottom(page, 5000, 100, 1000);
-
-        await PuppeteerUtil.addJquery(page);
-        console.log(await hisResWait);
-
-        const downloadImgRes = await PuppeteerUtil.downloadImg(page, ".index-logo-src", appInfo.workplace + "/download/img");
-        console.log(downloadImgRes);
-
-        const href = await PuppeteerUtil.links(page, {
-            "index": ["#result_logo", ".*"],
-            "baidu": "^https?://[^/]*\\.baidu\\.",
-            "other": (a: Element) => {
-                const href = (a as any).href as string;
-                if (href.startsWith("http")) return href;
-            }
-        });
-        console.log(href);
-
-        const count = await PuppeteerUtil.count(page, "#result_logo");
-        console.log(count);
-
-        const ids = await PuppeteerUtil.specifyIdByJquery(page, "a:visible:contains('登录')");
-        if (ids) {
-            console.log(ids);
-            await page.tap("#" + ids[0]);
-        }
-    }
-
-}
-```
 
 ## 日志
 通过 src/common/util/logger.ts 中定义的 logger.debug, logger.info, logger.warn, logger.error 方法输出日志  
 输出的日志中包含时间，等级，源文件位置这些额外信息      
 ```
-// 示例
-// 设置输出格式
-// logger.format = "yyyy-MM-dd HH:mm:ss.SSS [level] position message"
-// 设置最低输出等级, 必须是 "debug", "info", "warn", "error" 中的一个
-// logger.level = "info";
 logger.debugValid && logger.debug("test debug");
 logger.info("test info");
 logger.warn("test warn");
@@ -355,10 +358,13 @@ logger.error("test error");
 ```
 
 # 调试
-非注入代码可以直接在 IDEA 中调试  
+通过 Page.evaluate, Page.evaluateOnNewDocument, Page.evaluateHandle 执行的代码，
+实际上是通过 chrome devtools protocol 运行在 chromium 中，这些代码我们称为注入代码  
+这些代码并不是直接由Nodejs执行，所以在IDEA中并不能直接调试    
+其他直接由Nodejs执行的代码是可以在IDEA中直接调试的  
 
-注入到网页中运行的js代码可以通过有界面模式下打开的 Chromium 进行调试  
-Chromium 界面可以在构造 PuppeteerWorkerFactory 时，参数的 headless = false开启；另外还需要设置 devtools = true ，这样可以让新打开的页面自动打开开发者工具面板，debugger 才会断点成功   
+下面是注入代码的调试方式    
+在构造 PuppeteerWorkerFactory 时，设置参数 headless = false, devtools = true ，chromium 执行到 debugger 会自动断点     
 [Inject js debug example](https://github.com/xiyuan-fengyu/ppspider_example/tree/master/src/debug)  
 ```
 import {Launcher, PuppeteerWorkerFactory} from "ppspider";
@@ -405,6 +411,28 @@ export class TestTask {
 }
 ```
 
+另外，开发者在开发 DataUi 时，界面部分也是在浏览器中调试  
+![DataUiDebug.png](https://i.loli.net/2019/04/04/5ca5ca3417d49.png)  
+
+# 相关知识
+## jQuery
+http://www.runoob.com/jquery/jquery-syntax.html  
+通过 PuppeteerUtil.addJquery 将 jQuery 注入到 page 中后，就可以愉快地使用 jQuery 获取页面中想要的信息了  
+
+## puppeteer
+https://github.com/GoogleChrome/puppeteer/blob/master/docs/api.md  
+对 chrome devtools protocol 的封装  
+在抓取页面的时候，基本上都是在和 Page 打交道，所以 Page 相关的Api需要着重了解    
+
+## nedb
+https://github.com/louischatriot/nedb  
+基于内存和日志的serverless轻量级数据库，类Mongodb的查询方式  
+src/common/nedb/NedbDao.ts 对nedb的加载，数据压缩，基础查询做了进一步封装，方便用户继承使用  
+
+## Angular  
+https://angular.io/  
+DataUi 是基于 angular 运行时动态编译的 Component，如果要编写复杂的 DataUi，有必要了解 Angular 的知识  
+
 # 控制界面
 使用浏览器打开 http://localhost:9000  
 Queue 面板可以查看和管理整个系统中子任务的运行情况  
@@ -414,6 +442,17 @@ Job 面板可以对所有子任务实例进行搜索，查看任务详情
 ![ppspiderJobs.cn.png](https://i.loli.net/2018/08/29/5b862ef9b9dd5.png)
 
 # 更新日志
+2019-04-04 v2.0.0
+1. QueueManager 中同一个队列的多个任务线程不再共用一个等待间隔      
+2. QueueManager 在执行一个任务过程中，可以强行中断一个任务的执行（UI Job面板提供交互按钮）  
+    代码的方式  
+    ```
+    appInfo.eventBus.emit(Events.QueueManager_InterruptJob, JOB_ID, "your interrupt reason");
+    ```
+3. 运行过程中可以保存运行状态  
+4. 新增 @Bean @Autowired 装饰器，提供依赖注入的编程方式  
+5. 新增 @DataUi @DataUiRequest 装饰器，提供自定义UI tab页的功能，用户可以自定义数据可视化页面、可交互工具  
+
 2019-01-28 v0.1.22
 1. 自动清除标记为 filtered 的job记录
 2. 在UI中的Job面板，可以搜索任务，点击状态为失败或成功的任务后面的按钮，可以将这个job重新加入队列. 

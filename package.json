@@ -2,13 +2,13 @@
   "name": "ppspider",
   "author": "xiyuan_fengyu <xiyuan_fengyu@163.com> (https://github.com/xiyuan-fengyu)",
   "homepage": "github.com/xiyuan-fengyu/ppspider",
-  "version": "2.0.0-preview.1554096924745",
+  "version": "2.0.1",
   "description": "web spider build with puppeteer, include task queue manager and dispatcher",
   "main": "./lib/index.js",
   "types": "./lib/index.d.ts",
   "scripts": {
     "auto build": "tsc",
-    "generate README toc": "markdown-toc -i ./README.cn.md && markdown-toc -i ./README.md"
+    "generate README toc": "markdown-toc -i ./README.en.md && markdown-toc -i ./README.md"
   },
   "keywords": [
     "spider",
