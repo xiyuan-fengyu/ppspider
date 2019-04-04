@@ -6,6 +6,7 @@ declare const CodeMirror: any;
 
 @DataUi({
     label: "Nedb Helper",
+    // language=CSS
     style: `
 #searchResultViewer {
     overflow-y: auto;
@@ -13,6 +14,7 @@ declare const CodeMirror: any;
     margin-top: 18px;
 }
     `,
+    // language=Angular2HTML
     template: `
 <div class="container-fluid" style="margin-top: 12px">
     <div class="row">

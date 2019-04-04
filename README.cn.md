@@ -237,9 +237,10 @@ DataUi 基本测试
 [example 2](https://github.com/xiyuan-fengyu/ppspider/blob/master/src/test/dataUi/test.ts)  
 
 演示UI界面动态添加任务的例子  
-[example 3](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/dataUi)
+[example 3](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/dataUi/App.ts)
   
-
+网页截图工具（支持超长网页截图）      
+[example 4](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/dataUi/ScreenshotApp.ts)
 
 
 ## 工具类 PuppeteerUtil
