@@ -442,6 +442,10 @@ Job 面板可以对所有子任务实例进行搜索，查看任务详情
 ![ppspiderJobs.cn.png](https://i.loli.net/2018/08/29/5b862ef9b9dd5.png)
 
 # 更新日志
+2019-04-22 v2.0.1
+1. 增加 RequestUtil，将request封装为promise风格的调用方式    
+2. 修改NedbHelperUi.defaultSearchExp的声明方式，避免ts编译过程中报错  
+
 2019-04-04 v2.0.0
 1. QueueManager 中同一个队列的多个任务线程不再共用一个等待间隔      
 2. QueueManager 在执行一个任务过程中，可以强行中断一个任务的执行（UI Job面板提供交互按钮）  

@@ -474,6 +474,10 @@ Job panel: search jobs and view details
 ![ppspiderJobs.en.png](https://i.loli.net/2018/08/29/5b862f27e2809.png)
 
 # Update Note
+2019-04-22 v2.0.1
+1. add RequestUtil, Encapsulate request as a promise style call    
+2. Modify the declaration of NedbHelperUi.defaultSearchExp to avoid error reporting during ts compilation  
+
 2019-04-04 v2.0.0
 1. Multiple task threads of the same queue in the QueueManager no longer share a single wait interval    
 2. The QueueManager can forcibly interrupt the execution of a running job (the UI Job panel provides an interactive button)  
