@@ -7,6 +7,7 @@ export {FileUtil} from "./common/util/FileUtil";
 export {logger, LoggerSetting} from "./common/util/logger";
 export {PromiseUtil} from "./common/util/PromiseUtil";
 export {StringUtil} from "./common/util/StringUtil";
+export {RequestUtil} from "./common/util/RequestUtil";
 export {
     OnStartConfig,
     OnTimeConfig,

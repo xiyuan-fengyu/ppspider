@@ -48,8 +48,7 @@ export class NedbHelperUi {
 
     private searchExpInput: any;
 
-    readonly defaultSearchExp =
-`{
+    readonly defaultSearchExp: string = `{
   "pageIndex": 0,
   "pageSize": 10,
   "match": {
