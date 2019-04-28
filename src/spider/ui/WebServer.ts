@@ -67,7 +67,7 @@ export class WebServer {
         });
 
         this.http.listen(port, () => {
-            logger.info("The web ui server start at port: " + port);
+            logger.info("The web ui server started successfully, have a look at http://localhost:" + port);
         });
     }
 

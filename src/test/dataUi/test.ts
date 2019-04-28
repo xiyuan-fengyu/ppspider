@@ -189,6 +189,9 @@ class TestTask {
     ],
     workerFactorys: [
     ],
-    webUiPort: 9000
+    webUiPort: 9000,
+    logger: {
+        level: "debug"
+    }
 })
 class App {}

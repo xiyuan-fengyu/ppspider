@@ -1,5 +1,6 @@
 import "source-map-support/register";
 import moment = require("moment");
+import ansiColors = require('ansi-colors');
 
 export type LoggerSetting = {
 
@@ -18,7 +19,7 @@ export class logger {
 
     private static _datetimeFormat = "YYYY-MM-DD HH:mm:ss.SSS";
 
-    private static _logFormat = "datetime [level] position message";
+    private static _logFormat = "datetime level position message";
 
     private static _level = 0;
 
@@ -73,31 +74,59 @@ export class logger {
         return this._level <= 3;
     }
 
-    public static format(level: "debug" | "info" | "warn" | "error", format: string, ...msgs: any[]): string {
-        const nowStr = moment(new Date()).format(this._datetimeFormat);
-        const position = new Error().stack.split("\n")[4].trim().replace(/^at /, "");
-        const msgsStr = (msgs || []).map(item => {
+    /*
+    use the folloeing code to check colors supported by the console
+    for i in {0..256}; do echo -e "${i} \x1b[38;05;${i}m COLOR \x1b[0m"; done
+     */
+    private static ansiColorWrapper = {
+        debug: str => ansiColors.grey(str),
+        info: str => ansiColors.cyan(str),
+        warn: str => ansiColors.yellow(str),
+        error: str => ansiColors.red(str),
+    };
+
+    public static format(level: "debug" | "info" | "warn" | "error" | string, useAnsiColor: boolean, format: string, ...msgs: any[]): string {
+        if (format.indexOf("datetime") > -1) {
+            const nowStr = moment(new Date()).format(this._datetimeFormat);
+            format = format.replace(/datetime/, nowStr);
+        }
+
+        if (format.indexOf("level") > -1) {
+            let levelStr = level;
+            if (useAnsiColor) {
+                levelStr = this.ansiColorWrapper[level](levelStr);
+            }
+            format = format.replace(/level/, levelStr);
+        }
+
+        if (format.indexOf("position") > -1) {
+            const position = new Error().stack.split("\n")[4].trim().replace(/^at /, "");
+            format = format.replace(/position/, position);
+        }
+
+        let msgsStr = (msgs || []).map(item => {
             if (item.constructor == Error) {
-                return "\n" + item.stack;
+                return item.stack;
             }
             else {
                 return typeof item === "object" ? JSON.stringify(item, null, 4) : "" + item;
             }
         }).join("\n");
-        return format
-            .replace(/datetime/, nowStr)
-            .replace(/level/, level)
-            .replace(/position/, position)
-            .replace(/message/, msgsStr);
+        if (useAnsiColor) {
+            msgsStr = this.ansiColorWrapper[level](msgsStr);
+        }
+        format = format.replace(/message/, msgsStr);
+
+        return format;
     }
 
     public static formatWithoutPos(level: "debug" | "info" | "warn" | "error", ...msgs: any[]): string {
-        return this.format(level, "datetime [level] message", ...msgs);
+        return this.format(level, false, "datetime [level] message", ...msgs);
     }
 
     private static log(level: "debug" | "info" | "warn" | "error", ...msgs: any[]) {
-        const logStr = this.format(level, this._logFormat, ...msgs);
-        console[level](logStr);
+        const logStr = this.format(level, true, this._logFormat, ...msgs);
+        console.log(logStr);
     }
 
     static debug(...msgs: any[]) {
