@@ -433,6 +433,14 @@ src/common/nedb/NedbDao.ts 对nedb的加载，数据压缩，基础查询做了�
 https://angular.io/  
 DataUi 是基于 angular 运行时动态编译的 Component，如果要编写复杂的 DataUi，有必要了解 Angular 的知识  
 
+## G2  
+https://antv.alipay.com/zh-cn/g2/3.x/demo/index.html  
+web ui中集成了 G2，方便在DataUi中实现数据可视化  
+
+## bootstrap
+https://v3.bootcss.com/css/  
+web ui中集成了 bootstrap, jquery，方便在DataUi中可以直接使用bootstrap和jquery编写ui界面    
+
 # 控制界面
 使用浏览器打开 http://localhost:9000  
 Queue 面板可以查看和管理整个系统中子任务的运行情况  
