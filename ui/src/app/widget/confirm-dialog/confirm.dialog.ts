@@ -5,7 +5,7 @@ export type ConfirmDialogData = {
   title: string;
   message: string;
   confirm: string;
-  cancle: string;
+  cancel: string;
 }
 
 @Component({
