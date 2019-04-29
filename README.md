@@ -450,6 +450,9 @@ Job 面板可以对所有子任务实例进行搜索，查看任务详情
 ![ppspiderJobs.cn.png](https://i.loli.net/2018/08/29/5b862ef9b9dd5.png)
 
 # 更新日志
+2019-04-29 v2.0.2
+1. 使用ansi-colors输出彩色日志    
+
 2019-04-22 v2.0.1
 1. 增加 RequestUtil，将request封装为promise风格的调用方式    
 2. 修改NedbHelperUi.defaultSearchExp的声明方式，避免ts编译过程中报错  

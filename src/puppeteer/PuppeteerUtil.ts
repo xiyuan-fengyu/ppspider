@@ -450,12 +450,24 @@ export class PuppeteerUtil {
         for (let groupName of Object.keys(predicts)) {
             const predict = predicts[groupName];
             if (predict.constructor == Array) {
+                let predictExp = predict[1];
+                if (predictExp instanceof RegExp) {
+                    predictExp = predictExp.toString();
+                    predictExp = predictExp.substring(1, predictExp.lastIndexOf('/'));
+                }
                 predictStrMap[groupName] = [
                     predict[0],
-                    (typeof predict[1] === "function" ? "function" : "string") + " " + (predict[1] || "").toString()
+                    (typeof predict[1] === "function" ? "function" : "string") + " " + (predictExp || "")
                 ];
             }
-            else predictStrMap[groupName] = (typeof predict === "function" ? "function" : "string") + " " + predict.toString();
+            else {
+                let predictExp = predict;
+                if (predictExp instanceof RegExp) {
+                    predictExp = predictExp.toString();
+                    predictExp = predictExp.substring(1, predictExp.lastIndexOf('/'));
+                }
+                predictStrMap[groupName] = (typeof predict === "function" ? "function" : "string") + " " + (predictExp || "");
+            }
         }
         return await page.evaluate((predictStrMap, onlyAddToFirstMatch) => {
             const hrefs = {};

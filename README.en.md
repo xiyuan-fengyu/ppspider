@@ -464,6 +464,15 @@ https://github.com/louischatriot/nedb
 ## Angular  
 https://angular.io/  
 
+## G2  
+https://antv.alipay.com/zh-cn/g2/3.x/demo/index.html  
+G2 integrated in web ui for data visualization in DataUi    
+
+## bootstrap
+https://v3.bootcss.com/css/  
+The web ui integrates bootstrap and jquery which make it easy to use the bootstrap and jquery to 
+write the ui interface directly in DataUi.      
+
 # WebUI
 open http://localhost:9000 in browser  
 
@@ -474,6 +483,9 @@ Job panel: search jobs and view details
 ![ppspiderJobs.en.png](https://i.loli.net/2018/08/29/5b862f27e2809.png)
 
 # Update Note
+2019-04-29 v2.0.2
+1. Output colorful logs using ansi-colors   
+
 2019-04-22 v2.0.1
 1. add RequestUtil, Encapsulate request as a promise style call    
 2. Modify the declaration of NedbHelperUi.defaultSearchExp to avoid error reporting during ts compilation  
