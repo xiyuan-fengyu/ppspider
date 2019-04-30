@@ -1,9 +1,10 @@
 import {NgModule} from '@angular/core';
-import {RouterModule, Routes} from '@angular/router';
+import {RouteReuseStrategy, RouterModule, Routes} from '@angular/router';
 import {QueueInfoComponent} from "./page/queue-info/queue-info.component";
 import {JobInfoComponent} from "./page/job-info/job-info.component";
 import {IconsComponent} from "./page/icons/icons.component";
 import {DataUiComponent} from "./page/data-ui/data-ui.component";
+import {CacheRouteReuseStrategy} from "./CacheRouteReuseStrategy";
 
 const routes: Routes = [
   {
@@ -30,6 +31,12 @@ const routes: Routes = [
 
 @NgModule({
   imports: [RouterModule.forRoot(routes)],
-  exports: [RouterModule]
+  exports: [RouterModule],
+  providers: [
+    {
+      provide: RouteReuseStrategy,
+      useClass: CacheRouteReuseStrategy
+    }
+  ]
 })
 export class AppRoutingModule { }

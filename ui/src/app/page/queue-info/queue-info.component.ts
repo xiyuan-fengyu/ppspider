@@ -5,6 +5,8 @@ import {PromiseUtil} from "../../util/PromiseUtil";
 import {ToasterService} from "angular2-toaster";
 import {CommonService} from "../../service/common.service";
 import {ConfirmDialog} from "../../widget/confirm-dialog/confirm.dialog";
+import {ShouldKeepThisOnNav} from "../../CacheRouteReuseStrategy";
+import {ActivatedRouteSnapshot} from "@angular/router";
 
 declare const CodeMirror: any;
 
@@ -13,7 +15,7 @@ declare const CodeMirror: any;
   templateUrl: './queue-info.component.html',
   styleUrls: ['./queue-info.component.css']
 })
-export class QueueInfoComponent implements OnInit {
+export class QueueInfoComponent implements OnInit, ShouldKeepThisOnNav {
 
   constructor(
     private socketIOService: SocketIOService,
@@ -115,6 +117,9 @@ export class QueueInfoComponent implements OnInit {
         this.commonService.queues = {};
       }
     });
+  }
+
+  shouldKeepThisOnNav(route: ActivatedRouteSnapshot) {
   }
 
 }

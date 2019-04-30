@@ -4,6 +4,8 @@ import {MAT_DIALOG_DATA, MatDialog, MatDialogRef, MatTableDataSource} from "@ang
 import {ToasterService} from "angular2-toaster";
 import {SocketIOService} from "../../service/socket-io.service";
 import {ConfirmDialog} from "../../widget/confirm-dialog/confirm.dialog";
+import {ShouldKeepThisOnNav} from "../../CacheRouteReuseStrategy";
+import {ActivatedRouteSnapshot} from "@angular/router";
 
 declare const $: any;
 
@@ -41,7 +43,7 @@ type Pager = {
   templateUrl: './job-info.component.html',
   styleUrls: ['./job-info.component.css']
 })
-export class JobInfoComponent implements OnInit {
+export class JobInfoComponent implements OnInit, ShouldKeepThisOnNav {
 
   displayedColumns = [
     "_id",
@@ -336,6 +338,9 @@ export class JobInfoComponent implements OnInit {
       job.status = this.jobsStatus.find(s => s.value == job.status).key;
       this.toasterService.pop(res.success ? "success" : "warning", "Message", res.message);
     });
+  }
+
+  shouldKeepThisOnNav(route: ActivatedRouteSnapshot) {
   }
 
 }
