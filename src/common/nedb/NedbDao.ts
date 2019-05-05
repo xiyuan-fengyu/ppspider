@@ -26,6 +26,32 @@ storage.writeFile = (...args) => {
     }
 };
 
+function fix_nedb_persistence_persistCachedDatabase(nedb) {
+    // 修复 Persistence.prototype.persistCachedDatabase 中直接用 + 拼接字符串导致内存溢出的问题
+    nedb.persistence["persistCachedDatabase"] = cb => {
+        const callback = cb || function () {};
+        const self = nedb.persistence as any;
+        const toPersist = [];
+
+        if (self.inMemoryOnly) { return callback(null); }
+
+        self.db.getAllData().forEach(function (doc) {
+            toPersist.push(self.afterSerialization(model.serialize(doc)));
+        });
+        Object.keys(self.db.indexes).forEach(function (fieldName) {
+            if (fieldName != "_id") {   // The special _id index is managed by datastore.js, the others need to be persisted
+                toPersist.push(self.afterSerialization(model.serialize({ $$indexCreated: { fieldName: fieldName, unique: self.db.indexes[fieldName].unique, sparse: self.db.indexes[fieldName].sparse }})));
+            }
+        });
+
+        storage.crashSafeWriteFile(self.filename, toPersist, function (err) {
+            if (err) { return callback(err); }
+            self.db.emit('compaction.done');
+            return callback(null);
+        });
+    };
+}
+
 export type Sort = {[by: string]: -1 | 1};
 
 export class Pager<T> {
@@ -91,33 +117,11 @@ export class NedbDao<T extends NedbModel> {
                 autoload: false
             });
 
-            // 修复 Persistence.prototype.persistCachedDatabase 中直接用 + 拼接字符串导致内存溢出的问题
-            nedb.persistence["persistCachedDatabase"] = cb => {
-                const callback = cb || function () {}
-                    , self = nedb.persistence as any;
-                const toPersist = [];
-
-                if (self.inMemoryOnly) { return callback(null); }
-
-                self.db.getAllData().forEach(function (doc) {
-                    toPersist.push(self.afterSerialization(model.serialize(doc)));
-                });
-                Object.keys(self.db.indexes).forEach(function (fieldName) {
-                    if (fieldName != "_id") {   // The special _id index is managed by datastore.js, the others need to be persisted
-                        toPersist.push(self.afterSerialization(model.serialize({ $$indexCreated: { fieldName: fieldName, unique: self.db.indexes[fieldName].unique, sparse: self.db.indexes[fieldName].sparse }})));
-                    }
-                });
-
-                storage.crashSafeWriteFile(self.filename, toPersist, function (err) {
-                    if (err) { return callback(err); }
-                    self.db.emit('compaction.done');
-                    return callback(null);
-                });
-            };
+            fix_nedb_persistence_persistCachedDatabase(nedb);
 
             nedb.loadDatabase(error => {
                 if (error) {
-                    reject(new Error("nedb load fial: " + dbFile));
+                    reject(new Error("nedb loading failed: " + dbFile));
                 }
                 else {
                     resolve(nedb);

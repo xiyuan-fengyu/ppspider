@@ -43,6 +43,8 @@
   * [puppeteer](#puppeteer)
   * [nedb](#nedb)
   * [Angular](#angular)
+  * [G2](#g2)
+  * [bootstrap](#bootstrap)
 - [控制界面](#%E6%8E%A7%E5%88%B6%E7%95%8C%E9%9D%A2)
 - [更新日志](#%E6%9B%B4%E6%96%B0%E6%97%A5%E5%BF%97)
 
@@ -450,6 +452,12 @@ Job 面板可以对所有子任务实例进行搜索，查看任务详情
 ![ppspiderJobs.cn.png](https://i.loli.net/2018/08/29/5b862ef9b9dd5.png)
 
 # 更新日志
+2019-04-29 v2.0.3
+1. ui界面切换tab页时，不销毁之前的tab页  
+2. 修复bug： PuppeteerUtil.links 传递 Regex 参数时获取不到连接  
+3. 修复bug： nedb 在压缩数据过程中，采用字符串拼接的方式来构建新的数据内容，
+    当数据量较大时，会出现内存溢出  
+
 2019-04-29 v2.0.2
 1. 使用ansi-colors输出彩色日志    
 

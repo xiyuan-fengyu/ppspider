@@ -43,6 +43,8 @@
   * [puppeteer](#puppeteer)
   * [nedb](#nedb)
   * [Angular](#angular)
+  * [G2](#g2)
+  * [bootstrap](#bootstrap)
 - [WebUI](#webui)
 - [Update Note](#update-note)
 
@@ -483,6 +485,12 @@ Job panel: search jobs and view details
 ![ppspiderJobs.en.png](https://i.loli.net/2018/08/29/5b862f27e2809.png)
 
 # Update Note
+2019-04-29 v2.0.3
+1. When the ui interface switches tab pages, the previous tab page will not be destroyed.  
+2. fix bug： PuppeteerUtil.links can't find urls when passing Regex parameter.  
+3. fix bug： Nedb uses string concatenation to build new data content during the process of compressing data.
+    Memory overflow occurs when the amount of data is large.  
+
 2019-04-29 v2.0.2
 1. Output colorful logs using ansi-colors   
 
