@@ -22,7 +22,7 @@ storage.writeFile = (...args) => {
         }
     }
     else {
-        fs.watchFile.call(fs, ...args);
+        fs.writeFile.call(fs, ...args);
     }
 };
 
