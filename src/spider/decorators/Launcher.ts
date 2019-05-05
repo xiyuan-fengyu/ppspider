@@ -78,6 +78,7 @@ export function Launcher(appConfig: AppConfig) {
 
     // 初始化消息总线
     appInfo.eventBus = new EventEmitter();
+    appInfo.eventBus.setMaxListeners(1024);
 
     // 设置 QueueManager 状态缓存目录
     appInfo.queueCache = appInfo.queueCache || appInfo.workplace + "/queueCache.json";

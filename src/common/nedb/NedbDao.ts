@@ -1,5 +1,30 @@
 import * as Nedb from "nedb";
 import {StringUtil} from "../util/StringUtil";
+import model = require("nedb/lib/model");
+import storage = require("nedb/lib/storage");
+import * as fs from "fs";
+
+// storage.writeFile 增加多行写入的功能
+storage.writeFile = (...args) => {
+    if (args[1] instanceof Array) {
+        try {
+            fs.writeFileSync(args[0], "", "utf-8");
+
+            const data = args[1] as string[];
+            for (let i = 0, len = data.length; i < len; i += 100) {
+                const subLines = data.slice(i, Math.min(len, i + 100)).join("\n") + "\n";
+                fs.appendFileSync(args[0], subLines, "utf-8");
+            }
+            args[2]();
+        }
+        catch (e) {
+            args[2](e);
+        }
+    }
+    else {
+        fs.watchFile.call(fs, ...args);
+    }
+};
 
 export type Sort = {[by: string]: -1 | 1};
 
@@ -52,9 +77,10 @@ export class NedbDao<T extends NedbModel> {
 
     protected nedbP: Promise<Nedb>;
 
-    private actionCount = 0;
+    // 10分钟压缩一次
+    private readonly compactRate = 600000;
 
-    private compactRateForSave = 10000;
+    private lastCompactTime = new Date().getTime();
 
     constructor(dbDir: string) {
         NedbDao._instances[this.constructor.name] = this;
@@ -62,15 +88,39 @@ export class NedbDao<T extends NedbModel> {
         this.nedbP = new Promise<Nedb>((resolve, reject) => {
             const nedb = new Nedb({
                 filename: dbFile,
-                autoload: true,
-                onload: error => {
-                    if (error) {
-                        reject(new Error("nedb load fial: " + dbFile));
+                autoload: false
+            });
+
+            // 修复 Persistence.prototype.persistCachedDatabase 中直接用 + 拼接字符串导致内存溢出的问题
+            nedb.persistence["persistCachedDatabase"] = cb => {
+                const callback = cb || function () {}
+                    , self = nedb.persistence as any;
+                const toPersist = [];
+
+                if (self.inMemoryOnly) { return callback(null); }
+
+                self.db.getAllData().forEach(function (doc) {
+                    toPersist.push(self.afterSerialization(model.serialize(doc)));
+                });
+                Object.keys(self.db.indexes).forEach(function (fieldName) {
+                    if (fieldName != "_id") {   // The special _id index is managed by datastore.js, the others need to be persisted
+                        toPersist.push(self.afterSerialization(model.serialize({ $$indexCreated: { fieldName: fieldName, unique: self.db.indexes[fieldName].unique, sparse: self.db.indexes[fieldName].sparse }})));
                     }
-                    else {
-                        NedbDao.compact(nedb);
-                        resolve(nedb);
-                    }
+                });
+
+                storage.crashSafeWriteFile(self.filename, toPersist, function (err) {
+                    if (err) { return callback(err); }
+                    self.db.emit('compaction.done');
+                    return callback(null);
+                });
+            };
+
+            nedb.loadDatabase(error => {
+                if (error) {
+                    reject(new Error("nedb load fial: " + dbFile));
+                }
+                else {
+                    resolve(nedb);
                 }
             });
         });
@@ -94,19 +144,20 @@ export class NedbDao<T extends NedbModel> {
      * compat之后，会将最新的数据记录保存到持久化文件中，delete/update记录就不会存在了，从而达到压缩体积的目的
      * 系统启动时否认会压缩一次数据
      */
-    private static compact(nedb: Nedb) {
-        nedb.persistence.compactDatafile()
+    private compact() {
+        this.nedbP.then(nedb => {
+            this.lastCompactTime = new Date().getTime();
+            nedb.persistence.compactDatafile();
+        });
     }
 
     /**
-     * 记录更新操作的次数，达到一定次数，执行compact操作
+     * 检测是否需要compact
      * @param {number} actionNum
      */
-    private afterAction(actionNum: number = 1) {
-        this.actionCount += actionNum;
-        if (this.actionCount >= this.compactRateForSave) {
-            this.nedbP.then(nedb => NedbDao.compact(nedb));
-            this.actionCount = 0;
+    private afterAction() {
+        if (new Date().getTime() - this.lastCompactTime >= this.compactRate) {
+            this.compact();
         }
     }
 
