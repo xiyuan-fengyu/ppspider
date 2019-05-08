@@ -81,7 +81,7 @@ export function Launcher(appConfig: AppConfig) {
     appInfo.eventBus.setMaxListeners(1024);
 
     // 设置 QueueManager 状态缓存目录
-    appInfo.queueCache = appInfo.queueCache || appInfo.workplace + "/queueCache.json";
+    appInfo.queueCache = appInfo.queueCache || appInfo.workplace + "/queueCache.txt";
 
     (async () => {
         let shutdownResolve;
@@ -172,6 +172,7 @@ export function Launcher(appConfig: AppConfig) {
             jobOverrideConfigs: jobOverrideConfigs,
             jobConfigs: jobConfigs
         });
+        await appInfo.queueManager.loadFromCache();
         logger.info("init QueueManager successfully");
 
         // 开始派发任务的循环

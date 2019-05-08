@@ -1,8 +1,8 @@
 import {Job, JobStatus} from "./Job";
-import {Serialize} from "../../common/serialize/Serialize";
+import {Serializable} from "../../common/serialize/Serializable";
 import {StringUtil} from "../../common/util/StringUtil";
 
-@Serialize()
+@Serializable()
 export class DefaultJob implements Job {
 
     private _id: string;

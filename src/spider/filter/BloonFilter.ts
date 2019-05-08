@@ -1,13 +1,13 @@
 import {Filter} from "./Filter";
 import {Job} from "../job/Job";
 import {BitSet} from "../../common/util/BitSet";
-import {Serialize} from "../../common/serialize/Serialize";
+import {Serializable} from "../../common/serialize/Serializable";
 
 /**
  * 布隆过滤器，AddToQueue 默认使用这个过滤器
  * 通过 job.key() 来判断任务是否已经存在
  */
-@Serialize()
+@Serializable()
 export class BloonFilter implements Filter {
 
     private static readonly size = 2 << 24;

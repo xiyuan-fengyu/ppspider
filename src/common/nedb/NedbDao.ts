@@ -12,7 +12,7 @@ storage.writeFile = (...args) => {
 
             const data = args[1] as string[];
             for (let i = 0, len = data.length; i < len; i += 100) {
-                const subLines = data.slice(i, Math.min(len, i + 100)).join("\n") + "\n";
+                const subLines = data.slice(i, i + 100).join("\n") + "\n";
                 fs.appendFileSync(args[0], subLines, "utf-8");
             }
             args[2]();

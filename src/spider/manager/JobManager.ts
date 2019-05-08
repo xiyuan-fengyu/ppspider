@@ -1,5 +1,5 @@
 import {Job, JobStatus} from "../job/Job";
-import {SerializableUtil} from "../../common/serialize/Serialize";
+import {SerializableUtil} from "../../common/serialize/Serializable";
 import {NedbDao, NedbModel, Pager, Sort} from "../../common/nedb/NedbDao";
 import {appInfo} from "../decorators/Launcher";
 import {ObjectUtil} from "../../common/util/ObjectUtil";

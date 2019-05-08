@@ -1,4 +1,4 @@
-import {Assign, SerializableUtil, Serialize, Transient} from "../../common/serialize/Serialize";
+import {Assign, SerializableUtil, Serializable, Transient} from "../../common/serialize/Serializable";
 import {Queue} from "../queue/Queue";
 import {
     AddToQueueInfo,
@@ -25,7 +25,7 @@ import {Filter} from "../filter/Filter";
 import {DefaultJob} from "../job/DefaultJob";
 import {BloonFilter} from "../filter/BloonFilter";
 import {PromiseUtil} from "../../common/util/PromiseUtil";
-import {getBean} from "../..";
+import {FileUtil, getBean} from "../..";
 
 type QueueInfo = {
 
@@ -47,7 +47,7 @@ type QueueInfo = {
 
 }
 
-@Serialize()
+@Serializable()
 export class QueueManager {
 
     private readonly queueInfos: {[queueName: string]: QueueInfo} = {}; // 所有队列的信息
@@ -90,7 +90,6 @@ export class QueueManager {
         if (config) {
             this.setJobOverrideConfigs(config.jobOverrideConfigs);
             this.setJobConfigs(config.jobConfigs);
-            this.loadFromCache();
         }
     }
 
@@ -304,11 +303,11 @@ export class QueueManager {
      * 实际上是通过反序列化创建了一个临时的QueueManager实例，然后将需要的信息复制给当前的实例
      * @param {string} cachePath
      */
-    loadFromCache() {
+    async loadFromCache() {
         try {
             if (fs.existsSync(appInfo.queueCache)) {
-                const data = JSON.parse(fs.readFileSync(appInfo.queueCache, "utf-8"));
-                const tempQueueManager = SerializableUtil.deserialize(data) as QueueManager;
+                const lines = await FileUtil.readLines(appInfo.queueCache, "utf-8");
+                const tempQueueManager = SerializableUtil.deserialize(lines) as QueueManager;
 
                 this.successNum = tempQueueManager.successNum;
                 this.runningNum = tempQueueManager.runningNum;
@@ -369,8 +368,8 @@ export class QueueManager {
         this.delayPushInfo();
         return PromiseUtil.wait(() => this.runningNum <= 0, 500, -1).then(() => {
             try {
-                const data = JSON.stringify(SerializableUtil.serialize(this));
-                fs.writeFileSync(appInfo.queueCache, data);
+                const lines = SerializableUtil.serialize(this);
+                FileUtil.write(appInfo.queueCache, lines);
             }
             catch (e) {
                 logger.warn(e);

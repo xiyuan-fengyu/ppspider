@@ -84,7 +84,7 @@ export type DataUiRequestConfig = {
 
 export type AppConfig = {
     workplace: string; // 系统的工作目录
-    queueCache?: string; // 运行状态保存文件的路径，默认为 this.workplace + "/queueCache.json"
+    queueCache?: string; // 运行状态保存文件的路径，默认为 this.workplace + "/queueCache.txt"
     tasks: any[]; // 任务类
     dataUis?: any[]; // 需要引入的DataUi
     workerFactorys: WorkerFactory<any>[]; // 工厂类实例

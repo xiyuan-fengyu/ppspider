@@ -1,6 +1,6 @@
-import {Serialize, Transient} from "../..";
+import {Serializable, Transient} from "../..";
 import {BitSet} from "../../common/util/BitSet";
-import {SerializableUtil} from "../../common/serialize/Serialize";
+import {SerializableUtil} from "../../common/serialize/Serializable";
 
 class A {
     paraA = "aaa";
@@ -22,7 +22,7 @@ class B {
 //     }
 // }
 
-@Serialize()
+@Serializable()
 class C {
 
     @Transient()
@@ -71,9 +71,7 @@ class C {
 
 const c = new C();
 const serC = SerializableUtil.serialize(c);
-const serCJsonStr = JSON.stringify(serC, null, 4);
-console.log(serCJsonStr);
-const serCJson = JSON.parse(serCJsonStr);
-const deserC = SerializableUtil.deserialize(serCJson);
+console.log(serC);
+const deserC = SerializableUtil.deserialize(serC);
 console.log(deserC.testLambda());
 console.log(deserC.testFun());

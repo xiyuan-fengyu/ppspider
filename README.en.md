@@ -18,7 +18,7 @@
     + [@OnTime](#ontime)
     + [@AddToQueue @FromQueue](#addtoqueue-fromqueue)
     + [@JobOverride](#joboverride)
-    + [@Serialize Serializable @Transient](#serialize-serializable-transient)
+    + [@Serializable @Transient](#serializable-transient)
     + [@RequestMapping](#requestmapping)
     + [@Bean @Autowired](#bean-autowired)
     + [@DataUi @DataUiRequest](#dataui-datauirequest)
@@ -279,21 +279,20 @@ Actually, sub task type OnStart/OnTime is also managed by queue whose name just 
 or OnTime_ClassName_MethodName, so you can set a JobOverride to it.   
 [JobOverride example](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/bilibili/tasks/BilibiliTask.ts)
 
-### @Serialize Serializable @Transient
+### @Serializable @Transient
 ```
-export function Serialize(config?: SerializeConfig) { ... }
-export class Serializable { ... }
+export function Serializable(config?: SerializableConfig) { ... }
 export function Transient() { ... }
 ```
-@Serialize is used to mark a class, then the class info will keep during serializing and deserializing.
+@Serializable is used to mark a class, then the class info will keep during serializing and deserializing.
 Otherwise, the class info will lose when serializing.   
-a class which extends from Serializable supports customized serialize / deserialize， for example: [BitSet](https://github.com/xiyuan-fengyu/ppspider/blob/master/src/common/util/BitSet.ts)    
+    
 @Transient is used to mark a field which will be ignored when serializing and deserializing.
 Warn: static field will not be serialized.   
 These three are mainly used to save running status. You can use @Transient to ignore fields which are not 
 related with running status, then the output file will be smaller in size 
 and the possible error caused by deep nested object during deserializing will be avoid.  
-[example](https://github.com/xiyuan-fengyu/ppspider/blob/master/src/test/SerializeTest.ts)
+[example](https://github.com/xiyuan-fengyu/ppspider/blob/master/src/test/SerializeTest.ts)  
 
 
 ### @RequestMapping
@@ -485,6 +484,15 @@ Job panel: search jobs and view details
 ![ppspiderJobs.en.png](https://i.loli.net/2018/08/29/5b862f27e2809.png)
 
 # Update Note
+2019-05-08 v2.0.4
+1. Upgrade puppeteer: v1.15.0  
+2. Rewrite the serialization and deserialization process to solve the problem of large object serialization failure  
+    Due to this change, if you need to use the old queueCache.json which saved the running state, you can upgrade this file as following:  
+    Import UpgradeQueueCacheTask at "@Launcher tasks",   
+    Rename the old queueCache.json to queueCache_old.json and put it in the workplace directory,    
+    Start the app and the queueCache.txt will be generated in the workplace directory,    
+    Remove UpgradeQueueCacheTask at "@Launcher tasks".   
+       
 2019-04-29 v2.0.3
 1. When the ui interface switches tab pages, the previous tab page will not be destroyed.  
 2. fix bug： PuppeteerUtil.links can't find urls when passing Regex parameter.  

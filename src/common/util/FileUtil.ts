@@ -1,5 +1,6 @@
 import * as fs from "fs";
 import * as path from "path";
+import * as readline from "readline";
 
 /**
  * 文件系统相关的工具类
@@ -54,12 +55,24 @@ export class FileUtil {
      * @param {string} charset
      * @returns {boolean}
      */
-    static write(pathStr: string, content: any, charset?: string): boolean {
+    static write(pathStr: string, content: string | string[], charset?: string): boolean {
         try {
             if (this.mkdirs(this.parent(pathStr))) {
-                fs.writeFileSync(pathStr, content, charset ? {
+                const options = charset ? {
                     encoding: charset
-                } : null);
+                } : "utf-8";
+                if (content instanceof Array) {
+                    // 写入多行
+                    const lines = content as string[];
+                    fs.writeFileSync(pathStr, "", options);
+                    for (let i = 0, len = lines.length; i < len; i += 100) {
+                        const subLines = lines.slice(i, i + 100).join("\n") + "\n";
+                        fs.appendFileSync(pathStr, subLines, options);
+                    }
+                }
+                else {
+                    fs.writeFileSync(pathStr, content, options);
+                }
                 return true;
             }
         }
@@ -87,6 +100,21 @@ export class FileUtil {
             console.warn(e.stack);
         }
         return null;
+    }
+
+    static readLines(file: string, charset: string = "utf-8"): Promise<string[]> {
+        return new Promise<string[]>(resolve => {
+            const lines = [];
+            const reader = readline.createInterface({
+                input: fs.createReadStream(file).setEncoding(charset)
+            });
+            reader.on('line', function(line) {
+                lines.push(line);
+            });
+            reader.on('close', function(line) {
+                resolve(lines);
+            });
+        });
     }
 
 }

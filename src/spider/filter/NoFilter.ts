@@ -1,11 +1,11 @@
 import {Filter} from "./Filter";
 import {Job} from "../job/Job";
-import {Serialize} from "../../common/serialize/Serialize";
+import {Serializable} from "../../common/serialize/Serializable";
 
 /**
  * 不做存在性检测，全部添加到队列
  */
-@Serialize()
+@Serializable()
 export class NoFilter implements Filter {
 
     clear(): void {

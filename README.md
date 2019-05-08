@@ -18,7 +18,7 @@
     + [@OnTime](#ontime)
     + [@AddToQueue @FromQueue](#addtoqueue-fromqueue)
     + [@JobOverride](#joboverride)
-    + [@Serialize Serializable @Transient](#serialize-serializable-transient)
+    + [@Serializable @Transient](#serializable-transient)
     + [@RequestMapping](#requestmapping)
     + [@Bean @Autowired](#bean-autowired)
     + [@DataUi @DataUiRequest](#dataui-datauirequest)
@@ -250,19 +250,18 @@ OnStart_ClassName_MethodName，所以也可以通过 JobOverride 对 job 进行�
 [JobOverride example](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/jobOverride)  
 
 
-### @Serialize Serializable @Transient
+### @Serializable @Transient
 ```
-export function Serialize(config?: SerializeConfig) { ... }
-export class Serializable { ... }
+export function Serializable(config?: SerializableConfig) { ... }
 export function Transient() { ... }
 ```
-@Serialize 用于标记在序列化和反序列化中，需要保留类信息的类，没有这个标记的类的实例在
+@Serializable 用于标记在序列化和反序列化中，需要保留类信息的类，没有这个标记的类的实例在
 序列化之后会丢失类的信息  
-继承至 Serializable 的类可以自定义序列化和反序列化的实现方式， 例子：[BitSet](https://github.com/xiyuan-fengyu/ppspider/blob/master/src/common/util/BitSet.ts)    
+    
 @Transient 用于标记类成员，在序列化时忽略该字段。注意：类静态成员不参与序列化  
 这三个主要为关闭系统时保存运行状态提供支持，在实际使用的时候，如果有些类成员和运行状态没有直接关联，不需要序列化保存的
 时候，一定要用 @Transient 来忽略该字段，可以减小序列化后文件的大小，也可以避免对象嵌套太深导致的反序列化失败  
-[example](https://github.com/xiyuan-fengyu/ppspider/blob/master/src/test/component/SerializeTest.ts)
+[example](https://github.com/xiyuan-fengyu/ppspider/blob/master/src/test/component/SerializeTest.ts)  
 
 
 ### @RequestMapping
@@ -452,6 +451,16 @@ Job 面板可以对所有子任务实例进行搜索，查看任务详情
 ![ppspiderJobs.cn.png](https://i.loli.net/2018/08/29/5b862ef9b9dd5.png)
 
 # 更新日志
+2019-05-08 v2.0.4
+1. 升级 puppeteer 版本v1.15.0  
+2. 重写序列化和反序列化过程，解决大对象序列化失败的问题  
+    由于这项更改，如果需要继续使用旧的 queueCache.json 中保存的运行状态，可参考如下方案对这个文件进行升级    
+    在 @Launcher tasks 中引入 UpgradeQueueCacheTask  
+    将旧的 queueCache.json 更名为 queueCache_old.json，放到 workplace 目录下  
+    启动一次 app，将在 workplace 目录下生成 queueCache.txt  
+    在 @Launcher tasks 中移除 UpgradeQueueCacheTask  
+       
+    
 2019-04-29 v2.0.3
 1. ui界面切换tab页时，不销毁之前的tab页  
 2. 修复bug： PuppeteerUtil.links 传递 Regex 参数时获取不到连接  
