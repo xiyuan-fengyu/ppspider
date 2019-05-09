@@ -22,7 +22,7 @@ export type OnStartConfig = {
     urls: string | string[]; // 要抓取链接
     workerFactory: Class_WorkerFactory; // worker工厂类型
     running?: boolean; // 系统启动后该队列是否处于工作状态
-    parallel?: ParallelConfig; // 任务并行数配置
+    parallel?: ParallelConfig; // 任务并行数配置；可以是一个定值，也可以通过cron表达式在特定时间动态更改数值
     exeInterval?: number; // 两个任务的执行间隔时间
     exeIntervalJitter?: number; // 在 exeInterval 基础上增加一个随机的抖动，这个值为左右抖动最大半径，默认为 exeIntervalJitter * 0.25
     timeout?: number; // 任务超时时间，单位：毫秒，默认：300000ms(5分钟)，负数表示永不超时
@@ -31,7 +31,7 @@ export type OnStartConfig = {
 
 export type OnTimeConfig = {
     urls: string | string[];
-    cron: string; // cron表达式，描述了周期性执行的时刻；不清楚cron表达式的可以参考这里：http://cron.qqe2.com/
+    cron: string; // cron表达式，描述了周期性执行的时刻
     workerFactory: Class_WorkerFactory;
     running?: boolean;
     parallel?: ParallelConfig;

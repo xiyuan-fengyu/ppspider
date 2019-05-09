@@ -484,6 +484,10 @@ Job panel: search jobs and view details
 ![ppspiderJobs.en.png](https://i.loli.net/2018/08/29/5b862f27e2809.png)
 
 # Update Note
+2019-05-09 v2.0.5  
+1. Change cron lib: later -> cron  
+2. Update the logic to calculate the next execution time of OnTime Job  
+
 2019-05-08 v2.0.4
 1. Upgrade puppeteer: v1.15.0  
 2. Rewrite the serialization and deserialization process to solve the problem of large object serialization failure  
