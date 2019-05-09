@@ -450,12 +450,16 @@ export class QueueManager {
 
     private fixParallelNextExeTime(queueInfo: QueueInfo) {
         const maxNexExeTime = new Date().getTime() + queueInfo.config.exeInterval + queueInfo.config.exeIntervalJitter;
-        let nextExeTimea = this.queueParallelNextExeTimes[queueInfo.name];
-        for (let key of Object.keys(nextExeTimea)) {
-            const time = nextExeTimea[key];
+        let nextExeTime = this.queueParallelNextExeTimes[queueInfo.name];
+        for (let key of Object.keys(nextExeTime)) {
+            const time = nextExeTime[key];
             if (time > maxNexExeTime) {
-                nextExeTimea[key] = maxNexExeTime;
+                nextExeTime[key] = maxNexExeTime;
             }
+        }
+
+        if (queueInfo.config["type"] == "OnTime" && queueInfo.queue.size() > 0) {
+            queueInfo.queue.peek().datas()._.exeTime = this.computeNextExeTimeForOnTimeJob(queueInfo);
         }
     }
 
@@ -608,17 +612,47 @@ export class QueueManager {
     }
 
     private addOnTimeJob(queueName: string) {
-        const config = this.queueInfos[queueName].config as OnTimeConfig;
-        const nearTime = CronUtil.next(config.cron, 1) as Date;
-        this.addToQueue(null, {
-            queueName: queueName,
-            jobs: config.urls,
-            queueType: DefaultQueue,
-            filterType: NoFilter,
-            _: {
-                exeTime: nearTime.getTime()
+        const queueInfo = this.queueInfos[queueName];
+        const nextExeTime = this.computeNextExeTimeForOnTimeJob(queueInfo);
+        if (nextExeTime) {
+            this.addToQueue(null, {
+                queueName: queueName,
+                jobs: (queueInfo.config as OnTimeConfig).urls,
+                queueType: DefaultQueue,
+                filterType: NoFilter,
+                _: {
+                    exeTime: nextExeTime
+                }
+            });
+        }
+    }
+
+    private computeNextExeTimeForOnTimeJob(queueInfo: QueueInfo) {
+        let nextExeTime = null;
+        const parallelExeInfo = this.queueParallelNextExeTimes[queueInfo.name];
+        if (parallelExeInfo) {
+            for (let i = 0; i < queueInfo.curMaxParallel; i++) {
+                const temp = parallelExeInfo[i];
+                if (temp != -1) {
+                    if (nextExeTime == null) {
+                        const interval = (queueInfo.config.exeInterval || 0)
+                            + (Math.random() * 2 - 1) * queueInfo.config.exeIntervalJitter;
+                        nextExeTime = new Date().getTime() + interval;
+                    }
+                    if (nextExeTime == null || nextExeTime > temp) {
+                        nextExeTime = temp;
+                    }
+                }
             }
-        });
+
+            if (!nextExeTime) {
+                // 全部线程繁忙，返回空，不添加新任务
+                return null;
+            }
+        }
+
+        const nearTime = (CronUtil.next((queueInfo.config as OnTimeConfig).cron, 1) as Date).getTime();
+        return nextExeTime == null ? nearTime : Math.max(nearTime, nextExeTime);
     }
 
     private addFromQueueConfig(config: FromQueueConfig) {
