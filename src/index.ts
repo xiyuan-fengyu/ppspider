@@ -1,6 +1,7 @@
 export {Autowired, Bean, AfterInit, getBean, registeBean, existBean} from "./common/bean/Bean";
 export {Serializable, SerializableUtil, Transient} from "./common/serialize/Serializable";
 export {Sort, Pager, NedbModel, NedbDao} from "./common/nedb/NedbDao";
+export {CronUtil} from "./common/util/CronUtil";
 export {DateUtil} from "./common/util/DateUtil";
 export {DownloadResult, DownloadUtil} from "./common/util/DownloadUtil";
 export {FileUtil} from "./common/util/FileUtil";

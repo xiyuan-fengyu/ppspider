@@ -1,48 +1,65 @@
-const later: any = require('later');
-later.date.localTime();
-
-type CronSchedule = {
-    cron: any;
-    schedule: any;
-}
+import {CronJob} from "cron";
+import {Moment} from "moment";
 
 /**
  * cron表达式工具类，用途：
  * 1. 用于计算 OnTime 任务的 cron表达式，算出周期性执行任务的时间
- * 2. 用于计算 ParallelConfig 中的 cron表达式，添加周期性任务，用于改变任务并行数
+ * 2. 用于计算 ParallelConfig 中的 cron表达式，添加周期性任务，用于周期性改变任务并行数
  */
 export class CronUtil {
 
-    private static readonly cronSchedules: {
-        [cron: string]: CronSchedule
+    private static readonly crons: {
+        [cron: string]: CronJob
     } = {};
 
-    private static getCronSchedule(cronStr: string): CronSchedule {
-        let cronSchedule = CronUtil.cronSchedules[cronStr];
-        if (!cronSchedule) {
-            const cron = later.parse.cron(cronStr, true);
-            this.cronSchedules[cronStr] = cronSchedule = {
-                cron: cron,
-                schedule: later.schedule(cron)
-            };
+    private static getCronJob(cronStr: string): CronJob {
+        let cronJob = this.crons[cronStr];
+        if (!cronJob) {
+            CronUtil.crons[cronStr] = cronJob = new CronJob(cronStr, null, null, true);
         }
-        return cronSchedule;
+        return cronJob;
     }
 
-    static next(cron: string, num: number = 10, point: Date = null): Date | Date[] {
-        if (!point) {
-            point = new Date();
-            point.setTime(point.getTime() + 500); // 防止OnTime队列最后一个任务（记为A）执行之后，新添加的OnTime任务中第一个任务的执行时间和A执行时间重复
-        }
-        const cronExp = CronUtil.getCronSchedule(cron);
-        if (!cronExp) return [];
-        return cronExp.schedule.next(num, point) || [];
+    static next(cron: string, num: number = 10): Date[] {
+        const cronJob = this.getCronJob(cron);
+        const nexts = cronJob.nextDates(num);
+        return (nexts as Moment[]).map(item => item.toDate());
     }
 
-    static setInterval(cron: string, func: Function) {
-        const cronExp = CronUtil.getCronSchedule(cron);
-        if (!cronExp) return null;
-        return later.setInterval(func, cronExp.cron);
+    static setInterval(cron: string, func: Function): {
+        cron: string,
+        callback: Function,
+        clear: Function
+    } {
+        const cronJob = this.getCronJob(cron);
+        cronJob.addCallback(func);
+        return {
+            cron: cron,
+            callback: func,
+            clear: () => {
+                this.removeInterval(cron, func);
+            }
+        };
+    }
+
+    static removeInterval(cron: string, func?: Function) {
+        const cronJob = this.getCronJob(cron);
+        const _callbacks = cronJob["_callbacks"] as Function[];
+
+        if (func) {
+            const index = _callbacks.indexOf(func);
+            if (index > -1) {
+                _callbacks.splice(index, 1);
+            }
+        }
+        else {
+            _callbacks.splice(0, _callbacks.length);
+        }
+
+        if (_callbacks.length == 0) {
+            cronJob.stop();
+            delete this.crons[cron];
+        }
     }
 
 }

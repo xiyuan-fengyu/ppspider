@@ -24,7 +24,7 @@
   "license": "MIT",
   "dependencies": {
     "express": "^4.16.4",
-    "later": "^1.2.0",
+    "cron": "^1.7.1",
     "nedb": "^1.8.0",
     "puppeteer": "1.15.0",
     "request": "^2.88.0",
@@ -37,6 +37,7 @@
   "devDependencies": {
     "@types/express": "^4.16.1",
     "@types/jquery": "^3.3.29",
+    "@types/cron": "^1.7.0",
     "@types/nedb": "^1.8.5",
     "@types/node": "^11.9.4",
     "@types/puppeteer": "^1.12.4",

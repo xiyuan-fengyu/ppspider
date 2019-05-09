@@ -492,9 +492,7 @@ export class QueueManager {
                         const interval = CronUtil.setInterval(cron, () => {
                             queueInfo.curMaxParallel = para as number;
                         });
-                        if (interval) {
-                            queueInfo.parallelIntervals.push(interval);
-                        }
+                        queueInfo.parallelIntervals.push(interval);
                     }
                 }
             }
@@ -651,7 +649,7 @@ export class QueueManager {
             }
         }
 
-        const nearTime = (CronUtil.next((queueInfo.config as OnTimeConfig).cron, 1) as Date).getTime();
+        const nearTime = CronUtil.next((queueInfo.config as OnTimeConfig).cron, 1)[0].getTime();
         return nextExeTime == null ? nearTime : Math.max(nearTime, nextExeTime);
     }
 
