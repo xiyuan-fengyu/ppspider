@@ -41,6 +41,7 @@ export {AbsQueue} from "./spider/queue/AbsQueue";
 export {Queue} from "./spider/queue/Queue";
 export {NoneWorkerFactory} from "./spider/worker/NoneWorkerFactory";
 export {WorkerFactory} from "./spider/worker/WorkerFactory";
+export {NetworkTracing} from "./puppeteer/NetworkTracing";
 export {
     ResponseListener,
     DownloadImgError,
