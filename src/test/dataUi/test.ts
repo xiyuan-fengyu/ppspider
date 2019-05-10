@@ -1,5 +1,5 @@
 import {
-    AddToQueue,
+    AddToQueue, appInfo,
     DataUi,
     DataUiRequest,
     DateUtil,
@@ -11,8 +11,10 @@ import {
     NoneWorkerFactory,
     OnStart,
     OnTime,
-    PromiseUtil
+    PromiseUtil, RequestMapping
 } from "../..";
+import {Request, Response} from "express";
+import * as fs from "fs";
 
 @DataUi({
     label: "DataUi测试",
@@ -190,7 +192,7 @@ class TestTask {
     workerFactorys: [
     ],
     webUiPort: 9000,
-    webUiSsl: true,
+    webUiSsl: false,
     logger: {
         level: "debug"
     }
