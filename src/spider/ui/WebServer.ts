@@ -55,7 +55,9 @@ XwvvAxX61pPw6DE+PB4HgRyJkKj4SnXPzP/IVsArKooxrq+rKB/JAwezilYKr+jA
 Sb3jZSp5bW9r6TZR/4iwsQkP6GqiOBCXH2Bbb3845lSeMeKEj5/hvyXWDIaTmDqZ
 k8huTOiN8eiAFz/3HdFL4Ky8jAjRYIqWSaXvi3zNRgvk8o2GtYMYvcY1zo3Cwaez
 AVi87rG+Sa7/yORm9kcdir5lmEy4Sqei9tAI7iiBBA==
------END CERTIFICATE-----`
+-----END CERTIFICATE-----`,
+    requestCert: false,
+    rejectUnauthorized: false
 };
 
 /**
