@@ -89,7 +89,6 @@ export type AppConfig = {
     dataUis?: any[]; // 需要引入的DataUi
     workerFactorys: WorkerFactory<any>[]; // 工厂类实例
     webUiPort?: 9000 | number; // UI管理界面的web服务器端口，默认9000
-    webUiSsl?: boolean; // 是否启用ssl
     logger?: LoggerSetting; // 日志配置
 }
 

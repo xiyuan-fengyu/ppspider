@@ -192,7 +192,6 @@ class TestTask {
     workerFactorys: [
     ],
     webUiPort: 9000,
-    webUiSsl: false,
     logger: {
         level: "debug"
     }
