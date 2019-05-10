@@ -49,7 +49,7 @@ export class NetworkTracing {
             };
         });
 
-        page.on("response", this.onResponse = event => {
+        page.on("response", this.onResponse = async event => {
             const response = this.requestMap[event["_request"]["_requestId"]].response = {
                 status: event["_status"],
                 contentType: event["_headers"]["content-type"],
@@ -59,7 +59,7 @@ export class NetworkTracing {
                 time: new Date().getTime()
             };
             if (response.contentLength == null) {
-                event.buffer().then(buffer => response.contentLength = buffer.length);
+                await event.buffer().then(buffer => response.contentLength = buffer.length);
             }
             else {
                 response.contentLength = parseInt(response.contentLength);
