@@ -59,7 +59,11 @@ export class NetworkTracing {
                 time: new Date().getTime()
             };
             if (response.contentLength == null) {
-                await event.buffer().then(buffer => response.contentLength = buffer.length);
+                try {
+                    await event.buffer().then(buffer => response.contentLength = buffer.length);
+                }
+                catch (e) {
+                }
             }
             else {
                 response.contentLength = parseInt(response.contentLength);
