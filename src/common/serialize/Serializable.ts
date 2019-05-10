@@ -18,13 +18,11 @@ interface ClassInfo {
      */
     pos: any;
 
-    /**
-     * 序列化时需要忽略的字段
-     */
-    transients?: {[field: string]: boolean};
-
 }
 
+/**
+ * 序列化时需要忽略的字段
+ */
 const transientFields = new Map<any, any>();
 const classInfos = new Map<any, ClassInfo>();
 
@@ -106,8 +104,9 @@ export class SerializableUtil {
 
                 if (res == null) {
                     res = {};
+                    const transients = transientFields[objConstructor];
                     for (let field of Object.keys(obj)) {
-                        if (classInfo && classInfo.transients && classInfo.transients[field]) {
+                        if (transients && transients[field]) {
                             // 忽略字段
                         }
                         else res[field] = this._serialize(obj[field], serializedCaches, serializedRes); // 进一步序列化类成员的值
@@ -341,10 +340,10 @@ export function Transient() {
 
 export function Assign(target, source) {
     if (source && target && typeof source == "object" && typeof target == "object") {
-        let existed = classInfos.get(source.constructor);
-        if (existed && existed.transients) {
+        const transients = transientFields[source.constructor];
+        if (transients) {
             for (let field of Object.keys(source)) {
-                if (!existed.transients[field]) {
+                if (!transients[field]) {
                     target[field] = source[field];
                 }
             }
