@@ -100,19 +100,16 @@ export class SerializableUtil {
                 });
             }
             else {
-                let classInfo = classInfos.get(objConstructor);
-
-                if (res == null) {
-                    res = {};
-                    const transients = transientFields[objConstructor];
-                    for (let field of Object.keys(obj)) {
-                        if (transients && transients[field]) {
-                            // 忽略字段
-                        }
-                        else res[field] = this._serialize(obj[field], serializedCaches, serializedRes); // 进一步序列化类成员的值
+                res = {};
+                const transients = transientFields[objConstructor];
+                for (let field of Object.keys(obj)) {
+                    if (transients && transients[field]) {
+                        // 忽略字段
                     }
-                    if (classInfo && classInfo.id) res.serializeClassId = classInfo.id; // 设置 classId，在反序列化时获取类信息
+                    else res[field] = this._serialize(obj[field], serializedCaches, serializedRes); // 进一步序列化类成员的值
                 }
+                let classInfo = classInfos.get(objConstructor);
+                if (classInfo && classInfo.id) res.serializeClassId = classInfo.id; // 设置 classId，在反序列化时获取类信息
             }
             serializedRes.push(serializedCache + " " + JSON.stringify(res));
         }
@@ -340,7 +337,7 @@ export function Transient() {
 
 export function Assign(target, source) {
     if (source && target && typeof source == "object" && typeof target == "object") {
-        const transients = transientFields[source.constructor];
+        const transients = transientFields[target.constructor];
         if (transients) {
             for (let field of Object.keys(source)) {
                 if (!transients[field]) {
