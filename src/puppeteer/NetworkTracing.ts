@@ -113,8 +113,8 @@ export class NetworkTracing {
             }
             traceEvents.push({"pid":1,"tid":1,"ts":ts(request.endTime),"ph":"I","cat":"devtools.timeline","name":"ResourceFinish","args":{"data":{"requestId":request.id, "didFail": !request.success, "decodedBodyLength": 0}}})
         }
-        traceEvents.push({"pid":1,"tid":1,"ts":traceEvents[traceEvents.length - 1].ts + 1,"ph":"I","cat":"devtools.timeline"});
         traceEvents.sort((o1, o2) => o1.ts - o2.ts);
+        traceEvents.push({"pid":1,"tid":1,"ts":traceEvents[traceEvents.length - 1].ts + 1,"ph":"I","cat":"devtools.timeline"});
         return {
             traceEvents: traceEvents
         };
