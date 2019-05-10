@@ -341,7 +341,7 @@ export function Launcher(appConfig: AppConfig) {
 
         // 启动UI界面的web服务器
         requestMappingConfigs.forEach(item => item.target = getBean(item.target, true));
-        appInfo.webServer = new WebServer(appInfo.webUiPort || Defaults.webUiPort, appInfo.workplace,
+        appInfo.webServer = new WebServer(appInfo.webUiPort || Defaults.webUiPort, appInfo.webUiSsl, appInfo.workplace,
             requestMappingConfigs, WebRequestHandler.dispatch);
 
         // 等待系统停止

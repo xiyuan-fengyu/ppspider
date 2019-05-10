@@ -138,7 +138,7 @@ class TestTask {
 
     @OnTime({
         urls: "",
-        cron: "0/1 * * * *",
+        cron: "* * * * * *",
         workerFactory: NoneWorkerFactory
     })
     async onTime(useless: any, job: Job) {
@@ -166,8 +166,8 @@ class TestTask {
         name: "test",
         workerFactory: NoneWorkerFactory,
         parallel: {
-            "0/10 * * * * *": 0,
-            "5/10 * * * * *": 5
+            "0-59/10 * * * * *": 0,
+            "5-59/10 * * * * *": 5
         }
     })
     async test(useless: any, job: Job) {
@@ -190,6 +190,7 @@ class TestTask {
     workerFactorys: [
     ],
     webUiPort: 9000,
+    webUiSsl: true,
     logger: {
         level: "debug"
     }
