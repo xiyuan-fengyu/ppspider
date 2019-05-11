@@ -7,6 +7,7 @@ export type PageRequest = {
     time: number,
     response?: {
         status: number,
+        location?: string,//仅当302时
         contentType: string,
         contentLength: number,
         fromCache: boolean,
@@ -60,6 +61,11 @@ export class NetworkTracing {
                 fromServiceWorker: event["_fromServiceWorker"],
                 time: new Date().getTime()
             };
+
+            if (response.status == 302) {
+                (response as any).location = event["_headers"]["location"]
+            }
+
             if (response.contentLength == null) {
                 event.buffer()
                     .then(buffer => response.contentLength = buffer.length)
