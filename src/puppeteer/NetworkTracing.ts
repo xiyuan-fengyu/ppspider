@@ -39,10 +39,12 @@ export class NetworkTracing {
     private onRequestFailed: (...args: any[]) => void;
 
     constructor(page: Page) {
+        let requestIndex = 0;
         page.on("request", this.onRequest = event => {
             const _requestId = event["_requestId"];
             this.requestMap[_requestId] = {
                 id: _requestId,
+                sort: requestIndex++,
                 url: event.url(),
                 method: event.method,
                 time: new Date().getTime()
@@ -94,7 +96,7 @@ export class NetworkTracing {
         for (let key of Object.keys(this.requestMap)) {
             tracing.push(this.requestMap[key]);
         }
-        tracing.sort((o1, o2) => o1.time - o2.time);
+        tracing.sort((o1, o2) => o1.sort - o2.sort).map(item => delete item.sort);
         return {
             time: this.startTime,
             requests: tracing
