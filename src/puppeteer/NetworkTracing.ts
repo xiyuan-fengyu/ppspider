@@ -1,4 +1,4 @@
-import {Page} from "puppeteer";
+import {Page, Response} from "puppeteer";
 
 export type PageRequest = {
     id: string,
@@ -67,9 +67,13 @@ export class NetworkTracing {
             }
 
             if (response.contentLength == null) {
-                event.buffer()
-                    .then(buffer => response.contentLength = buffer.length)
-                    .catch(err => {});
+                await event.buffer()
+                    .then(res => {
+                        response.contentLength = res.length
+                    })
+                    .catch(err => {
+                        response.contentLength = 0;
+                    });
             }
             else {
                 response.contentLength = parseInt(response.contentLength);
