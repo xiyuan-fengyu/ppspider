@@ -113,7 +113,7 @@ export class NedbDao<T extends NedbModel> {
 
     private lastCompactTime = new Date().getTime();
 
-    constructor(dbDir: string) {
+    constructor(dbDir: string, private autoCompact: boolean = true) {
         NedbDao._instances[this.constructor.name] = this;
         const dbFile = dbDir + "/" + this.constructor.name + ".db";
         this.nedbP = new Promise<Nedb>((resolve, reject) => {
@@ -165,8 +165,10 @@ export class NedbDao<T extends NedbModel> {
      * @param {number} actionNum
      */
     private afterAction() {
-        if (new Date().getTime() - this.lastCompactTime >= this.compactRate) {
-            this.compact();
+        if (this.autoCompact) {
+            if (new Date().getTime() - this.lastCompactTime >= this.compactRate) {
+                this.compact();
+            }
         }
     }
 
