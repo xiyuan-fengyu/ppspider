@@ -59,11 +59,9 @@ export class NetworkTracing {
                 time: new Date().getTime()
             };
             if (response.contentLength == null) {
-                try {
-                    await event.buffer().then(buffer => response.contentLength = buffer.length);
-                }
-                catch (e) {
-                }
+                event.buffer()
+                    .then(buffer => response.contentLength = buffer.length)
+                    .catch(err => {});
             }
             else {
                 response.contentLength = parseInt(response.contentLength);
@@ -105,8 +103,14 @@ export class NetworkTracing {
 
     static requestsToTraceEvents(pageRequests: PageRequests) {
         const startTime = pageRequests.time;
+        let lastTime = 0;
         const ts = time => {
-            return (time - startTime) * 1000;
+            let res = (time - startTime) * 1000;
+            if (res == lastTime) {
+                res++;
+            }
+            lastTime = res;
+            return res;
         };
         const traceEvents: any[] = [];
         traceEvents.push({"tid":0, "ts":0, "ph":"I","cat":"disabled-by-default-devtools.timeline","name":"TracingStartedInBrowser","args":{"data":{"frameTreeNodeId":0,"persistentIds":true,"frames":[{"url":"about:blank","name":"","processId":1}]}}});
