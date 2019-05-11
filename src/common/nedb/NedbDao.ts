@@ -10,10 +10,15 @@ storage.writeFile = (...args) => {
         try {
             fs.writeFileSync(args[0], "", "utf-8");
 
+            const bufferLen = 1024 * 1024 * 8;
             const data = args[1] as string[];
-            for (let i = 0, len = data.length; i < len; i += 100) {
-                const subLines = data.slice(i, i + 100).join("\n") + "\n";
-                fs.appendFileSync(args[0], subLines, "utf-8");
+            let str = "";
+            for (let i = 0, len = data.length; i < len; i ++) {
+                str += data[i] + "\n";
+                if (i + 1 == len || str.length >= bufferLen) {
+                    fs.appendFileSync(args[0], str, "utf-8");
+                    str = "";
+                }
             }
             args[2]();
         }
