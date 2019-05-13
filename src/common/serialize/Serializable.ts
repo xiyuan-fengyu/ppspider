@@ -177,6 +177,7 @@ export class SerializableUtil {
 
             const checkWriteFinish = () => {
                 if (serFinish && writeNum == writeOkNum) {
+                    writeStream.close();
                     resolve();
                 }
             };
