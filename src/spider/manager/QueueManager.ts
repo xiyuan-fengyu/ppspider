@@ -366,9 +366,9 @@ export class QueueManager {
     async saveQueueCache() {
         this.saving = true;
         this.delayPushInfo();
-        return PromiseUtil.wait(() => this.runningNum <= 0, 500, -1).then(() => {
+        return PromiseUtil.wait(() => this.runningNum <= 0, 500, -1).then(async () => {
             try {
-                SerializableUtil.serializeToFile(this, appInfo.queueCache);
+                await SerializableUtil.serializeToFile(this, appInfo.queueCache);
             }
             catch (e) {
                 logger.warn(e);

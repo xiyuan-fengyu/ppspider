@@ -168,10 +168,37 @@ export class SerializableUtil {
         return objType == "string" || objType == "number" || objType == "boolean";
     }
 
-    static serializeToFile(obj: any, file: PathLike, encoding: string = "utf-8"): void {
-        let writer = fs.createWriteStream(file, encoding);
-        this._serialize(obj,  writer, new Map<any, number>());
-        writer.close();
+    static serializeToFile(obj: any, file: PathLike, encoding: string = "utf-8"): Promise<void> {
+        return new Promise((resolve, reject) => {
+            let writeStream = fs.createWriteStream(file, encoding);
+            let serFinish = false;
+            let writeNum = 0;
+            let writeOkNum = 0;
+
+            const checkWriteFinish = () => {
+                if (serFinish && writeNum == writeOkNum) {
+                    resolve();
+                }
+            };
+
+            const writer = {
+                write: str => {
+                    writeNum++;
+                    writeStream.write(str, error => {
+                        if (error) {
+                            reject(error);
+                        }
+                        else {
+                            writeOkNum++;
+                            checkWriteFinish();
+                        }
+                    });
+                }
+            };
+            this._serialize(obj, writer, new Map<any, number>());
+            serFinish = true;
+            checkWriteFinish();
+        });
     }
 
     static serializeToString(obj: any): string {

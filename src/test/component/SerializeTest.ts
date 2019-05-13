@@ -64,16 +64,17 @@ class C {
 const c = new C();
 const serC = SerializableUtil.serializeToString(c);
 console.log(serC);
-SerializableUtil.serializeToFile(c, "test.txt");
-
 const deserC = SerializableUtil.deserializeFromString(serC);
-SerializableUtil.deserializeFromFile("test.txt").then(res => {
-    console.log(SerializableUtil.serializeToString(res));
-    console.log(res.testLambda());
-    console.log(res.testFun());
-});
 console.log(deserC.testLambda());
 console.log(deserC.testFun());
+
+SerializableUtil.serializeToFile(c, "test.txt").then(() => {
+    SerializableUtil.deserializeFromFile("test.txt").then(res => {
+        console.log(SerializableUtil.serializeToString(res));
+        console.log(res.testLambda());
+        console.log(res.testFun());
+    });
+});
 
 const str = JSON.stringify("\"name\"");
 console.log(str);
