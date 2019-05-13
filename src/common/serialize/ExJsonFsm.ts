@@ -203,7 +203,7 @@ class StringState extends State {
         this.addTransition(1, c => c != "\"" && c != "\\", 1);
         this.addTransition(1, "\\", 2);
         this.addTransition(1, "\"", 5);
-        this.addTransition(2, c => "\\/bfnrt".indexOf(c.toLowerCase()) > -1, 1);
+        this.addTransition(2, c => "\"\\/bfnrt".indexOf(c.toLowerCase()) > -1, 1);
         this.addTransition(2, "u", 3);
         this.addTransition(3, c => "0123456789abcdef".indexOf(c.toLowerCase()) > -1, 4);
         this.addTransition(4, (c, stateNode) => stateNode.selfReachCount <= 1 && "0123456789abcdef".indexOf(c.toLowerCase()) > -1, 4);
@@ -215,12 +215,18 @@ class StringState extends State {
     }
 
     protected afterTransition(fromStateNode: StateNode, condition: any, toStateNode: StateNode) {
-        if (fromStateNode.index != 0 && toStateNode.index != 5) {
+        if (fromStateNode.index == 3 || fromStateNode.index == 4) {
+            this.uHexStr += condition;
+        }
+        if (toStateNode.index == 1) {
             if (fromStateNode.index == 1) {
                 this.str += condition;
             }
             else if (fromStateNode.index == 2) {
                 switch (condition) {
+                    case '"':
+                        this.str += '"';
+                        break;
                     case "\\":
                         this.str += "\\";
                         break;
@@ -244,11 +250,7 @@ class StringState extends State {
                         break;
                 }
             }
-            else if (fromStateNode.index == 3 || fromStateNode.index == 4) {
-                this.uHexStr += condition;
-            }
-
-            if (fromStateNode.index == 4 && toStateNode.index == 1) {
+            else if (fromStateNode.index == 4) {
                 this.str += String.fromCharCode(parseInt(this.uHexStr, 16));
                 this.uHexStr = "";
             }

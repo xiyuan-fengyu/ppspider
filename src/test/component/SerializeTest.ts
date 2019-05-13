@@ -14,14 +14,6 @@ class B {
     a: A;
 }
 
-// {
-//     // 重复定义 classId 测试，解开注释报错
-//     @Serialize()
-//     class C {
-//
-//     }
-// }
-
 @Serializable()
 class C {
 
@@ -82,3 +74,8 @@ SerializableUtil.deserializeFromFile("test.txt").then(res => {
 });
 console.log(deserC.testLambda());
 console.log(deserC.testFun());
+
+const str = JSON.stringify("\"name\"");
+console.log(str);
+const obj2 = SerializableUtil.deserializeFromString(str);
+console.log(JSON.stringify(obj2));

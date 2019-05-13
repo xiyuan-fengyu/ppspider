@@ -105,7 +105,7 @@ export class logger {
         }
 
         let msgsStr = (msgs || []).map(item => {
-            if (item.constructor == Error) {
+            if (item instanceof Error) {
                 return item.stack;
             }
             else {
