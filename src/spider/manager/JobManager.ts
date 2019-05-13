@@ -1,10 +1,33 @@
 import {Job, JobStatus} from "../job/Job";
-import {SerializableUtil} from "../../common/serialize/Serializable";
+import {getClassInfoByConstructor, getClassInfoById} from "../../common/serialize/Serializable";
 import {NedbDao, NedbModel, Pager, Sort} from "../../common/nedb/NedbDao";
 import {appInfo} from "../decorators/Launcher";
 import {ObjectUtil} from "../../common/util/ObjectUtil";
 import {DateUtil} from "../../common/util/DateUtil";
 import {logger} from "../../common/util/logger";
+
+export function serializeJob(job: Job) {
+    const ser: any = {};
+    Object.assign(ser, job);
+    const jobClassInfo = getClassInfoByConstructor(job.constructor);
+    if (jobClassInfo) {
+        ser.serializeClassId = jobClassInfo.id;
+    }
+    return ser;
+}
+
+export function deserializeJob(ser: any): Job {
+    let res;
+    if (ser.serializeClassId) {
+        const jobClassInfo = getClassInfoById(ser.serializeClassId);
+        res = jobClassInfo == null ? {} : new jobClassInfo.type();
+    }
+    else {
+        res = {};
+    }
+    Object.assign(res, ser);
+    return res;
+}
 
 class JobWrapper extends NedbModel {
 
@@ -33,7 +56,7 @@ class JobWrapper extends NedbModel {
         this.createTime = job.createTime();
         this.tryNum = job.tryNum();
         this.status = job.status();
-        this.serialize = SerializableUtil.serialize(job);
+        this.serialize = serializeJob(job);
         this.updateTime = new Date().getTime();
         if (job.status() == JobStatus.Filtered) {
             this.autoRelease = true;
@@ -188,7 +211,7 @@ export class JobManager {
      * @returns {any}
      */
     private transformToJob(obj: any) {
-        const job = SerializableUtil.deserialize(obj) as Job;
+        const job = deserializeJob(obj) as Job;
         job.status(JobStatus[job.status()] as any);
         // 仅前端获取父任务id 时会使用到，且前端获取这个字段的值后，会删除这个字段
         job["_parentId_justForParentFetch"] = job.parentId();

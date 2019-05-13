@@ -1,6 +1,7 @@
 import * as fs from "fs";
 import {PathLike} from "fs";
-import {ValueState} from "./MyJsonFsm";
+import {ValueState} from "./ExJsonFsm";
+import {isUndefined} from "util";
 
 /**
  * 用于保存 被@Serialize装饰的类 或 类成员被@Transient装饰的类 的类信息
@@ -45,9 +46,9 @@ export const getClassInfoById = (id: string) => {
     return null;
 };
 
-export function getTransientFields(objConstructor: any) {
-    return transientFields.get(objConstructor);
-}
+export const getClassInfoByConstructor = (constructor: any) => {
+    return classInfos.get(constructor);
+};
 
 const stackPosReg = new RegExp("^at .* \\((.*)\\)$");
 
@@ -168,7 +169,9 @@ export class SerializableUtil {
     }
 
     static serializeToFile(obj: any, file: PathLike, encoding: string = "utf-8"): void {
-        this._serialize(obj, fs.createWriteStream(file, encoding) as Writer, new Map<any, number>());
+        let writer = fs.createWriteStream(file, encoding);
+        this._serialize(obj,  writer, new Map<any, number>());
+        writer.close();
     }
 
     static serializeToString(obj: any): string {
@@ -186,7 +189,8 @@ export class SerializableUtil {
         first: boolean,
         key?: string
     }) {
-        if (typeof obj == "function") {
+        const objType = typeof obj;
+        if (objType == "function" || objType == "undefined") {
             return;
         }
 

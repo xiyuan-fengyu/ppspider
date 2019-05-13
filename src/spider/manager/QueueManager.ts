@@ -26,6 +26,7 @@ import {DefaultJob} from "../job/DefaultJob";
 import {BloonFilter} from "../filter/BloonFilter";
 import {PromiseUtil} from "../../common/util/PromiseUtil";
 import {FileUtil, getBean} from "../..";
+import {deserializeJob} from "./JobManager";
 
 type QueueInfo = {
 
@@ -154,7 +155,7 @@ export class QueueManager {
     reExecuteJob(data: any): Promise<any> {
         return new Promise<any>(resolve => {
             appInfo.jobManager.job(data._id).then(doc => {
-                const job = SerializableUtil.deserialize(doc.serialize) as Job;
+                const job = deserializeJob(doc.serialize) as Job;
 
                 // 重新设置最大尝试次数
                 if (job.datas()._ == null) {
@@ -190,7 +191,7 @@ export class QueueManager {
                 }
                 else {
                     const jobInfo = await appInfo.jobManager.job(data._id);
-                    const job = SerializableUtil.deserialize(jobInfo.serialize) as Job;
+                    const job = deserializeJob(jobInfo.serialize) as Job;
                     const s = job.status();
                     if (job.status() != JobStatus.Running) {
                         return true;
