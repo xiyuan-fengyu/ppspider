@@ -70,8 +70,15 @@ class C {
 }
 
 const c = new C();
-const serC = SerializableUtil.serialize(c);
+const serC = SerializableUtil.serializeToString(c);
 console.log(serC);
-const deserC = SerializableUtil.deserialize(serC);
+SerializableUtil.serializeToFile(c, "test.txt");
+
+const deserC = SerializableUtil.deserializeFromString(serC);
+SerializableUtil.deserializeFromFile("test.txt").then(res => {
+    console.log(SerializableUtil.serializeToString(res));
+    console.log(res.testLambda());
+    console.log(res.testFun());
+});
 console.log(deserC.testLambda());
 console.log(deserC.testFun());

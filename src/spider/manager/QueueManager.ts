@@ -306,8 +306,7 @@ export class QueueManager {
     async loadFromCache() {
         try {
             if (fs.existsSync(appInfo.queueCache)) {
-                const lines = await FileUtil.readLines(appInfo.queueCache, "utf-8");
-                const tempQueueManager = SerializableUtil.deserialize(lines) as QueueManager;
+                const tempQueueManager = (await SerializableUtil.deserializeFromFile(appInfo.queueCache, "utf-8")) as QueueManager;
 
                 this.successNum = tempQueueManager.successNum;
                 this.runningNum = tempQueueManager.runningNum;
@@ -368,8 +367,7 @@ export class QueueManager {
         this.delayPushInfo();
         return PromiseUtil.wait(() => this.runningNum <= 0, 500, -1).then(() => {
             try {
-                const lines = SerializableUtil.serialize(this);
-                FileUtil.write(appInfo.queueCache, lines);
+                SerializableUtil.serializeToFile(this, appInfo.queueCache);
             }
             catch (e) {
                 logger.warn(e);
