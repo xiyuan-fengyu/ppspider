@@ -144,30 +144,6 @@ interface Writer {
  */
 export class SerializableUtil {
 
-    private static replacementChars = (() => {
-        const res = {};
-        for (let i = 0; i <= 0x1f; i++) {
-            let hex = Number(i).toString(16);
-            hex = "0000".slice(0, -hex.length) + hex;
-            res[String.fromCharCode(i)] = "\\u" + hex;
-        }
-        res['"'] = "\\\"";
-        res['\\'] = "\\\\";
-        res['\t'] = "\\t";
-        res['\b'] = "\\b";
-        res['\n'] = "\\n";
-        res['\r'] = "\\r";
-        res['\f'] = "\\f";
-        return res;
-    })();
-
-    private static isNormal(obj: any) {
-        if (obj == null || obj == undefined) return true;
-
-        const objType = typeof obj;
-        return objType == "string" || objType == "number" || objType == "boolean";
-    }
-
     static serializeToFile(obj: any, file: PathLike, encoding: string = "utf-8"): Promise<void> {
         return new Promise((resolve, reject) => {
             let writeStream = fs.createWriteStream(file, encoding);
@@ -176,17 +152,17 @@ export class SerializableUtil {
             let writeOkNum = 0;
 
             const checkWriteFinish = () => {
-                if (serFinish && writeNum == writeOkNum) {
+                if (writeNum == writeOkNum) {
                     writeStream.close();
                     resolve();
                 }
             };
 
             let buffer = "";
-            const bufferMaxLen = 1024 * 1024 * 16;
+            const bufferMaxLen = 1024;
 
             const tryFlush = (force: boolean = false) => {
-                if (buffer.length >= bufferMaxLen || force) {
+                if (buffer.length >= bufferMaxLen || (force && buffer.length > 0)) {
                     writeNum++;
                     writeStream.write(buffer, error => {
                         if (error) {
@@ -194,7 +170,9 @@ export class SerializableUtil {
                         }
                         else {
                             writeOkNum++;
-                            checkWriteFinish();
+                            if (serFinish) {
+                                checkWriteFinish();
+                            }
                         }
                     });
                     buffer = "";
@@ -235,23 +213,24 @@ export class SerializableUtil {
         }
 
         if (context) {
+            let str = "";
             if (!context.first) {
-                writer.write(",");
+                str += ",";
             }
             if (context.key != null) {
-                this.writeString("" + context.key, writer);
-                writer.write(":");
+                str += JSON.stringify(context.key) + ":";
+            }
+            if (str) {
+                writer.write(str);
             }
             context.first = false;
         }
 
-        if (this.isNormal(obj)) {
-            if (typeof obj == "string") {
-                this.writeString(obj, writer);
-            }
-            else {
-                writer.write("" + obj);
-            }
+        if (objType == "string") {
+            writer.write(JSON.stringify(obj));
+        }
+        else if (obj == null && objType != "object") {
+            writer.write("" + obj);
         }
         else {
             const objRef = objCache.get(obj);
@@ -279,8 +258,7 @@ export class SerializableUtil {
 
                     let classInfo = classInfos.get(obj.constructor);
                     if (classInfo) {
-                        writer.write("_:");
-                        this.writeString(classInfo.id, writer);
+                        writer.write("_:" + JSON.stringify(classInfo.id));
                         newContext.first = false;
                     }
 
@@ -300,38 +278,6 @@ export class SerializableUtil {
                 }
             }
         }
-    }
-
-    private static writeString(str: string, writer: Writer) {
-        writer.write("\"");
-        let last = 0;
-        let length = str.length;
-        const c128 = String.fromCharCode(128);
-        for (let i = 0; i < length; i++) {
-            const c = str.charAt(i);
-            let replacement;
-            if (c < c128) {
-                replacement = this.replacementChars[c];
-                if (replacement == null) {
-                    continue;
-                }
-            } else if (c == '\u2028') {
-                replacement = "\\u2028";
-            } else if (c == '\u2029') {
-                replacement = "\\u2029";
-            } else {
-                continue;
-            }
-            if (last < i) {
-                writer.write(str.substring(last, i));
-            }
-            writer.write(replacement);
-            last = i + 1;
-        }
-        if (last < length) {
-            writer.write(str.substring(last));
-        }
-        writer.write("\"");
     }
 
     static deserializeFromString(str: string): any {
