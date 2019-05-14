@@ -159,8 +159,8 @@ class State {
             }
             else {
                 throw new Error(`current state ${this.constructor.name}(${fromState}), bad token(${condition}) at ${index}:
-\x1b[38;05;91m${str}\x1b[0m
-\x1b[38;05;97m${str.substring(0, index)}\x1b[0m\x1b[38;05;91m^\x1b[0m`);
+${str}
+${str.substring(0, index)}^`);
             }
         }
 
@@ -188,6 +188,12 @@ class State {
 
     protected afterTransition(fromStateNode: StateNode, condition: any, toStateNode: StateNode) {
 
+    }
+
+    protected endStateCheck() {
+        if (!this.isCurrentEnd()) {
+            throw new Error(`not an end state: ${this.constructor.name}(${this.currentState})`);
+        }
     }
 
     get() {
@@ -220,12 +226,8 @@ class RefState extends State {
     }
 
     get() {
-        if (this.isCurrentEnd()) {
-            return this.root.objCache.get(parseInt(this.str));
-        }
-        else {
-            throw new Error(`not an end state(${this.currentState})`);
-        }
+        this.endStateCheck();
+        return this.root.objCache.get(parseInt(this.str));
     }
 
 }
@@ -304,12 +306,8 @@ class StringState extends State {
     }
 
     get() {
-        if (this.isCurrentEnd()) {
-            return this.str;
-        }
-        else {
-            throw new Error(`not an end state(${this.currentState})`);
-        }
+        this.endStateCheck();
+        return this.str;
     }
 
 }
@@ -345,12 +343,8 @@ class NumberState extends State {
     }
 
     get() {
-        if (this.isCurrentEnd()) {
-            return parseFloat(this.numberStr);
-        }
-        else {
-            throw new Error(`not an end state(${this.currentState})`);
-        }
+        this.endStateCheck();
+        return parseFloat(this.numberStr);
     }
 
 }
@@ -364,7 +358,7 @@ class ArrayState extends State {
 
         this.addTransition(0, "[", 1);
         this.addTransition(1, "]", 2);
-        this.addTransition(1, true, this.root.reuseStateFromCache(ValueState, 3, this));
+        this.addTransition(1, true, new ValueState(3, this));
         this.addTransition(3, ",", 1);
         this.addTransition(3, "]", 2);
 
@@ -377,23 +371,20 @@ class ArrayState extends State {
         if (fromState.index == 0) {
             this.root.objCache.set(this.root.objCache.size, this.arr);
         }
-        else if (fromState.index == 1 && toState.index == 3) {
-            (toState.state as ValueState).transition(condition);
+        else if (toState.index == 3) {
+            const valueState = toState.state as ValueState;
+            valueState.reset();
+            valueState.transition(condition);
         }
         else if (fromState.index == 3) {
             const valueState = fromState.state as ValueState;
             this.arr.push(valueState.get());
-            valueState.reset();
         }
     }
 
     get() {
-        if (this.isCurrentEnd()) {
-            return this.arr;
-        }
-        else {
-            throw new Error(`not an end state(${this.currentState})`);
-        }
+        this.endStateCheck();
+        return this.arr;
     }
 
 }
@@ -432,6 +423,9 @@ class ObjectState extends State {
         else if (toState.index == 4 || toState.index == 5) {
             (toState.state as StringState).setParent(this);
         }
+        else if (toState.index == 6) {
+            (toState.state as ValueState).reset();
+        }
 
         if (fromState.index == 1 && toState.state instanceof StringState) {
             (toState.state as StringState).transition(condition);
@@ -443,9 +437,7 @@ class ObjectState extends State {
         }
         else if (fromState.index == 6) {
             const valueState = fromState.state as ValueState;
-            const value = valueState.get();
-            valueState.reset();
-            this.obj[this.key] = value;
+            this.obj[this.key] = valueState.get();
             this.key = null;
         }
         else if (fromState.index == 4) {
@@ -463,12 +455,8 @@ class ObjectState extends State {
     }
 
     get() {
-        if (this.isCurrentEnd()) {
-            return this.obj;
-        }
-        else {
-            throw new Error(`not an end state(${this.currentState})`);
-        }
+        this.endStateCheck();
+        return this.obj;
     }
 
 }
@@ -542,22 +530,18 @@ export class ValueState extends State {
     }
 
     get() {
-        if (this.isCurrentEnd()) {
-            if (this.currentState == 4) {
-                return true;
-            }
-            else if (this.currentState == 9) {
-                return false;
-            }
-            else if (this.currentState == 13) {
-                return null;
-            }
-            else {
-                return this.states.get(this.currentState).state.get();
-            }
+        this.endStateCheck();
+        if (this.currentState == 4) {
+            return true;
+        }
+        else if (this.currentState == 9) {
+            return false;
+        }
+        else if (this.currentState == 13) {
+            return null;
         }
         else {
-            throw new Error(`not an end state(${this.currentState})`);
+            return this.states.get(this.currentState).state.get();
         }
     }
 
