@@ -61,6 +61,8 @@ class C {
 
 }
 
+
+
 const c = new C();
 const serC = SerializableUtil.serializeToString(c);
 console.log(serC);
@@ -80,3 +82,11 @@ const str = JSON.stringify("\"name\"");
 console.log(str);
 const obj2 = SerializableUtil.deserializeFromString(str);
 console.log(JSON.stringify(obj2));
+
+
+
+// SerializableUtil.deserializeFromFile("queueCache.txt").then(res => {
+//     console.log(res);
+// });
+
+

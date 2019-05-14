@@ -182,10 +182,13 @@ export class SerializableUtil {
                 }
             };
 
-            const writer = {
-                write: str => {
+            let buffer = "";
+            const bufferMaxLen = 1024 * 1024 * 16;
+
+            const tryFlush = (force: boolean = false) => {
+                if (buffer.length >= bufferMaxLen || force) {
                     writeNum++;
-                    writeStream.write(str, error => {
+                    writeStream.write(buffer, error => {
                         if (error) {
                             reject(error);
                         }
@@ -194,10 +197,19 @@ export class SerializableUtil {
                             checkWriteFinish();
                         }
                     });
+                    buffer = "";
+                }
+            };
+
+            const writer = {
+                write: str => {
+                    buffer += str;
+                    tryFlush();
                 }
             };
             this._serialize(obj, writer, new Map<any, number>());
             serFinish = true;
+            tryFlush(true);
             checkWriteFinish();
         });
     }
