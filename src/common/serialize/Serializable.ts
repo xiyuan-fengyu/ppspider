@@ -248,10 +248,12 @@ export class SerializableUtil {
             const objType = typeof obj;
             if (obj instanceof Array) {
                 const insArr = [];
+                let isAllRef = true;
                 for (let i = 0, len = obj.length; i < len; i++) {
                     const value = obj[i];
                     if (this.isSimpleType(value)) {
                         insArr[i] = value;
+                        isAllRef = false;
                     }
                     else {
                         insArr[i] = null;
@@ -268,8 +270,13 @@ export class SerializableUtil {
                         }
                     }
                 }
-                const insObjJson = JSON.stringify(insArr);
-                writer.write(`const _${objIndex}=` + insObjJson + ";");
+                if (isAllRef) {
+                    writer.write(`const _${objIndex}=new Array(${obj.length})`);
+                }
+                else {
+                    const insObjJson = JSON.stringify(insArr);
+                    writer.write(`const _${objIndex}=` + insObjJson + ";");
+                }
             }
             else if (objType == "object") {
                 const objConstructor = obj.constructor;
