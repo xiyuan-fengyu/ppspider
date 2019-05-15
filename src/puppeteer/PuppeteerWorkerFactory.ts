@@ -1,7 +1,9 @@
 import {Browser, launch, LaunchOptions, Page} from "puppeteer";
 import {WorkerFactory} from "../spider/worker/WorkerFactory";
-import {logger} from "..";
+import {Serializable} from "../common/serialize/Serializable";
+import {logger} from "../common/util/logger";
 
+@Serializable()
 export class PuppeteerWorkerFactory implements WorkerFactory<Page> {
 
     private browser: Promise<Browser>;

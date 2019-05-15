@@ -310,7 +310,13 @@ export class SerializableUtil {
                 writer.write(`const _${objIndex}=` + (newF ? newF + "(" + insObjJson + ")" : insObjJson) + ";");
             }
             else if (objType == "function") {
-                writer.write(`const _${objIndex}=(${obj.toString()});`);
+                const classInfo = classInfos.get(obj);
+                if (classInfo) {
+                    writer.write(`const _${objIndex}=getClass(${JSON.stringify(classInfo.id)});`);
+                }
+                else {
+                    writer.write(`const _${objIndex}=(${obj.toString().replace(/\n/g, ";")});`);
+                }
             }
             for (let refInfo of existedObjRefs) {
                 writer.write(`_${objIndex}[${typeof refInfo[0] == "number" ? refInfo[0] : JSON.stringify(refInfo[0])}]=_${refInfo[1]};`);
