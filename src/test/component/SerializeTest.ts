@@ -61,11 +61,10 @@ class C {
 }
 
 (async () => {
-    const c = new C();
-    await SerializableUtil.serializeToFile(c, "c.txt");
-    const cFromFile = await SerializableUtil.deserializeFromFile("c.txt");
-    console.log(cFromFile);
-    console.log(cFromFile.testLambda());
-    console.log(cFromFile.testFun());
+    // const c = new C();
+    // await SerializableUtil.serializeToFile(c, "c.txt");
+    // const cFromFile = await SerializableUtil.deserializeFromFile("c.txt");
+    // console.log(cFromFile);
+    // console.log(cFromFile.testLambda());
+    // console.log(cFromFile.testFun());
 })();
-

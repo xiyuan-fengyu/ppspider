@@ -10,7 +10,7 @@ import {Serializable} from "../../common/serialize/Serializable";
 @Serializable()
 export class BloonFilter implements Filter {
 
-    private static readonly size = 2 << 24;
+    private static readonly size = 1 << 25;
 
     private static readonly seeds = [7, 11, 13, 31, 37, 61];
 

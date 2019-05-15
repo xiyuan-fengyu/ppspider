@@ -3,11 +3,22 @@ import {Serializable} from "../serialize/Serializable";
 /**
  * 仿 Java 中的BitSet实现，目前只用于 BloonFilter
  * BitSet 中每一位有 0 | 1 两个状态
+ * 由于键太多会导致 for in 遍历卡主，所以采取分组
  */
 @Serializable()
 export class BitSet {
 
-    private bytes: {[index: number]: number} = {};
+    private byteGroups: {
+        [groupIndex: number]: {
+            [index: number]: number
+        }
+    } = {};
+
+    // 每组1024个键，可以保存 1024 * 32 位
+    private static groupSize = 1024 * 32;
+
+    // 每一个整数可以保存 32 位
+    private static perIntBit = 32;
 
     private _size: number;
 
@@ -23,7 +34,16 @@ export class BitSet {
     }
 
     clear() {
-        this.bytes = {};
+        this.byteGroups = {};
+    }
+
+    private getGroup(index: number) {
+        const groupIndex = parseInt("" + index / BitSet.groupSize);
+        let group = this.byteGroups[groupIndex];
+        if (!group) {
+            this.byteGroups[groupIndex] = group = {};
+        }
+        return group;
     }
 
     /**
@@ -33,7 +53,9 @@ export class BitSet {
      */
     get(index: number): number {
         if (index >= this._size) throw new Error(`index(${index}) is out of size(${this._size})`);
-        return ((this.bytes[parseInt("" + index / 8, 10)] || 0) & (1 << (index % 8))) === 0 ? 0 : 1;
+        const group = this.getGroup(index);
+        const indexInGroup = parseInt("" + (index % BitSet.groupSize) / BitSet.perIntBit);
+        return ((group[indexInGroup] || 0) & (1 << (indexInGroup % BitSet.perIntBit))) === 0 ? 0 : 1;
     }
 
     /**
@@ -43,28 +65,16 @@ export class BitSet {
      */
     set(index: number, value: 0 | 1) {
         if (index >= this._size) throw new Error(`index(${index}) is out of size(${this._size})`);
-        const byteIndex = parseInt("" + index / 8);
-        const indexByte = this.bytes[byteIndex] || 0;
-        const changeBit = 1 << (index % 8);
+        const group = this.getGroup(index);
+        const indexInGroup = parseInt("" + (index % BitSet.groupSize) / BitSet.perIntBit);
+        const indexByte = group[indexInGroup] || 0;
+        const changeBit = 1 << (indexInGroup % BitSet.perIntBit);
         if (value) {
-            this.bytes[byteIndex] = indexByte | changeBit;
+            group[indexInGroup] = indexByte | changeBit;
         }
         else {
-            this.bytes[byteIndex] = indexByte & (~changeBit);
+            group[indexInGroup] = indexByte & (~changeBit);
         }
-    }
-
-    toString(): string {
-        let str = "";
-        const maxByteIndex = parseInt("" + this._size / 8);
-        for (let i = 0, j = 0; i < maxByteIndex; ++i) {
-            const indexByte = this.bytes[i];
-            for (let endJ = j + 8; j < endJ && j < this._size; ++j) {
-                str += (indexByte & (1 << (j % 8))) === 0 ? '0' : '1';
-            }
-            str += " ";
-        }
-        return str;
     }
 
 }
