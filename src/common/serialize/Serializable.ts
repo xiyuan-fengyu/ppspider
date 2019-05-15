@@ -203,9 +203,21 @@ export class SerializableUtil {
 
     private static _serialize(obj: any, writer: Writer): string[] {
         if (this.isSimpleType(obj)) {
-            writer.write("res=" + JSON.stringify(obj));
+            writer.write("res=" + JSON.stringify(obj) + ";");
             return;
         }
+
+        // 54进制
+        const objIdChars = "$ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz";
+        const objId = num => {
+            let res = "";
+            let base = 54;
+            while (num > 0) {
+                res = objIdChars[num % base] + res;
+                num = +(num / base).toFixed(0);
+            }
+            return res || "$";
+        };
 
         const classes = new Map<any, string>();
         const addClassNewFunction = objConstructor => {
@@ -216,17 +228,17 @@ export class SerializableUtil {
                     const classId = classes.size;
                     c = "c" + classId;
                     classes.set(objConstructor, c);
-                    writer.write(`const class${classId} = (getClass(${JSON.stringify(classInfo.id)}) || {}).type;const c${classId} = obj => { if (class${classId}) { const ins = new class${classId}(); Object.assign(ins, obj); return ins; } return obj;};\n`);
+                    writer.write(`g.class${classId} = (getClass(${JSON.stringify(classInfo.id)}) || {}).type;g.c${classId} = obj => { if (g.class${classId}) { const ins = new g.class${classId}(); Object.assign(ins, obj); return ins; } return obj;};\n`);
                 }
             }
             return c;
         };
 
-        const refs = new Map<number, {
-            objIndex: number,
+        const refs = new Map<string, {
+            objIndex: string,
             keyOrIndex: number | string
         }[]>();
-        const addRef = (objIndex: number, keyOrIndex: number | string, refIndex: number) => {
+        const addRef = (objIndex: string, keyOrIndex: number | string, refIndex: string) => {
             let arr = refs.get(refIndex);
             if (!arr) {
                 refs.set(refIndex, arr = []);
@@ -237,8 +249,8 @@ export class SerializableUtil {
             });
         };
 
-        const objs = new Map<any, number>();
-        objs.set(obj, 0);
+        const objs = new Map<any, string>();
+        objs.set(obj, "$");
         const objsIt = objs.entries();
         let entry;
         while (entry = objsIt.next().value) {
@@ -247,7 +259,7 @@ export class SerializableUtil {
             const existedObjRefs = [];
             const objType = typeof obj;
             if (obj instanceof Array) {
-                const insArr = [];
+                const insArr = new Array(obj.length);
                 let isAllRef = true;
                 for (let i = 0, len = obj.length; i < len; i++) {
                     const value = obj[i];
@@ -256,10 +268,9 @@ export class SerializableUtil {
                         isAllRef = false;
                     }
                     else {
-                        insArr[i] = null;
                         let refObjIndex = objs.get(value);
                         if (refObjIndex == null) {
-                            refObjIndex = objs.size;
+                            refObjIndex = objId(objs.size);
                             objs.set(value, refObjIndex);
                         }
                         if (refObjIndex <= objIndex) {
@@ -271,11 +282,11 @@ export class SerializableUtil {
                     }
                 }
                 if (isAllRef) {
-                    writer.write(`const _${objIndex}=new Array(${obj.length});`);
+                    writer.write(`g.${objIndex}=new Array(${obj.length});`);
                 }
                 else {
                     const insObjJson = JSON.stringify(insArr);
-                    writer.write(`const _${objIndex}=` + insObjJson + ";");
+                    writer.write(`g.${objIndex}=` + insObjJson + ";");
                 }
             }
             else if (objType == "object") {
@@ -295,7 +306,7 @@ export class SerializableUtil {
                     else {
                         let refObjIndex = objs.get(value);
                         if (refObjIndex == null) {
-                            refObjIndex = objs.size;
+                            refObjIndex = objId(objs.size);
                             objs.set(value, refObjIndex);
                         }
                         if (refObjIndex <= objIndex) {
@@ -307,29 +318,29 @@ export class SerializableUtil {
                     }
                 }
                 const insObjJson = JSON.stringify(insObj);
-                writer.write(`const _${objIndex}=` + (newF ? newF + "(" + insObjJson + ")" : insObjJson) + ";");
+                writer.write(`g.${objIndex}=` + (newF ? newF + "(" + insObjJson + ")" : insObjJson) + ";");
             }
             else if (objType == "function") {
                 const classInfo = classInfos.get(obj);
                 if (classInfo) {
-                    writer.write(`const _${objIndex}=getClass(${JSON.stringify(classInfo.id)});`);
+                    writer.write(`g.${objIndex}=getClass(${JSON.stringify(classInfo.id)});`);
                 }
                 else {
-                    writer.write(`const _${objIndex}=(${obj.toString().replace(/\n/g, ";")});`);
+                    writer.write(`g.${objIndex}=(${obj.toString().replace(/\n/g, ";")});`);
                 }
             }
             for (let refInfo of existedObjRefs) {
-                writer.write(`_${objIndex}[${typeof refInfo[0] == "number" ? refInfo[0] : JSON.stringify(refInfo[0])}]=_${refInfo[1]};`);
+                writer.write(`g.${objIndex}[${typeof refInfo[0] == "number" ? refInfo[0] : JSON.stringify(refInfo[0])}]=g.${refInfo[1]};`);
             }
             const refsOfThis = refs.get(objIndex);
             if (refsOfThis) {
                 for (let refItem of refsOfThis) {
-                    writer.write(`_${refItem.objIndex}[${typeof refItem.keyOrIndex == "number" ? refItem.keyOrIndex : JSON.stringify(refItem.keyOrIndex)}]=_${objIndex};`);
+                    writer.write(`g.${refItem.objIndex}[${typeof refItem.keyOrIndex == "number" ? refItem.keyOrIndex : JSON.stringify(refItem.keyOrIndex)}]=g.${objIndex};`);
                 }
             }
             writer.write("\n");
         }
-        writer.write("res=_0");
+        writer.write("res=g.$;");
     }
 
     private static isSimpleType(obj: any) {
@@ -340,42 +351,59 @@ export class SerializableUtil {
 
     static deserializeFromString(str: string) {
         const getClass = id => getClassInfoById(id);
+        const g = {};
         let res;
         eval(str);
         return res;
     }
 
     static deserializeFromFile(file: PathLike, encoding: string = "utf-8"): Promise<any> {
-        return new Promise<any>((resolve, reject) => {
+        return new Promise<any>(async (resolve, reject) => {
             const getClass = id => getClassInfoById(id);
+            const g = {};
             let res;
-            let lineBuffer = "";
-            let lines = 0;
-            const evalLines = (line, end = false) => {
-                if (line) {
-                    lineBuffer += line + "\n";
-                    lines++;
-                }
-                if (lines >= 100 || (end && lineBuffer)) {
+            let lines = [];
+            let readFinish = false;
+            let waitLineResolve;
+
+            readline.createInterface({
+                input: fs.createReadStream(file).setEncoding(encoding)
+            })
+                .on('line', line => {
+                    lines.push(line);
+                    if (waitLineResolve) {
+                        const temp = waitLineResolve;
+                        waitLineResolve = null;
+                        temp();
+                    }
+                })
+                .on('close', () => {
+                    readFinish = true;
+                    if (waitLineResolve) {
+                        waitLineResolve();
+                    }
+                });
+
+            while (!readFinish || lines.length) {
+                if ((readFinish && lines.length) || lines.length >= 100) {
+                    let subLines = lines.slice(0, 100);
+                    lines.splice(0, subLines.length);
+                    let subLinesStr = subLines.join("\n");
                     try {
-                        eval(lineBuffer);
-                        lineBuffer = "";
-                        lines = 0;
+                        eval(subLinesStr);
                     }
                     catch (e) {
+                        const stacks = e.stack.split("\n");
+                        stacks.splice(1, 0, subLinesStr);
+                        e.stack = stacks.join("\n");
                         reject(e);
                     }
                 }
-                if (end) {
-                    resolve(res);
+                else if (!readFinish) {
+                    await new Promise(resolve1 => waitLineResolve = resolve1);
                 }
-            };
-
-            const reader = readline.createInterface({
-                input: fs.createReadStream(file).setEncoding(encoding)
-            });
-            reader.on('line', line => evalLines(line));
-            reader.on('close', () => evalLines("", true));
+            }
+            resolve(res);
         });
     }
 
