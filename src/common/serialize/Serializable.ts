@@ -271,7 +271,7 @@ export class SerializableUtil {
                     }
                 }
                 if (isAllRef) {
-                    writer.write(`const _${objIndex}=new Array(${obj.length})`);
+                    writer.write(`const _${objIndex}=new Array(${obj.length});`);
                 }
                 else {
                     const insObjJson = JSON.stringify(insArr);
