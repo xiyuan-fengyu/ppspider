@@ -226,9 +226,9 @@ export class SerializableUtil {
                 const classInfo = classInfos.get(objConstructor);
                 if (classInfo) {
                     const classId = classes.size;
-                    c = "c" + classId;
+                    c = "g.c" + classId;
                     classes.set(objConstructor, c);
-                    writer.write(`g.class${classId} = (getClass(${JSON.stringify(classInfo.id)}) || {}).type;g.c${classId} = obj => { if (g.class${classId}) { const ins = new g.class${classId}(); Object.assign(ins, obj); return ins; } return obj;};\n`);
+                    writer.write(`g.class${classId} = (getClass(${JSON.stringify(classInfo.id)}) || {}).type;${c} = obj => { if (g.class${classId}) { const ins = new g.class${classId}(); Object.assign(ins, obj); return ins; } return obj;};\n`);
                 }
             }
             return c;
