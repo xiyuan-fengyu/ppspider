@@ -3,7 +3,7 @@
 状态机示意图 https://v3.processon.com/view/link/5cd908c5e4b0a59a64cfae7d
  */
 
-import {getClassInfoById} from "./Serializable";
+import {getClassInfoById} from "./Serializable_exJsonFsm";
 
 type StateNode = {
     index: number,

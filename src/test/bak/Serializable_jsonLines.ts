@@ -41,93 +41,6 @@ const getClassInfoById = (id: string) => {
     return null;
 };
 
-const stackPosReg = new RegExp("^at .* \\((.*)\\)$");
-
-/**
- * 获取 @Serialize 的装饰位置，以便在后续报错时能指出正确的位置
- * @returns {string}
- */
-function getDecoratorPos() {
-    const stack = new Error("test").stack.split("\n");
-    const pos = stack[3].trim();
-    const stackPosM = stackPosReg.exec(pos);
-    return stackPosM ? stackPosM[1] : null;
-}
-
-export interface SerializableConfig {
-    classId?: string;
-}
-
-/**
- * 在js加载的过程中，有这个装饰器的类的类信息会保存到 classInfos 中，用于序列化和反序列化
- * @param {SerializableConfig} config
- * @returns {(target) => void}
- * @constructor
- */
-export function Serializable(config?: SerializableConfig) {
-    const decoratorPos = getDecoratorPos();
-    return function (target) {
-        if (!config) config = {};
-
-        const id = config.classId || target.name;
-        let existed = classInfos.get(id);
-        if (!existed) {
-            existed = {
-                id: config.classId || target.name,
-                type: target,
-                pos: decoratorPos,
-                transients: transientFields[target],
-            } as ClassInfo;
-            classInfos.set(target, existed);
-        }
-        else {
-            throw new Error("duplicate classId(" + existed.id + ") at: \n" + existed.pos + "\n" + existed.pos);
-        }
-    }
-}
-
-/**
- * 类在序列化时要忽略的字段
- * 不能作用于类静态字段
- * @returns {(target: any, field: string) => void}
- * @constructor
- */
-export function Transient() {
-    return function (target: any, field: string) {
-        const isStatic = target.constructor.name === "Function";
-        if (isStatic) throw new Error("cannot decorate static field with Transient"); // @Transient 不能作用于类静态成员
-
-        const type = target.constructor;
-        let transients = transientFields[type];
-        if (!transients) {
-            transientFields[type] = transients = {};
-        }
-        transients[field] = true;
-    };
-}
-
-export function Assign(target, source) {
-    if (source && target && typeof source == "object" && typeof target == "object") {
-        const transients = transientFields[target.constructor];
-        if (transients) {
-            for (let field of Object.keys(source)) {
-                if (!transients[field]) {
-                    target[field] = source[field];
-                }
-            }
-        }
-        else {
-            Object.assign(target, source);
-        }
-    }
-}
-
-interface Writer {
-
-    write(str: string);
-
-}
-
 /**
  * 序列化和反序列化工具类，目前在整个框架中只有两个地方用到：
  * 1. QueueManager 中保存和加载运行状态
@@ -137,98 +50,15 @@ export class SerializableUtil {
 
     /**
      * 序列化
+     * @param obj
+     * @returns {any | string | {}}
      */
-    static serialize(obj: any, writer: Writer): string[] {
-        if (this.isSimpleType(obj)) {
-            writer.write("const _0=" + JSON.stringify(obj));
-            return;
-        }
-
-        const classes = new Map<any, string>();
-        const addClassNewFunction = objConstructor => {
-            let c = classes.get(objConstructor);
-            if (c == null) {
-                const classInfo = getClassInfoById(objConstructor);
-                if (classInfo) {
-                    const classId = classes.size;
-                    c = "c" + classId;
-                    classes.set(objConstructor, c);
-                    writer.write(`
-const class${classId} = (classes.get(${classInfo.id}) || {}).type;
-const c${classId} = obj => {
-    if (class${classId}) {
-        const ins = new class${classId}();
-        Object.assign(ins, obj);
-        return ins;
-    }
-    return obj;
-};
-
-`);
-                }
-            }
-            return c;
-        };
-
-        const refs = new Map<number, {
-            objIndex: number,
-            keyOrIndex: number | string
-        }[]>();
-        const addRef = (objIndex: number, keyOrIndex: number | string, refIndex: number) => {
-            let arr = refs.get(refIndex);
-            if (!arr) {
-                refs.set(refIndex, arr = []);
-            }
-            arr.push({
-                objIndex: objIndex,
-                keyOrIndex: keyOrIndex
-            });
-        };
-
-        const objs = new Map<any, number>();
-        objs.set(obj, 0);
-        const objsIt = objs.entries();
-        let entry;
-        while (entry = objsIt.next().value) {
-            const obj = entry[0];
-            const objIndex = entry[1];
-            if (obj instanceof Array) {
-                const insArr = [];
-                for (let i = 0, len = obj.length; i < len; i++) {
-                    const value = obj[i];
-                    if (this.isSimpleType(value)) {
-                        insArr[i] = value;
-                    }
-                    else {
-                        insArr[i] = null;
-                        const refObjIndex = objs.size;
-                        objs.set(value, refObjIndex);
-                        addRef(objIndex, i, refObjIndex);
-                    }
-                }
-                const insObjJson = JSON.stringify(insArr);
-                writer.write(`const _${objIndex}=` + insObjJson + "\n");
-            }
-            else {
-                const objConstructor = obj.constructor;
-                const newF = addClassNewFunction(objConstructor);
-                const insObj = {};
-                for (let field in obj) {
-                    const value = obj[field];
-                    if (this.isSimpleType(value)) {
-                        insObj[field] = value;
-                    }
-                    else {
-                        const refObjIndex = objs.size;
-                        objs.set(value, refObjIndex);
-                        addRef(objIndex, field, refObjIndex);
-                    }
-                }
-                const insObjJson = JSON.stringify(insObj);
-                writer.write(`const _${objIndex}=` + (newF ? newF + "(" + insObjJson + ")" : insObjJson) + "\n");
-            }
-            const refsObjs  = refs.get(objIndex);
-
+    static serialize(obj: any): string[] {
+        if (!this.shouldSerialize(obj)) {
+            return [
+                "-1",
+                JSON.stringify(obj)
+            ];
         }
 
         const serializedCaches = new Map<any, string>();
@@ -238,8 +68,9 @@ const c${classId} = obj => {
         return serializedRes;
     }
 
-    private static isSimpleType(obj: any) {
-        if (obj == null || obj == undefined) return true;
+    private static shouldSerialize(obj: any) {
+        if (obj == null || obj == undefined) return false;
+
         const objType = typeof obj;
         return !(objType == "string" || objType == "number" || objType == "boolean");
     }
@@ -271,7 +102,7 @@ const c${classId} = obj => {
             else {
                 res = {};
                 const transients = transientFields[objConstructor];
-                for (let field of Object.keys(obj)) {
+                for (let field in obj) {
                     if (transients && transients[field]) {
                         // 忽略字段
                     }
@@ -366,4 +197,156 @@ const c${classId} = obj => {
         }
     }
 
+}
+
+
+/**
+ * @deprecated
+ */
+export class SerializableUtil_old {
+
+    /**
+     * 反序列化
+     * @param obj
+     * @returns {any}
+     */
+    static deserialize(obj: any): any {
+        return this._deserialize(obj, {}, obj, "$");
+    }
+
+    private static _deserialize(obj: any, deserializedCaches: any, root: any, path: string): any {
+        if (obj == null) return obj;
+
+        const objType = typeof obj;
+        if (objType == "number" || objType == "boolean") {
+            return obj; // number | boolean 不需要反序列化，直接返回
+        }
+        else if (objType == "string") {
+            const str = obj as string;
+            if (str.startsWith("ref($") && str.endsWith(")")) {
+                const refPath = str.substring(4, str.length - 1);
+                let deserializedCache = deserializedCaches[refPath];
+                if (deserializedCache === undefined) {
+                    const $ = root;
+                    try {
+                        deserializedCache = deserializedCaches[refPath] = eval(refPath); // 根据绝对路径计算引用表达式的值
+                    }
+                    catch (e) {
+                        return str; // 根据路径获取值失败，当做普通 string 返回
+                    }
+                }
+                return deserializedCache;
+            }
+            else return obj; // 普通的 string 值，直接返回结果
+        }
+
+        let res = null;
+        if (obj instanceof Array) {
+            res = deserializedCaches[path] = [];
+            (obj as Array<any>).forEach((value, index) => {
+                res.push(this._deserialize(value, deserializedCaches, root, path + "[" + index + "]")); // 进一步反序列化数组中每一个元素
+            });
+        }
+        else {
+            const serializeClassId = (obj as any).serializeClassId;
+            const serializeClassInfo = serializeClassId ? getClassInfoById(serializeClassId) : null;
+            if (serializeClassInfo) {
+                const serializeClass = serializeClassInfo.type;
+                res = deserializedCaches[path] = new serializeClass();
+                for (let field of Object.keys(obj)) {
+                    if (field != "serializeClassId") res[field] =
+                        this._deserialize(obj[field], deserializedCaches, root, path + "[" + JSON.stringify(field) + "]");
+                }
+            }
+            else {
+                res = deserializedCaches[path] = {};
+                for (let field of Object.keys(obj)) {
+                    res[field] = this._deserialize(obj[field], deserializedCaches, root, path + "[" + JSON.stringify(field) + "]");
+                }
+            }
+        }
+        return res;
+    }
+
+}
+
+const stackPosReg = new RegExp("^at .* \\((.*)\\)$");
+
+/**
+ * 获取 @Serialize 的装饰位置，以便在后续报错时能指出正确的位置
+ * @returns {string}
+ */
+function getDecoratorPos() {
+    const stack = new Error("test").stack.split("\n");
+    const pos = stack[3].trim();
+    const stackPosM = stackPosReg.exec(pos);
+    return stackPosM ? stackPosM[1] : null;
+}
+
+export interface SerializableConfig {
+    classId?: string;
+}
+
+/**
+ * 在js加载的过程中，有这个装饰器的类的类信息会保存到 classInfos 中，用于序列化和反序列化
+ * @param {SerializableConfig} config
+ * @returns {(target) => void}
+ * @constructor
+ */
+export function Serializable(config?: SerializableConfig) {
+    const decoratorPos = getDecoratorPos();
+    return function (target) {
+        if (!config) config = {};
+
+        const id = config.classId || target.name;
+        let existed = classInfos.get(id);
+        if (!existed) {
+            existed = {
+                id: config.classId || target.name,
+                type: target,
+                pos: decoratorPos,
+                transients: transientFields[target],
+            } as ClassInfo;
+            classInfos.set(target, existed);
+        }
+        else {
+            throw new Error("duplicate classId(" + existed.id + ") at: \n" + existed.pos + "\n" + existed.pos);
+        }
+    }
+}
+
+/**
+ * 类在序列化时要忽略的字段
+ * 不能作用于类静态字段
+ * @returns {(target: any, field: string) => void}
+ * @constructor
+ */
+export function Transient() {
+    return function (target: any, field: string) {
+        const isStatic = target.constructor.name === "Function";
+        if (isStatic) throw new Error("cannot decorate static field with Transient"); // @Transient 不能作用于类静态成员
+
+        const type = target.constructor;
+        let transients = transientFields[type];
+        if (!transients) {
+            transientFields[type] = transients = {};
+        }
+        transients[field] = true;
+    };
+}
+
+export function Assign(target, source) {
+    if (source && target && typeof source == "object" && typeof target == "object") {
+        const transients = transientFields[target.constructor];
+        if (transients) {
+            for (let field of Object.keys(source)) {
+                if (!transients[field]) {
+                    target[field] = source[field];
+                }
+            }
+        }
+        else {
+            Object.assign(target, source);
+        }
+    }
 }

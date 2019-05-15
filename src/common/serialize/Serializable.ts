@@ -1,6 +1,7 @@
-/**
- * 用于保存 被@Serialize装饰的类 或 类成员被@Transient装饰的类 的类信息
- */
+import * as fs from "fs";
+import {PathLike} from "fs";
+import * as readline from "readline";
+
 interface ClassInfo {
 
     /**
@@ -24,6 +25,10 @@ interface ClassInfo {
  * 序列化时需要忽略的字段
  */
 const transientFields = new Map<any, any>();
+
+/**
+ * 被@Serialize装饰的类信息
+ */
 const classInfos = new Map<any, ClassInfo>();
 
 /**
@@ -31,7 +36,7 @@ const classInfos = new Map<any, ClassInfo>();
  * @param {string} id
  * @returns {ClassInfo}
  */
-const getClassInfoById = (id: string) => {
+export const getClassInfoById = (id: string) => {
     for (let entry of classInfos) {
         let classInfo = entry[1];
         if (classInfo.id == id) {
@@ -41,234 +46,9 @@ const getClassInfoById = (id: string) => {
     return null;
 };
 
-/**
- * 序列化和反序列化工具类，目前在整个框架中只有两个地方用到：
- * 1. QueueManager 中保存和加载运行状态
- * 2. JobManager 中对 job 进行序列化保存和反序列化加载
- */
-export class SerializableUtil {
-
-    /**
-     * 序列化
-     * @param obj
-     * @returns {any | string | {}}
-     */
-    static serialize(obj: any): string[] {
-        if (!this.shouldSerialize(obj)) {
-            return [
-                "-1",
-                JSON.stringify(obj)
-            ];
-        }
-
-        const serializedCaches = new Map<any, string>();
-        const magicNum = (Math.random() * 10000).toFixed(0);
-        const serializedRes = [magicNum]; // 第一行为magicNum
-        this._serialize(obj, serializedCaches, serializedRes);
-        return serializedRes;
-    }
-
-    private static shouldSerialize(obj: any) {
-        if (obj == null || obj == undefined) return false;
-
-        const objType = typeof obj;
-        return !(objType == "string" || objType == "number" || objType == "boolean");
-    }
-
-    private static _serialize(obj: any, serializedCaches: Map<any, string>, serializedRes: string[]) {
-        if (!this.shouldSerialize(obj)) {
-            return obj;
-        }
-
-        let serializedCache = serializedCaches.get(obj);
-        if (serializedCache == undefined) {
-            const objConstructor = obj.constructor;
-            if (typeof obj == "function" || !objConstructor) {
-                // 方法不需要进一步序列化
-                return undefined;
-            }
-
-            // 保存当前处理的实例的ref id
-            serializedCache = serializedRes[0] + "_" + serializedCaches.size;
-            serializedCaches.set(obj, serializedCache);
-
-            let res = null;
-            if (obj instanceof Array) {
-                res = [];
-                (obj as Array<any>).forEach((value, index) => {
-                    res.push(this._serialize(value, serializedCaches, serializedRes)); // 数组中每个元素需要进一步序列化
-                });
-            }
-            else {
-                res = {};
-                const transients = transientFields[objConstructor];
-                for (let field in obj) {
-                    if (transients && transients[field]) {
-                        // 忽略字段
-                    }
-                    else res[field] = this._serialize(obj[field], serializedCaches, serializedRes); // 进一步序列化类成员的值
-                }
-                let classInfo = classInfos.get(objConstructor);
-                if (classInfo && classInfo.id) res.serializeClassId = classInfo.id; // 设置 classId，在反序列化时获取类信息
-            }
-            serializedRes.push(serializedCache + " " + JSON.stringify(res));
-        }
-        return "ref(" + serializedCache + ")";
-    }
-
-    /**
-     * 反序列化
-     * @param lines
-     * @returns {any}
-     */
-    static deserialize(lines: string[]): any {
-        if (lines[0] == "-1") {
-            return JSON.parse(lines[1]);
-        }
-
-        const deserializedCaches = {};
-        this._deserialize(lines, deserializedCaches, {});
-        return deserializedCaches[lines[0] + "_0"];
-    }
-
-    private static _deserialize(lines: string[], deserializedCaches: any, refCaches: any): any {
-        const magicNum = lines[0];
-        const objIdRegex = new RegExp("^ref\\((" + magicNum + "_\\d+)\\)$");
-        for (let i = 1, len = lines.length; i < len; i++) {
-            const line = lines[i];
-            const spaceI = line.indexOf(" ");
-            const objId = line.substring(0, spaceI);
-            if (!objId.startsWith(magicNum + "_")) {
-                throw new Error("bad serialized line, wrong magic num: " + line);
-            }
-
-            let obj = JSON.parse(line.substring(spaceI + 1));
-            if (obj instanceof Array) {
-                for (let j = 0, objLen = obj.length; j < objLen; j++) {
-                    this.checkRefCache(objIdRegex, obj, j, deserializedCaches, refCaches);
-                }
-            }
-            else {
-                const serializeClassId = obj.serializeClassId;
-                const serializeClassInfo = serializeClassId ? getClassInfoById(serializeClassId) : null;
-                if (serializeClassInfo) {
-                    delete obj.serializeClassId;
-                    const serializeClass = serializeClassInfo.type;
-                    const newObj = new serializeClass();
-                    Object.assign(newObj, obj);
-                    obj = newObj;
-                }
-                for (let key of Object.keys(obj)) {
-                    this.checkRefCache(objIdRegex, obj, key, deserializedCaches, refCaches);
-                }
-            }
-
-            deserializedCaches[objId] = obj;
-            let refs = refCaches[objId];
-            if (refs) {
-                for (let ref of refs) {
-                    ref.obj[ref.keyOrIndex] = obj;
-                }
-                delete refCaches[objId];
-            }
-        }
-    }
-
-    private static checkRefCache(objIdRegex: RegExp, obj: any, keyOrIndex: any, deserializedCaches: any, refCaches: any) {
-        let m;
-        const value = obj[keyOrIndex];
-        if (typeof value == "string" && (m = objIdRegex.exec(value))) {
-            let refId = m[1];
-            let refObj = deserializedCaches[refId];
-            if (refObj) {
-                obj[keyOrIndex] = refObj;
-            }
-            else {
-                let refs = refCaches[refId];
-                if (refs == null) {
-                    refs = [];
-                    refCaches[refId] = refs;
-                }
-                refs.push({
-                    obj: obj,
-                    keyOrIndex: keyOrIndex
-                });
-            }
-        }
-    }
-
-}
-
-
-/**
- * @deprecated
- */
-export class SerializableUtil_old {
-
-    /**
-     * 反序列化
-     * @param obj
-     * @returns {any}
-     */
-    static deserialize(obj: any): any {
-        return this._deserialize(obj, {}, obj, "$");
-    }
-
-    private static _deserialize(obj: any, deserializedCaches: any, root: any, path: string): any {
-        if (obj == null) return obj;
-
-        const objType = typeof obj;
-        if (objType == "number" || objType == "boolean") {
-            return obj; // number | boolean 不需要反序列化，直接返回
-        }
-        else if (objType == "string") {
-            const str = obj as string;
-            if (str.startsWith("ref($") && str.endsWith(")")) {
-                const refPath = str.substring(4, str.length - 1);
-                let deserializedCache = deserializedCaches[refPath];
-                if (deserializedCache === undefined) {
-                    const $ = root;
-                    try {
-                        deserializedCache = deserializedCaches[refPath] = eval(refPath); // 根据绝对路径计算引用表达式的值
-                    }
-                    catch (e) {
-                        return str; // 根据路径获取值失败，当做普通 string 返回
-                    }
-                }
-                return deserializedCache;
-            }
-            else return obj; // 普通的 string 值，直接返回结果
-        }
-
-        let res = null;
-        if (obj instanceof Array) {
-            res = deserializedCaches[path] = [];
-            (obj as Array<any>).forEach((value, index) => {
-                res.push(this._deserialize(value, deserializedCaches, root, path + "[" + index + "]")); // 进一步反序列化数组中每一个元素
-            });
-        }
-        else {
-            const serializeClassId = (obj as any).serializeClassId;
-            const serializeClassInfo = serializeClassId ? getClassInfoById(serializeClassId) : null;
-            if (serializeClassInfo) {
-                const serializeClass = serializeClassInfo.type;
-                res = deserializedCaches[path] = new serializeClass();
-                for (let field of Object.keys(obj)) {
-                    if (field != "serializeClassId") res[field] =
-                        this._deserialize(obj[field], deserializedCaches, root, path + "[" + JSON.stringify(field) + "]");
-                }
-            }
-            else {
-                res = deserializedCaches[path] = {};
-                for (let field of Object.keys(obj)) {
-                    res[field] = this._deserialize(obj[field], deserializedCaches, root, path + "[" + JSON.stringify(field) + "]");
-                }
-            }
-        }
-        return res;
-    }
-
-}
+export const getClassInfoByConstructor = (constructor: any) => {
+    return classInfos.get(constructor);
+};
 
 const stackPosReg = new RegExp("^at .* \\((.*)\\)$");
 
@@ -349,4 +129,311 @@ export function Assign(target, source) {
             Object.assign(target, source);
         }
     }
+}
+
+interface Writer {
+
+    write(str: string);
+
+}
+
+/**
+ * 序列化和反序列化工具类，目前在整个框架中只有一个地方用到：
+ * 1. QueueManager 中保存和加载运行状态
+ */
+export class SerializableUtil {
+
+    static serializeToFile(obj: any, file: PathLike, encoding: string = "utf-8"): Promise<void> {
+        return new Promise((resolve, reject) => {
+            let writeStream = fs.createWriteStream(file, encoding);
+            let serFinish = false;
+            let writeNum = 0;
+
+            const checkWriteFinish = () => {
+                if (writeNum == 0) {
+                    writeStream.close();
+                    resolve();
+                }
+            };
+
+            let buffer = "";
+            const bufferMaxLen = 1024;
+
+            const tryFlush = (force: boolean = false) => {
+                if (buffer.length >= bufferMaxLen || (force && buffer.length > 0)) {
+                    writeNum++;
+                    writeStream.write(buffer, error => {
+                        if (error) {
+                            reject(error);
+                        }
+                        else {
+                            writeNum--;
+                            if (serFinish) {
+                                checkWriteFinish();
+                            }
+                        }
+                    });
+                    buffer = "";
+                }
+            };
+
+            const writer = {
+                write: str => {
+                    buffer += str;
+                    tryFlush();
+                }
+            };
+            this._serialize(obj, writer);
+            serFinish = true;
+            tryFlush(true);
+            checkWriteFinish();
+        });
+    }
+
+    static serializeToString(obj: any): string {
+        let res = "";
+        const writer = {
+            write: str => {
+                res += str;
+            }
+        };
+        this._serialize(obj, writer);
+        return res;
+    }
+
+    private static _serialize(obj: any, writer: Writer): string[] {
+        if (this.isSimpleType(obj)) {
+            writer.write("res=" + JSON.stringify(obj));
+            return;
+        }
+
+        const classes = new Map<any, string>();
+        const addClassNewFunction = objConstructor => {
+            let c = classes.get(objConstructor);
+            if (c == null) {
+                const classInfo = classInfos.get(objConstructor);
+                if (classInfo) {
+                    const classId = classes.size;
+                    c = "c" + classId;
+                    classes.set(objConstructor, c);
+                    writer.write(`const class${classId} = (getClass(${JSON.stringify(classInfo.id)}) || {}).type;const c${classId} = obj => { if (class${classId}) { const ins = new class${classId}(); Object.assign(ins, obj); return ins; } return obj;};\n`);
+                }
+            }
+            return c;
+        };
+
+        const refs = new Map<number, {
+            objIndex: number,
+            keyOrIndex: number | string
+        }[]>();
+        const addRef = (objIndex: number, keyOrIndex: number | string, refIndex: number) => {
+            let arr = refs.get(refIndex);
+            if (!arr) {
+                refs.set(refIndex, arr = []);
+            }
+            arr.push({
+                objIndex: objIndex,
+                keyOrIndex: keyOrIndex
+            });
+        };
+
+        const objs = new Map<any, number>();
+        objs.set(obj, 0);
+        const objsIt = objs.entries();
+        let entry;
+        while (entry = objsIt.next().value) {
+            const obj = entry[0];
+            const objIndex = entry[1];
+            const existedObjRefs = [];
+            const objType = typeof obj;
+            if (obj instanceof Array) {
+                const insArr = [];
+                for (let i = 0, len = obj.length; i < len; i++) {
+                    const value = obj[i];
+                    if (this.isSimpleType(value)) {
+                        insArr[i] = value;
+                    }
+                    else {
+                        insArr[i] = null;
+                        let refObjIndex = objs.get(value);
+                        if (refObjIndex == null) {
+                            refObjIndex = objs.size;
+                            objs.set(value, refObjIndex);
+                        }
+                        if (refObjIndex <= objIndex) {
+                            existedObjRefs.push([i, refObjIndex]);
+                        }
+                        else {
+                            addRef(objIndex, i, refObjIndex);
+                        }
+                    }
+                }
+                const insObjJson = JSON.stringify(insArr);
+                writer.write(`const _${objIndex}=` + insObjJson + ";");
+            }
+            else if (objType == "object") {
+                const objConstructor = obj.constructor;
+                const newF = addClassNewFunction(objConstructor);
+                const transients = transientFields[objConstructor];
+                const insObj = {};
+                for (let field in obj) {
+                    if (transients && transients[field]) {
+                        // 忽略字段
+                        continue;
+                    }
+                    const value = obj[field];
+                    if (this.isSimpleType(value)) {
+                        insObj[field] = value;
+                    }
+                    else {
+                        let refObjIndex = objs.get(value);
+                        if (refObjIndex == null) {
+                            refObjIndex = objs.size;
+                            objs.set(value, refObjIndex);
+                        }
+                        if (refObjIndex <= objIndex) {
+                            existedObjRefs.push([field, refObjIndex]);
+                        }
+                        else {
+                            addRef(objIndex, field, refObjIndex);
+                        }
+                    }
+                }
+                const insObjJson = JSON.stringify(insObj);
+                writer.write(`const _${objIndex}=` + (newF ? newF + "(" + insObjJson + ")" : insObjJson) + ";");
+            }
+            else if (objType == "function") {
+                writer.write(`const _${objIndex}=(${obj.toString()});`);
+            }
+            for (let refInfo of existedObjRefs) {
+                writer.write(`_${objIndex}[${typeof refInfo[0] == "number" ? refInfo[0] : JSON.stringify(refInfo[0])}]=_${refInfo[1]};`);
+            }
+            const refsOfThis = refs.get(objIndex);
+            if (refsOfThis) {
+                for (let refItem of refsOfThis) {
+                    writer.write(`_${refItem.objIndex}[${typeof refItem.keyOrIndex == "number" ? refItem.keyOrIndex : JSON.stringify(refItem.keyOrIndex)}]=_${objIndex};`);
+                }
+            }
+            writer.write("\n");
+        }
+        writer.write("res=_0");
+    }
+
+    private static isSimpleType(obj: any) {
+        if (obj == null || obj == undefined) return true;
+        const objType = typeof obj;
+        return objType == "string" || objType == "number" || objType == "boolean";
+    }
+
+    static deserializeFromString(str: string) {
+        const getClass = id => getClassInfoById(id);
+        let res;
+        eval(str);
+        return res;
+    }
+
+    static deserializeFromFile(file: PathLike, encoding: string = "utf-8"): Promise<any> {
+        return new Promise<any>((resolve, reject) => {
+            const getClass = id => getClassInfoById(id);
+            let res;
+            let lineBuffer = "";
+            let lines = 0;
+            const evalLines = (line, end = false) => {
+                if (line) {
+                    lineBuffer += line + "\n";
+                    lines++;
+                }
+                if (lines >= 100 || (end && lineBuffer)) {
+                    try {
+                        eval(lineBuffer);
+                        lineBuffer = "";
+                        lines = 0;
+                    }
+                    catch (e) {
+                        reject(e);
+                    }
+                }
+                if (end) {
+                    resolve(res);
+                }
+            };
+
+            const reader = readline.createInterface({
+                input: fs.createReadStream(file).setEncoding(encoding)
+            });
+            reader.on('line', line => evalLines(line));
+            reader.on('close', () => evalLines("", true));
+        });
+    }
+
+}
+
+/**
+ * @deprecated
+ */
+export class SerializableUtil_old {
+
+    /**
+     * 反序列化
+     * @param obj
+     * @returns {any}
+     */
+    static deserialize(obj: any): any {
+        return this._deserialize(obj, {}, obj, "$");
+    }
+
+    private static _deserialize(obj: any, deserializedCaches: any, root: any, path: string): any {
+        if (obj == null) return obj;
+
+        const objType = typeof obj;
+        if (objType == "number" || objType == "boolean") {
+            return obj; // number | boolean 不需要反序列化，直接返回
+        }
+        else if (objType == "string") {
+            const str = obj as string;
+            if (str.startsWith("ref($") && str.endsWith(")")) {
+                const refPath = str.substring(4, str.length - 1);
+                let deserializedCache = deserializedCaches[refPath];
+                if (deserializedCache === undefined) {
+                    const $ = root;
+                    try {
+                        deserializedCache = deserializedCaches[refPath] = eval(refPath); // 根据绝对路径计算引用表达式的值
+                    }
+                    catch (e) {
+                        return str; // 根据路径获取值失败，当做普通 string 返回
+                    }
+                }
+                return deserializedCache;
+            }
+            else return obj; // 普通的 string 值，直接返回结果
+        }
+
+        let res = null;
+        if (obj instanceof Array) {
+            res = deserializedCaches[path] = [];
+            (obj as Array<any>).forEach((value, index) => {
+                res.push(this._deserialize(value, deserializedCaches, root, path + "[" + index + "]")); // 进一步反序列化数组中每一个元素
+            });
+        }
+        else {
+            const serializeClassId = (obj as any).serializeClassId;
+            const serializeClassInfo = serializeClassId ? getClassInfoById(serializeClassId) : null;
+            if (serializeClassInfo) {
+                const serializeClass = serializeClassInfo.type;
+                res = deserializedCaches[path] = new serializeClass();
+                for (let field of Object.keys(obj)) {
+                    if (field != "serializeClassId") res[field] =
+                        this._deserialize(obj[field], deserializedCaches, root, path + "[" + JSON.stringify(field) + "]");
+                }
+            }
+            else {
+                res = deserializedCaches[path] = {};
+                for (let field of Object.keys(obj)) {
+                    res[field] = this._deserialize(obj[field], deserializedCaches, root, path + "[" + JSON.stringify(field) + "]");
+                }
+            }
+        }
+        return res;
+    }
+
 }
