@@ -45,7 +45,7 @@ class JobWrapper extends NedbModel {
 
     serialize: any;
 
-    autoRelease: boolean;
+    autoRelease: Date;
 
     constructor(job: Job) {
         super(job.id());
@@ -59,7 +59,7 @@ class JobWrapper extends NedbModel {
         this.serialize = serializeJob(job);
         this.updateTime = new Date().getTime();
         if (job.status() == JobStatus.Filtered) {
-            this.autoRelease = true;
+            this.autoRelease = new Date();
         }
     }
 
@@ -77,21 +77,16 @@ export class JobManager {
     private jobDao: JobDao;
 
     init() {
-        this.jobDao = new JobDao(appInfo.workplace + "/nedb");
-        return this.jobDao.waitNedbReady().then(res => this.autoReleaseLoop());
-    }
-
-    /**
-     * 周期性删除数据库中状态为 Filtered，创建时间在 10 分钟以前的job记录
-     */
-    private autoReleaseLoop() {
-        const autoRelease = () => {
-            this.jobDao.remove({autoRelease: true, createTime: {"$lte": new Date().getTime() - 1000 * 120}},
-                true).then(res => {
-                    setTimeout(autoRelease, 600000);
-            });
-        };
-        autoRelease();
+        this.jobDao = new JobDao(appInfo.workplace + "/nedb", {
+            indexes: [
+                {fieldName: "queue"},
+                {fieldName: "depth"},
+                {fieldName: "tryNum"},
+                {fieldName: "status"},
+                {fieldName: "createTime"},
+                {fieldName: "autoRelease", expireAfterSeconds: 300} // 5分钟后自动删除
+            ]
+        });
     }
 
     /**

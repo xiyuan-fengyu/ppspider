@@ -3,6 +3,8 @@ import {StringUtil} from "../util/StringUtil";
 import model = require("nedb/lib/model");
 import storage = require("nedb/lib/storage");
 import * as fs from "fs";
+import {EnsureIndexOptions} from "nedb";
+import {logger} from "../util/logger";
 
 // storage.writeFile 增加多行写入的功能
 storage.writeFile = (...args) => {
@@ -40,9 +42,10 @@ function fix_nedb_persistence_persistCachedDatabase(nedb) {
 
         if (self.inMemoryOnly) { return callback(null); }
 
-        self.db.getAllData().forEach(function (doc) {
+        for (let doc of self.db.getAllData()) {
             toPersist.push(self.afterSerialization(model.serialize(doc)));
-        });
+        }
+
         Object.keys(self.db.indexes).forEach(function (fieldName) {
             if (fieldName != "_id") {   // The special _id index is managed by datastore.js, the others need to be persisted
                 toPersist.push(self.afterSerialization(model.serialize({ $$indexCreated: { fieldName: fieldName, unique: self.db.indexes[fieldName].unique, sparse: self.db.indexes[fieldName].sparse }})));
@@ -102,25 +105,50 @@ export class NedbModel {
 
 }
 
+export type NedbDaoConfig = {
+    compactInterval?: number, // 自动压缩频率，default = 600000ms, 小于0表示永不压缩
+    indexes?: EnsureIndexOptions[], // 索引 indexing
+}
+
 export class NedbDao<T extends NedbModel> {
 
     private static _instances = {};
 
+    private readonly config: NedbDaoConfig;
+
     protected nedbP: Promise<Nedb>;
 
-    // 10分钟压缩一次
-    private readonly compactRate = 600000;
-
-    private lastCompactTime = new Date().getTime();
-
-    constructor(dbDir: string, private autoCompact: boolean = true) {
+    constructor(dbDir: string, config: NedbDaoConfig = {}) {
         NedbDao._instances[this.constructor.name] = this;
+
+        if (config.compactInterval == null) {
+            config.compactInterval = 600000;
+        }
+        else if (config.compactInterval >= 0 && config.compactInterval < 60000) {
+            logger.warn(`auto compact interval(${this.config.compactInterval}ms) is less than 1 minute.`);
+        }
+        this.config = config;
+
         const dbFile = dbDir + "/" + this.constructor.name + ".db";
         this.nedbP = new Promise<Nedb>((resolve, reject) => {
             const nedb = new Nedb({
                 filename: dbFile,
                 autoload: false
             });
+
+            // 设置自动压缩时间
+            nedb.persistence.setAutocompactionInterval(this.config.compactInterval);
+
+            // 设置索引
+            if (this.config.indexes) {
+                for (let inex of this.config.indexes) {
+                    nedb.ensureIndex(inex, err => {
+                        if (err) {
+                            logger.warn("indexing failed", err);
+                        }
+                    });
+                }
+            }
 
             fix_nedb_persistence_persistCachedDatabase(nedb);
 
@@ -145,31 +173,6 @@ export class NedbDao<T extends NedbModel> {
 
     waitNedbReady() {
         return this.nedbP.then(nedb => true);
-    }
-
-    /**
-     * 对 nedb 的数据进行压缩整理，这个源于nedb的数据存储方式
-     * 数据更新都是 append 操作，删除是增加一个 delete记录，更新数据是增加一个 update记录，这些记录都会添加到持久化文件末尾
-     * compat之后，会将最新的数据记录保存到持久化文件中，delete/update记录就不会存在了，从而达到压缩体积的目的
-     * 系统启动时否认会压缩一次数据
-     */
-    private compact() {
-        this.nedbP.then(nedb => {
-            this.lastCompactTime = new Date().getTime();
-            nedb.persistence.compactDatafile();
-        });
-    }
-
-    /**
-     * 检测是否需要compact
-     * @param {number} actionNum
-     */
-    private afterAction() {
-        if (this.autoCompact) {
-            if (new Date().getTime() - this.lastCompactTime >= this.compactRate) {
-                this.compact();
-            }
-        }
     }
 
     /**
@@ -214,7 +217,6 @@ export class NedbDao<T extends NedbModel> {
                             if (err.errorType == "uniqueViolated") {
                                 nedb.update({_id: item._id}, item, {}, err1 => {
                                     NedbDao.ifErrorRejectElseResolve(err1, reject, resolve, true);
-                                    this.afterAction();
                                 });
                             }
                             else {
@@ -223,7 +225,6 @@ export class NedbDao<T extends NedbModel> {
                         }
                         else {
                             resolve(true);
-                            this.afterAction();
                         }
                     });
                 })
@@ -232,7 +233,6 @@ export class NedbDao<T extends NedbModel> {
                 this.nedbP.then(nedb => {
                     nedb.update({_id: item._id}, item, {}, err1 => {
                         NedbDao.ifErrorRejectElseResolve(err1, reject, resolve, true);
-                        this.afterAction();
                     });
                 });
             }
