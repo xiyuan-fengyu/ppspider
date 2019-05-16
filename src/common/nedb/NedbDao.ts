@@ -42,7 +42,8 @@ function fix_nedb_persistence_persistCachedDatabase(nedb) {
 
         if (self.inMemoryOnly) { return callback(null); }
 
-        for (let doc of self.db.getAllData()) {
+        const docs = self.db.getAllData();
+        for (let doc of docs) {
             toPersist.push(self.afterSerialization(model.serialize(doc)));
         }
 
@@ -105,29 +106,21 @@ export class NedbModel {
 
 }
 
-export type NedbDaoConfig = {
-    compactInterval?: number, // 自动压缩频率，default = 600000ms, 小于0表示永不压缩
-    indexes?: EnsureIndexOptions[], // 索引 indexing
-}
-
 export class NedbDao<T extends NedbModel> {
 
     private static _instances = {};
 
-    private readonly config: NedbDaoConfig;
+    private readonly compactInterval: number;
 
     protected nedbP: Promise<Nedb>;
 
-    constructor(dbDir: string, config: NedbDaoConfig = {}) {
+    constructor(dbDir: string, compactInterval: number = 600000) {
         NedbDao._instances[this.constructor.name] = this;
 
-        if (config.compactInterval == null) {
-            config.compactInterval = 600000;
+        if (compactInterval >= 0 && compactInterval < 60000) {
+            logger.warn(`auto compact interval(${compactInterval}ms) is less than 1 minute.`);
         }
-        else if (config.compactInterval >= 0 && config.compactInterval < 60000) {
-            logger.warn(`auto compact interval(${this.config.compactInterval}ms) is less than 1 minute.`);
-        }
-        this.config = config;
+        this.compactInterval = compactInterval;
 
         const dbFile = dbDir + "/" + this.constructor.name + ".db";
         this.nedbP = new Promise<Nedb>((resolve, reject) => {
@@ -136,8 +129,10 @@ export class NedbDao<T extends NedbModel> {
                 autoload: false
             });
 
-            // 设置自动压缩时间
-            nedb.persistence.setAutocompactionInterval(this.config.compactInterval);
+            if (compactInterval >= 0) {
+                // 设置自动压缩时间
+                nedb.persistence.setAutocompactionInterval(this.compactInterval);
+            }
 
             fix_nedb_persistence_persistCachedDatabase(nedb);
 
@@ -146,20 +141,6 @@ export class NedbDao<T extends NedbModel> {
                     reject(new Error("nedb loading failed: " + dbFile));
                 }
                 else {
-                    // 设置索引
-                    if (this.config.indexes) {
-                        for (let inex of this.config.indexes) {
-                            nedb.ensureIndex(inex, err => {
-                                if (err) {
-                                    logger.warn("indexing failed", err);
-                                }
-                            });
-                            // 设置自动过期的索引
-                            if (typeof inex.expireAfterSeconds == "number") {
-                                nedb["ttlIndexes"][inex.fieldName] = inex.expireAfterSeconds;
-                            }
-                        }
-                    }
                     resolve(nedb);
                 }
             });
@@ -176,6 +157,12 @@ export class NedbDao<T extends NedbModel> {
 
     waitNedbReady() {
         return this.nedbP.then(nedb => true);
+    }
+
+    expireAtKey(key: string, expireSecondes: number) {
+        return this.nedbP.then(nedb => {
+           nedb["ttlIndexes"][key] = expireSecondes;
+        });
     }
 
     /**

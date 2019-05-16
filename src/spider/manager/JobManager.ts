@@ -77,16 +77,8 @@ export class JobManager {
     private jobDao: JobDao;
 
     init() {
-        this.jobDao = new JobDao(appInfo.workplace + "/nedb", {
-            indexes: [
-                {fieldName: "queue"},
-                {fieldName: "depth"},
-                {fieldName: "tryNum"},
-                {fieldName: "status"},
-                {fieldName: "createTime"},
-                {fieldName: "autoRelease", expireAfterSeconds: 300} // 5分钟后自动删除
-            ]
-        });
+        this.jobDao = new JobDao(appInfo.workplace + "/nedb");
+        this.jobDao.expireAtKey("autoRelease", 300);
     }
 
     /**
