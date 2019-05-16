@@ -58,11 +58,8 @@ function fix_nedb_persistence_persistCachedDatabase(nedb) {
         //     }
         // }
 
-        self.db.getAllData().forEach(node => {
-            for (let i = 0, len = node.data.length; i < len; i += 1) {
-                const doc = node.data[i];
-                toPersist.push(self.afterSerialization(model.serialize(doc)));
-            }
+        self.db.getAllData().forEach(doc => {
+            toPersist.push(self.afterSerialization(model.serialize(doc)));
         });
 
         Object.keys(self.db.indexes).forEach(function (fieldName) {
