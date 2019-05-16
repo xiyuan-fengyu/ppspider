@@ -35,12 +35,12 @@ storage.writeFile = (...args) => {
 function fix_nedb_persistence_persistCachedDatabase(nedb) {
     // 修复 Persistence.prototype.persistCachedDatabase 中直接用 + 拼接字符串导致内存溢出的问题
 
-    // 采用生成器遍历，防止event-loop-block
-    const treeVisitor = function* (node) {
-        node.left && treeVisitor(node.left);
-        yield node;
-        node.right && treeVisitor(node.right);
-    };
+    // // 采用生成器遍历，防止event-loop-block
+    // const treeVisitor = function* (node) {
+    //     node.left && treeVisitor(node.left);
+    //     yield node;
+    //     node.right && treeVisitor(node.right);
+    // };
 
     nedb.persistence["persistCachedDatabase"] = cb => {
         const callback = cb || function () {};
@@ -49,14 +49,21 @@ function fix_nedb_persistence_persistCachedDatabase(nedb) {
 
         if (self.inMemoryOnly) { return callback(null); }
 
-        const tree = self.db.indexes._id.tree.tree;
-        const treeNodes = treeVisitor(tree);
-        for (let node of treeNodes) {
+        // const tree = self.db.indexes._id.tree.tree;
+        // const treeNodes = treeVisitor(tree);
+        // for (let node of treeNodes) {
+        //     for (let i = 0, len = node.data.length; i < len; i += 1) {
+        //         const doc = node.data[i];
+        //         toPersist.push(self.afterSerialization(model.serialize(doc)));
+        //     }
+        // }
+
+        self.db.getAllData().forEach(node => {
             for (let i = 0, len = node.data.length; i < len; i += 1) {
                 const doc = node.data[i];
                 toPersist.push(self.afterSerialization(model.serialize(doc)));
             }
-        }
+        });
 
         Object.keys(self.db.indexes).forEach(function (fieldName) {
             if (fieldName != "_id") {   // The special _id index is managed by datastore.js, the others need to be persisted
