@@ -1,10 +1,9 @@
 import * as Nedb from "nedb";
 import {StringUtil} from "../util/StringUtil";
+import * as fs from "fs";
+import {logger} from "../util/logger";
 import model = require("nedb/lib/model");
 import storage = require("nedb/lib/storage");
-import * as fs from "fs";
-import {EnsureIndexOptions} from "nedb";
-import {logger} from "../util/logger";
 
 // storage.writeFile 增加多行写入的功能
 storage.writeFile = (...args) => {
@@ -35,6 +34,14 @@ storage.writeFile = (...args) => {
 
 function fix_nedb_persistence_persistCachedDatabase(nedb) {
     // 修复 Persistence.prototype.persistCachedDatabase 中直接用 + 拼接字符串导致内存溢出的问题
+
+    // 采用生成器遍历，防止event-loop-block
+    const treeVisitor = function* (node) {
+        node.left && treeVisitor(node.left);
+        yield node;
+        node.right && treeVisitor(node.right);
+    };
+
     nedb.persistence["persistCachedDatabase"] = cb => {
         const callback = cb || function () {};
         const self = nedb.persistence as any;
@@ -42,9 +49,13 @@ function fix_nedb_persistence_persistCachedDatabase(nedb) {
 
         if (self.inMemoryOnly) { return callback(null); }
 
-        const docs = self.db.getAllData();
-        for (let doc of docs) {
-            toPersist.push(self.afterSerialization(model.serialize(doc)));
+        const tree = self.db.indexes._id.tree.tree;
+        const treeNodes = treeVisitor(tree);
+        for (let node of treeNodes) {
+            for (let i = 0, len = node.data.length; i < len; i += 1) {
+                const doc = node.data[i];
+                toPersist.push(self.afterSerialization(model.serialize(doc)));
+            }
         }
 
         Object.keys(self.db.indexes).forEach(function (fieldName) {
