@@ -139,17 +139,6 @@ export class NedbDao<T extends NedbModel> {
             // 设置自动压缩时间
             nedb.persistence.setAutocompactionInterval(this.config.compactInterval);
 
-            // 设置索引
-            if (this.config.indexes) {
-                for (let inex of this.config.indexes) {
-                    nedb.ensureIndex(inex, err => {
-                        if (err) {
-                            logger.warn("indexing failed", err);
-                        }
-                    });
-                }
-            }
-
             fix_nedb_persistence_persistCachedDatabase(nedb);
 
             nedb.loadDatabase(error => {
@@ -157,6 +146,20 @@ export class NedbDao<T extends NedbModel> {
                     reject(new Error("nedb loading failed: " + dbFile));
                 }
                 else {
+                    // 设置索引
+                    if (this.config.indexes) {
+                        for (let inex of this.config.indexes) {
+                            nedb.ensureIndex(inex, err => {
+                                if (err) {
+                                    logger.warn("indexing failed", err);
+                                }
+                            });
+                            // 设置自动过期的索引
+                            if (typeof inex.expireAfterSeconds == "number") {
+                                nedb["ttlIndexes"][inex.fieldName] = inex.expireAfterSeconds;
+                            }
+                        }
+                    }
                     resolve(nedb);
                 }
             });
