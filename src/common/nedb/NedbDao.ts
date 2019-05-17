@@ -9,19 +9,34 @@ import storage = require("nedb/lib/storage");
 storage.writeFile = (...args) => {
     if (args[1] instanceof Array) {
         try {
-            fs.writeFileSync(args[0], "", "utf-8");
-
-            const bufferLen = 1024 * 1024 * 8;
+            const bufferLen = 2048;
             const data = args[1] as string[];
-            let str = "";
-            for (let i = 0, len = data.length; i < len; i ++) {
-                str += data[i] + "\n";
-                if (i + 1 == len || str.length >= bufferLen) {
-                    fs.appendFileSync(args[0], str, "utf-8");
-                    str = "";
+            const callback = args[2];
+            (async () => {
+                let writePromise;
+                let writeResolve;
+                let writeStream = fs.createWriteStream(args[0], "utf-8");
+                let buffer = "";
+                let hasError;
+                for (let i = 0, len = data.length; i < len; i ++) {
+                    buffer += data[i] + "\n";
+                    if (i + 1 == len || buffer.length >= bufferLen) {
+                        writePromise && await writePromise;
+                        writePromise = new Promise(resolve => writeResolve = resolve);
+                        writeStream.write(buffer, err => {
+                            if (err) {
+                                hasError = true;
+                                callback(err);
+                            }
+                            writeResolve();
+                        });
+                        if (hasError) {
+                            return;
+                        }
+                        buffer = "";
+                    }
                 }
-            }
-            args[2]();
+            })();
         }
         catch (e) {
             args[2](e);
@@ -35,12 +50,12 @@ storage.writeFile = (...args) => {
 function fix_nedb_persistence_persistCachedDatabase(nedb) {
     // 修复 Persistence.prototype.persistCachedDatabase 中直接用 + 拼接字符串导致内存溢出的问题
 
-    // // 采用生成器遍历，防止event-loop-block
-    // const treeVisitor = function* (node) {
-    //     node.left && treeVisitor(node.left);
-    //     yield node;
-    //     node.right && treeVisitor(node.right);
-    // };
+    // 采用生成器遍历，防止event-loop-block
+    const treeVisitor = function* (node) {
+        node.left && treeVisitor(node.left);
+        yield node;
+        node.right && treeVisitor(node.right);
+    };
 
     nedb.persistence["persistCachedDatabase"] = cb => {
         const callback = cb || function () {};
@@ -49,18 +64,18 @@ function fix_nedb_persistence_persistCachedDatabase(nedb) {
 
         if (self.inMemoryOnly) { return callback(null); }
 
-        // const tree = self.db.indexes._id.tree.tree;
-        // const treeNodes = treeVisitor(tree);
-        // for (let node of treeNodes) {
-        //     for (let i = 0, len = node.data.length; i < len; i += 1) {
-        //         const doc = node.data[i];
-        //         toPersist.push(self.afterSerialization(model.serialize(doc)));
-        //     }
-        // }
+        const tree = self.db.indexes._id.tree.tree;
+        const treeNodes = treeVisitor(tree);
+        for (let node of treeNodes) {
+            for (let i = 0, len = node.data.length; i < len; i += 1) {
+                const doc = node.data[i];
+                toPersist.push(self.afterSerialization(model.serialize(doc)));
+            }
+        }
 
-        self.db.getAllData().forEach(doc => {
-            toPersist.push(self.afterSerialization(model.serialize(doc)));
-        });
+        // self.db.getAllData().forEach(doc => {
+        //     toPersist.push(self.afterSerialization(model.serialize(doc)));
+        // });
 
         Object.keys(self.db.indexes).forEach(function (fieldName) {
             if (fieldName != "_id") {   // The special _id index is managed by datastore.js, the others need to be persisted
@@ -175,8 +190,9 @@ export class NedbDao<T extends NedbModel> {
     }
 
     expireAtKey(key: string, expireSecondes: number) {
+        // @TODO 这里貌似有问题，自行实现过期
         return this.nedbP.then(nedb => {
-           nedb["ttlIndexes"][key] = expireSecondes;
+           // nedb["ttlIndexes"][key] = expireSecondes;
         });
     }
 
