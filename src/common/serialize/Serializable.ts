@@ -347,6 +347,7 @@ export class SerializableUtil {
                 for (let refItem of refsOfThis) {
                     writer.write(`g.${refItem.objIndex}[${typeof refItem.keyOrIndex == "number" ? refItem.keyOrIndex : JSON.stringify(refItem.keyOrIndex)}]=g.${objSymbol};`);
                 }
+                refs.delete(objSymbol);
             }
             writer.write("\n");
         }

@@ -8,6 +8,10 @@ import storage = require("nedb/lib/storage");
 // storage.writeFile 增加多行写入的功能
 storage.writeFile = (...args) => {
     if (args[1] instanceof Array) {
+        fs.writeFileSync(args[0], "");
+        if (args[1].length == 0) {
+            return args[2]();
+        }
         try {
             const bufferLen = 2048;
             const data = args[1] as string[];
@@ -31,11 +35,14 @@ storage.writeFile = (...args) => {
                             writeResolve();
                         });
                         if (hasError) {
+                            writeStream.close();
                             return;
                         }
                         buffer = "";
                     }
                 }
+                writeStream.close();
+                callback();
             })();
         }
         catch (e) {
@@ -144,6 +151,8 @@ export class NedbDao<T extends NedbModel> {
 
     protected nedbP: Promise<Nedb>;
 
+    protected lastCompactTime: number;
+
     constructor(dbDir: string, compactInterval: number = 600000) {
         NedbDao._instances[this.constructor.name] = this;
 
@@ -159,11 +168,6 @@ export class NedbDao<T extends NedbModel> {
                 autoload: false
             });
 
-            if (compactInterval >= 0) {
-                // 设置自动压缩时间
-                nedb.persistence.setAutocompactionInterval(this.compactInterval);
-            }
-
             fix_nedb_persistence_persistCachedDatabase(nedb);
 
             nedb.loadDatabase(error => {
@@ -171,6 +175,10 @@ export class NedbDao<T extends NedbModel> {
                     reject(new Error("nedb loading failed: " + dbFile));
                 }
                 else {
+                    this.lastCompactTime = new Date().getTime();
+                    nedb.addListener("compaction.done", () => {
+                       setTimeout(() => nedb.persistence.compactDatafile(), this.compactInterval);
+                    });
                     resolve(nedb);
                 }
             });
@@ -189,12 +197,19 @@ export class NedbDao<T extends NedbModel> {
         return this.nedbP.then(nedb => true);
     }
 
-    expireAtKey(key: string, expireSecondes: number) {
-        // @TODO 这里貌似有问题，自行实现过期
-        return this.nedbP.then(nedb => {
-           // nedb["ttlIndexes"][key] = expireSecondes;
+    private autoCompact() {
+        this.nedbP.then(nedb => {
+            this.lastCompactTime = new Date().getTime();
+            nedb.persistence.compactDatafile();
         });
     }
+
+    // expireAtKey(key: string, expireSecondes: number) {
+    //     // @TODO 这里貌似有问题，自行实现过期
+    //     return this.nedbP.then(nedb => {
+    //        // nedb["ttlIndexes"][key] = expireSecondes;
+    //     });
+    // }
 
     /**
      * 将查询语句中的regex string转换为Regex对象实例，因为nedb的$regex操作只接受 Regex对象实例

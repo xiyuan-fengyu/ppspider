@@ -45,7 +45,7 @@ class JobWrapper extends NedbModel {
 
     serialize: any;
 
-    autoRelease: Date;
+    autoRelease: boolean;
 
     constructor(job: Job) {
         super(job.id());
@@ -59,7 +59,7 @@ class JobWrapper extends NedbModel {
         this.serialize = serializeJob(job);
         this.updateTime = new Date().getTime();
         if (job.status() == JobStatus.Filtered) {
-            this.autoRelease = new Date();
+            this.autoRelease = true;
         }
     }
 
@@ -78,7 +78,17 @@ export class JobManager {
 
     init() {
         this.jobDao = new JobDao(appInfo.workplace + "/nedb");
-        this.jobDao.expireAtKey("autoRelease", 300);
+        return this.jobDao.waitNedbReady().then(res => this.autoReleaseLoop());
+    }
+
+    private autoReleaseLoop() {
+        const autoRelease = () => {
+            this.jobDao.remove({autoRelease: true, createTime: {"$lte": new Date().getTime() - 1000 * 120}},
+                true).then(res => {
+                setTimeout(autoRelease, 120000);
+            });
+        };
+        autoRelease();
     }
 
     /**
