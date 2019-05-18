@@ -11,6 +11,7 @@
     + [Install npm dependencies](#install-npm-dependencies)
     + [Run tsc](#run-tsc)
     + [Startup ppspider App](#startup-ppspider-app)
+- [Question](#question)
 - [ppspider System Introduction](#ppspider-system-introduction)
   * [Decorator](#decorator)
     + [@Launcher](#launcher)
@@ -94,6 +95,11 @@ tsc is a TypeScript compiler which can auto compile the ts file to js file after
 ### Startup ppspider App
 Run lib/quickstart/App.js    
 Open http://localhost:9000 in the browser to check the ppspider's status  
+
+# Question
+1. When running an app in idea under debug mode after a long time, the app gets stucked
+    on a code line just like a breakpoint stop. It is due to low memory, just add a node 
+    paramter "--max-old-space-size=8192" to solve it.
 
 # ppspider System Introduction
 ## Decorator
