@@ -145,6 +145,8 @@ Persistence.prototype.loadDatabase = function (cb) {
                         return cb(e);
                     }
 
+                    self.db.executor.processBuffer();
+
                     cb();
                 }).catch(err => cb(err));
             }).catch(err => cb(err));
@@ -252,7 +254,6 @@ export class NedbDao<T extends NedbModel> {
                     reject(new Error("nedb loading failed: " + dbFile));
                 }
                 else {
-                    this.lastCompactTime = new Date().getTime();
                     nedb.addListener("compaction.done", () => {
                        setTimeout(() => nedb.persistence.compactDatafile(), this.compactInterval);
                     });
