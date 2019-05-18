@@ -2,8 +2,12 @@ import * as Nedb from "nedb";
 import {StringUtil} from "../util/StringUtil";
 import * as fs from "fs";
 import {logger} from "../util/logger";
+import Persistence = require("nedb/lib/persistence");
+import Index = require("nedb/lib/indexes");
 import model = require("nedb/lib/model");
 import storage = require("nedb/lib/storage");
+import * as path from "path";
+import * as readline from "readline";
 
 // storage.writeFile 增加多行写入的功能
 storage.writeFile = (...args) => {
@@ -54,49 +58,124 @@ storage.writeFile = (...args) => {
     }
 };
 
-function fix_nedb_persistence_persistCachedDatabase(nedb) {
-    // 修复 Persistence.prototype.persistCachedDatabase 中直接用 + 拼接字符串导致内存溢出的问题
+// 重写，按行读入
+storage.readFile = (filePath: string, encoding: string) => {
+    return new Promise<any>(async resolve => {
+        const lines = [];
+        const reader = readline.createInterface({
+            input: fs.createReadStream(filePath).setEncoding(encoding)
+        });
+        reader.on('line', function(line) {
+            lines.push(line);
+        });
+        reader.on('close', function(line) {
+            resolve(lines);
+        });
+    });
+};
 
-    // 采用生成器遍历，防止event-loop-block
-    const treeVisitor = function* (node) {
-        node.left && treeVisitor(node.left);
-        yield node;
-        node.right && treeVisitor(node.right);
-    };
+// 修复 Persistence.prototype.treatRawData 中直接用 .split('\n') 分割单个字符串得出所有数据行的逻辑，当数据量达到一定大小时，数据加载失败
+Persistence.prototype.treatRawData = function(lines) {
+    const self = this;
+    const data = lines;
+    const dataById = new Map<any, any>();
+    const tdata = [];
+    const indexes = {};
 
-    nedb.persistence["persistCachedDatabase"] = cb => {
-        const callback = cb || function () {};
-        const self = nedb.persistence as any;
-        const toPersist = [];
-
-        if (self.inMemoryOnly) { return callback(null); }
-
-        const tree = self.db.indexes._id.tree.tree;
-        const treeNodes = treeVisitor(tree);
-        for (let node of treeNodes) {
-            for (let i = 0, len = node.data.length; i < len; i += 1) {
-                const doc = node.data[i];
-                toPersist.push(self.afterSerialization(model.serialize(doc)));
-            }
+    return new Promise((resolve, reject) => {
+        const dataLen = data.length;
+        if (dataLen == 0) {
+            return resolve({ data: tdata, indexes: indexes, compose: 1 });
         }
 
-        // self.db.getAllData().forEach(doc => {
-        //     toPersist.push(self.afterSerialization(model.serialize(doc)));
-        // });
-
-        Object.keys(self.db.indexes).forEach(function (fieldName) {
-            if (fieldName != "_id") {   // The special _id index is managed by datastore.js, the others need to be persisted
-                toPersist.push(self.afterSerialization(model.serialize({ $$indexCreated: { fieldName: fieldName, unique: self.db.indexes[fieldName].unique, sparse: self.db.indexes[fieldName].sparse }})));
+        for (let i = 0; i < dataLen; i++) {
+            const dataItem = data[i];
+            try {
+                const doc = model.deserialize(self.beforeDeserialization(dataItem));
+                if (doc._id) {
+                    if (doc.$$deleted === true) {
+                        dataById.delete(doc._id);
+                    } else {
+                        dataById.set(doc._id, doc);
+                    }
+                } else if (doc.$$indexCreated && doc.$$indexCreated.fieldName != undefined) {
+                    indexes[doc.$$indexCreated.fieldName] = doc.$$indexCreated;
+                } else if (typeof doc.$$indexRemoved === "string") {
+                    delete indexes[doc.$$indexRemoved];
+                }
             }
-        });
+            catch (e) {
+                dataById.clear();
+                return reject(e);
+            }
+            data[i] = null;
+        }
 
-        storage.crashSafeWriteFile(self.filename, toPersist, function (err) {
-            if (err) { return callback(err); }
-            self.db.emit('compaction.done');
-            return callback(null);
+        for (let item of dataById.values()) {
+            tdata.push(item);
+        }
+        dataById.clear();
+        return resolve({ data: tdata, indexes: indexes});
+    });
+};
+
+Persistence.prototype.loadDatabase = function (cb) {
+    const callback = cb || function () {};
+    const self = this;
+
+    self.db.resetIndexes();
+
+    // In-memory only datastore
+    if (self.inMemoryOnly) { return callback(null); }
+
+    Persistence.ensureDirectoryExists(path.dirname(self.filename), function (err) {
+        storage.ensureDatafileIntegrity(self.filename, function (err) {
+            storage.readFile(self.filename, 'utf8').then(lines => {
+                self.treatRawData(lines).then(treatedData => {
+                    // Recreate all indexes in the datafile
+                    Object.keys(treatedData.indexes).forEach(function (key) {
+                        self.db.indexes[key] = new Index(treatedData.indexes[key]);
+                    });
+
+                    // Fill cached database (i.e. all indexes) with data
+                    try {
+                        self.db.resetIndexes(treatedData.data);
+                    } catch (e) {
+                        self.db.resetIndexes();   // Rollback any index which didn't fail
+                        return cb(e);
+                    }
+
+                    cb();
+                }).catch(err => cb(err));
+            }).catch(err => cb(err));
         });
-    };
-}
+    });
+};
+
+Persistence.prototype.persistCachedDatabase = function (cb) {
+    const callback = cb || function () {};
+    const self = this;
+
+    const toPersist = [];
+
+    if (self.inMemoryOnly) { return callback(null); }
+
+    self.db.getAllData().forEach(doc => {
+        toPersist.push(self.afterSerialization(model.serialize(doc)));
+    });
+
+    Object.keys(self.db.indexes).forEach(function (fieldName) {
+        if (fieldName != "_id") {   // The special _id index is managed by datastore.js, the others need to be persisted
+            toPersist.push(self.afterSerialization(model.serialize({ $$indexCreated: { fieldName: fieldName, unique: self.db.indexes[fieldName].unique, sparse: self.db.indexes[fieldName].sparse }})));
+        }
+    });
+
+    storage.crashSafeWriteFile(self.filename, toPersist, function (err) {
+        if (err) { return callback(err); }
+        self.db.emit('compaction.done');
+        return callback(null);
+    });
+};
 
 export type Sort = {[by: string]: -1 | 1};
 
@@ -168,8 +247,6 @@ export class NedbDao<T extends NedbModel> {
                 autoload: false
             });
 
-            fix_nedb_persistence_persistCachedDatabase(nedb);
-
             nedb.loadDatabase(error => {
                 if (error) {
                     reject(new Error("nedb loading failed: " + dbFile));
@@ -196,20 +273,6 @@ export class NedbDao<T extends NedbModel> {
     waitNedbReady() {
         return this.nedbP.then(nedb => true);
     }
-
-    private autoCompact() {
-        this.nedbP.then(nedb => {
-            this.lastCompactTime = new Date().getTime();
-            nedb.persistence.compactDatafile();
-        });
-    }
-
-    // expireAtKey(key: string, expireSecondes: number) {
-    //     // @TODO 这里貌似有问题，自行实现过期
-    //     return this.nedbP.then(nedb => {
-    //        // nedb["ttlIndexes"][key] = expireSecondes;
-    //     });
-    // }
 
     /**
      * 将查询语句中的regex string转换为Regex对象实例，因为nedb的$regex操作只接受 Regex对象实例
