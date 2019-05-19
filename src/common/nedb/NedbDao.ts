@@ -9,116 +9,6 @@ import storage = require("nedb/lib/storage");
 import * as path from "path";
 import * as readline from "readline";
 
-// storage.writeFile 增加多行写入的功能
-storage.writeFile = (...args) => {
-    if (args[1] instanceof Array) {
-        fs.writeFileSync(args[0], "");
-        if (args[1].length == 0) {
-            return args[2]();
-        }
-        try {
-            const bufferLen = 2048;
-            const data = args[1] as string[];
-            const callback = args[2];
-            (async () => {
-                let writePromise;
-                let writeResolve;
-                let writeStream = fs.createWriteStream(args[0], "utf-8");
-                let buffer = "";
-                let hasError;
-                for (let i = 0, len = data.length; i < len; i ++) {
-                    buffer += data[i] + "\n";
-                    if (i + 1 == len || buffer.length >= bufferLen) {
-                        writePromise && await writePromise;
-                        writePromise = new Promise(resolve => writeResolve = resolve);
-                        writeStream.write(buffer, err => {
-                            if (err) {
-                                hasError = true;
-                                callback(err);
-                            }
-                            writeResolve();
-                        });
-                        if (hasError) {
-                            writeStream.close();
-                            return;
-                        }
-                        buffer = "";
-                    }
-                }
-                writeStream.close();
-                callback();
-            })();
-        }
-        catch (e) {
-            args[2](e);
-        }
-    }
-    else {
-        fs.writeFile.call(fs, ...args);
-    }
-};
-
-// 重写，按行读入
-storage.readFile = (filePath: string, encoding: string) => {
-    return new Promise<any>(async resolve => {
-        const lines = [];
-        const reader = readline.createInterface({
-            input: fs.createReadStream(filePath).setEncoding(encoding)
-        });
-        reader.on('line', function(line) {
-            lines.push(line);
-        });
-        reader.on('close', function(line) {
-            resolve(lines);
-        });
-    });
-};
-
-// 修复 Persistence.prototype.treatRawData 中直接用 .split('\n') 分割单个字符串得出所有数据行的逻辑，当数据量达到一定大小时，数据加载失败
-Persistence.prototype.treatRawData = function(lines) {
-    const self = this;
-    const data = lines;
-    const dataById = new Map<any, any>();
-    const tdata = [];
-    const indexes = {};
-
-    return new Promise((resolve, reject) => {
-        const dataLen = data.length;
-        if (dataLen == 0) {
-            return resolve({ data: tdata, indexes: indexes, compose: 1 });
-        }
-
-        for (let i = 0; i < dataLen; i++) {
-            const dataItem = data[i];
-            try {
-                const doc = model.deserialize(self.beforeDeserialization(dataItem));
-                if (doc._id) {
-                    if (doc.$$deleted === true) {
-                        dataById.delete(doc._id);
-                    } else {
-                        dataById.set(doc._id, doc);
-                    }
-                } else if (doc.$$indexCreated && doc.$$indexCreated.fieldName != undefined) {
-                    indexes[doc.$$indexCreated.fieldName] = doc.$$indexCreated;
-                } else if (typeof doc.$$indexRemoved === "string") {
-                    delete indexes[doc.$$indexRemoved];
-                }
-            }
-            catch (e) {
-                dataById.clear();
-                return reject(e);
-            }
-            data[i] = null;
-        }
-
-        for (let item of dataById.values()) {
-            tdata.push(item);
-        }
-        dataById.clear();
-        return resolve({ data: tdata, indexes: indexes});
-    });
-};
-
 Persistence.prototype.loadDatabase = function (cb) {
     const callback = cb || function () {};
     const self = this;
@@ -129,53 +19,207 @@ Persistence.prototype.loadDatabase = function (cb) {
     if (self.inMemoryOnly) { return callback(null); }
 
     Persistence.ensureDirectoryExists(path.dirname(self.filename), function (err) {
+        if (err) {
+            return callback(err);
+        }
+
         storage.ensureDatafileIntegrity(self.filename, function (err) {
-            storage.readFile(self.filename, 'utf8').then(lines => {
-                self.treatRawData(lines).then(treatedData => {
-                    // Recreate all indexes in the datafile
-                    Object.keys(treatedData.indexes).forEach(function (key) {
-                        self.db.indexes[key] = new Index(treatedData.indexes[key]);
-                    });
+            if (err) {
+                return callback(err);
+            }
 
-                    // Fill cached database (i.e. all indexes) with data
+            const dataById = new Map<any, any>();
+            const tdata = [];
+            const indexes = {};
+            const lineBuffer = [];
+            let waitReadFinishResolve;
+            const waitReadFinishPromise = new Promise(resolve => waitReadFinishResolve = resolve);
+
+            const parseDocs =() => {
+                for (let line of lineBuffer) {
                     try {
-                        self.db.resetIndexes(treatedData.data);
-                    } catch (e) {
-                        self.db.resetIndexes();   // Rollback any index which didn't fail
-                        return cb(e);
+                        const doc = model.deserialize(self.beforeDeserialization(line));
+                        if (doc._id) {
+                            if (doc.$$deleted === true) {
+                                dataById.delete(doc._id);
+                            } else {
+                                dataById.set(doc._id, doc);
+                            }
+                        } else if (doc.$$indexCreated && doc.$$indexCreated.fieldName != undefined) {
+                            indexes[doc.$$indexCreated.fieldName] = doc.$$indexCreated;
+                        } else if (typeof doc.$$indexRemoved === "string") {
+                            delete indexes[doc.$$indexRemoved];
+                        }
                     }
+                    catch (e) {
+                        waitReadFinishResolve(e);
+                    }
+                }
+                lineBuffer.splice(0, lineBuffer.length);
+            };
 
-                    self.db.executor.processBuffer();
+            const reader = readline.createInterface({
+                input: fs.createReadStream(self.filename).setEncoding('utf8')
+            });
+            reader.on('line', function(line) {
+                lineBuffer.push(line);
+                lineBuffer.length >= 10000 && parseDocs();
+            });
+            reader.on('close', function(line) {
+                lineBuffer.length > 0 && parseDocs();
+                waitReadFinishResolve();
+            });
 
-                    cb();
-                }).catch(err => cb(err));
-            }).catch(err => cb(err));
+            waitReadFinishPromise.then(err => {
+               if (err) {
+                   reader.close();
+                   return callback(err);
+               }
+
+                for (let item of dataById.values()) {
+                    tdata.push(item);
+                }
+                dataById.clear();
+                const treatedData = { data: tdata, indexes: indexes};
+                // Recreate all indexes in the datafile
+                Object.keys(treatedData.indexes).forEach(function (key) {
+                    self.db.indexes[key] = new Index(treatedData.indexes[key]);
+                });
+
+                // Fill cached database (i.e. all indexes) with data
+                try {
+                    self.db.resetIndexes(treatedData.data);
+                } catch (e) {
+                    self.db.resetIndexes();   // Rollback any index which didn't fail
+                    return cb(e);
+                }
+
+                self.db.executor.processBuffer();
+
+                cb();
+            });
         });
     });
+};
+
+const treeVisitor = (node, callback)  => {
+    let shouldContinue;
+    node.left && (shouldContinue = treeVisitor(node.left, callback));
+    if (shouldContinue === false) {
+        return shouldContinue;
+    }
+
+    shouldContinue = callback(node);
+    if (shouldContinue === false) {
+        return shouldContinue;
+    }
+
+    node.right && (shouldContinue = treeVisitor(node.right, callback));
+    return shouldContinue;
 };
 
 Persistence.prototype.persistCachedDatabase = function (cb) {
     const callback = cb || function () {};
     const self = this;
 
-    const toPersist = [];
-
     if (self.inMemoryOnly) { return callback(null); }
 
-    self.db.getAllData().forEach(doc => {
-        toPersist.push(self.afterSerialization(model.serialize(doc)));
-    });
+    const tempFilename = self.filename + '~';
+    const writeToTempFile = () => {
+        const lineBuffer = [];
+        let writeErr;
+        let waitFinishResolve;
+        let waitFinishPromise;
 
-    Object.keys(self.db.indexes).forEach(function (fieldName) {
-        if (fieldName != "_id") {   // The special _id index is managed by datastore.js, the others need to be persisted
-            toPersist.push(self.afterSerialization(model.serialize({ $$indexCreated: { fieldName: fieldName, unique: self.db.indexes[fieldName].unique, sparse: self.db.indexes[fieldName].sparse }})));
+        const writer = fs.createWriteStream(tempFilename, "utf-8");
+        const writeLines = async () => {
+            if (lineBuffer.length) {
+                waitFinishPromise && await waitFinishPromise;
+                waitFinishPromise = new Promise(resolve => waitFinishResolve = resolve);
+                writer.write(lineBuffer.join("\n") + "\n", err => {
+                    if (err) {
+                        writeErr = err;
+                    }
+                    waitFinishResolve();
+                });
+                lineBuffer.splice(0, lineBuffer.length);
+            }
+        };
+
+        treeVisitor(self.db.indexes._id.tree.tree, node => {
+            if (writeErr) {
+                return false;
+            }
+
+            for (let i = 0, len = node.data.length; i < len; i += 1) {
+                const doc = node.data[i];
+                lineBuffer.push(self.afterSerialization(model.serialize(doc)));
+                lineBuffer.length >= 100 && writeLines();
+            }
+        });
+
+        for (let fieldName of Object.keys(self.db.indexes)) {
+            if (fieldName != "_id") {   // The special _id index is managed by datastore.js, the others need to be persisted
+                lineBuffer.push(self.afterSerialization(model.serialize({ $$indexCreated: { fieldName: fieldName, unique: self.db.indexes[fieldName].unique, sparse: self.db.indexes[fieldName].sparse }})));
+                lineBuffer.length >= 100 && writeLines();
+            }
         }
-    });
 
-    storage.crashSafeWriteFile(self.filename, toPersist, function (err) {
-        if (err) { return callback(err); }
-        self.db.emit('compaction.done');
-        return callback(null);
+        lineBuffer.length > 0 && writeLines();
+
+        if (writeErr) {
+            return callback(writeErr);
+        }
+
+        const rename = () => {
+            storage.flushToStorage(tempFilename, err => {
+                if (err) {
+                    return callback(err);
+                }
+
+                fs.rename(tempFilename, self.filename, err1 => {
+                    if (err1) {
+                        return callback(err1);
+                    }
+
+                    storage.flushToStorage({ filename: path.dirname(self.filename), isDir: true }, err2  => {
+                        if (!err2) {
+                            self.db.emit('compaction.done');
+                        }
+                        callback(err2);
+                    })
+                });
+            });
+        };
+        if (waitFinishPromise) {
+            waitFinishPromise.then(() => {
+                if (writeErr) {
+                    return callback(writeErr);
+                }
+                rename();
+            });
+        }
+        else {
+            rename();
+        }
+    };
+
+    storage.flushToStorage({ filename: path.dirname(self.filename), isDir: true }, err => {
+        if (err) {
+            return callback(err);
+        }
+
+        if (fs.existsSync(self.filename)) {
+            storage.flushToStorage(self.filename, function (err) {
+                if (err) {
+                    callback(err);
+                }
+                else writeToTempFile();
+            });
+        }
+        else {
+            writeToTempFile();
+        }
     });
 };
 
@@ -231,8 +275,6 @@ export class NedbDao<T extends NedbModel> {
     private readonly compactInterval: number;
 
     protected nedbP: Promise<Nedb>;
-
-    protected lastCompactTime: number;
 
     constructor(dbDir: string, compactInterval: number = 600000) {
         NedbDao._instances[this.constructor.name] = this;

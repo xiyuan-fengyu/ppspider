@@ -370,48 +370,45 @@ export class SerializableUtil {
         return new Promise<any>(async (resolve, reject) => {
             const getClass = id => getClassInfoById(id);
             const g: any = {};
-            let lines = [];
-            let readFinish = false;
-            let waitLineResolve;
 
-            readline.createInterface({
+            const lineBuffer = [];
+            let waitReadFinishResolve;
+            const waitReadFinishPromise = new Promise(resolve => waitReadFinishResolve = resolve);
+
+            const evalLines =() => {
+                let subLinesStr = lineBuffer.join("\n");
+                try {
+                    eval(subLinesStr);
+                }
+                catch (e) {
+                    const stacks = e.stack.split("\n");
+                    stacks.splice(1, 0, subLinesStr);
+                    e.stack = stacks.join("\n");
+                    waitReadFinishResolve(e);
+                }
+                lineBuffer.splice(0, lineBuffer.length);
+            };
+
+            const reader = readline.createInterface({
                 input: fs.createReadStream(file).setEncoding(encoding)
-            })
-                .on('line', line => {
-                    lines.push(line);
-                    if (waitLineResolve) {
-                        const temp = waitLineResolve;
-                        waitLineResolve = null;
-                        temp();
-                    }
-                })
-                .on('close', () => {
-                    readFinish = true;
-                    if (waitLineResolve) {
-                        waitLineResolve();
-                    }
-                });
+            });
+            reader.on('line', function(line) {
+                lineBuffer.push(line);
+                lineBuffer.length >= 1000 && evalLines();
+            });
+            reader.on('close', function(line) {
+                lineBuffer.length > 0 && evalLines();
+                waitReadFinishResolve();
+            });
 
-            while (!readFinish || lines.length) {
-                if ((readFinish && lines.length) || lines.length >= 100) {
-                    let subLines = lines.slice(0, 100);
-                    lines.splice(0, subLines.length);
-                    let subLinesStr = subLines.join("\n");
-                    try {
-                        eval(subLinesStr);
-                    }
-                    catch (e) {
-                        const stacks = e.stack.split("\n");
-                        stacks.splice(1, 0, subLinesStr);
-                        e.stack = stacks.join("\n");
-                        reject(e);
-                    }
+            waitReadFinishPromise.then(err => {
+                if (err) {
+                    reader.close();
+                    return reject(err);
                 }
-                else if (!readFinish) {
-                    await new Promise(resolve1 => waitLineResolve = resolve1);
-                }
-            }
-            resolve(g.$);
+
+                resolve(g.$);
+            });
         });
     }
 
