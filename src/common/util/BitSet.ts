@@ -8,14 +8,9 @@ import {Serializable} from "../serialize/Serializable";
 @Serializable()
 export class BitSet {
 
-    private byteGroups: {
-        [groupIndex: number]: {
-            [index: number]: number
-        }
+    private bytes: {
+        [index: number]: number
     } = {};
-
-    // 每组1024个键，可以保存 1024 * 32 位
-    private static groupSize = 1024 * 32;
 
     // 每一个整数可以保存 32 位
     private static perIntBit = 32;
@@ -34,16 +29,7 @@ export class BitSet {
     }
 
     clear() {
-        this.byteGroups = {};
-    }
-
-    private getGroup(index: number) {
-        const groupIndex = parseInt("" + index / BitSet.groupSize);
-        let group = this.byteGroups[groupIndex];
-        if (!group) {
-            this.byteGroups[groupIndex] = group = {};
-        }
-        return group;
+        this.bytes = {};
     }
 
     /**
@@ -53,9 +39,8 @@ export class BitSet {
      */
     get(index: number): number {
         if (index >= this._size) throw new Error(`index(${index}) is out of size(${this._size})`);
-        const group = this.getGroup(index);
-        const indexInGroup = parseInt("" + (index % BitSet.groupSize) / BitSet.perIntBit);
-        return ((group[indexInGroup] || 0) & (1 << (indexInGroup % BitSet.perIntBit))) === 0 ? 0 : 1;
+        const numIndex = parseInt("" + index / BitSet.perIntBit);
+        return ((this.bytes[numIndex] || 0) & (1 << (index % BitSet.perIntBit))) === 0 ? 0 : 1;
     }
 
     /**
@@ -65,15 +50,14 @@ export class BitSet {
      */
     set(index: number, value: 0 | 1) {
         if (index >= this._size) throw new Error(`index(${index}) is out of size(${this._size})`);
-        const group = this.getGroup(index);
-        const indexInGroup = parseInt("" + (index % BitSet.groupSize) / BitSet.perIntBit);
-        const indexByte = group[indexInGroup] || 0;
-        const changeBit = 1 << (indexInGroup % BitSet.perIntBit);
+        const numIndex = parseInt("" + index / BitSet.perIntBit);
+        const indexByte = this.bytes[numIndex] || 0;
+        const changeBit = 1 << (index % BitSet.perIntBit);
         if (value) {
-            group[indexInGroup] = indexByte | changeBit;
+            this.bytes[numIndex] = indexByte | changeBit;
         }
         else {
-            group[indexInGroup] = indexByte & (~changeBit);
+            this.bytes[numIndex] = indexByte & (~changeBit);
         }
     }
 

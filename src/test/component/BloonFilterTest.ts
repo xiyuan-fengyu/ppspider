@@ -1,5 +1,5 @@
 import {BloonFilter} from "../../spider/filter/BloonFilter";
-import {DefaultJob} from "../../spider/job/DefaultJob";
+import {Job} from "../../spider/job/Job";
 
 let urls = [ 'https://www.baidu.com/',
     'https://www.baidu.com/',
@@ -38,7 +38,7 @@ let urls = [ 'https://www.baidu.com/',
 
 const bloonFilter = new BloonFilter();
 for (let url of urls) {
-    const job = new DefaultJob(url);
+    const job = new Job(url);
     if (bloonFilter.isExisted(job)) {
         console.log("existed: " + url);
     }
@@ -48,3 +48,15 @@ for (let url of urls) {
     }
 }
 console.log();
+
+const bloonFilter1 = new BloonFilter();
+for (let i = 0; i < 10; i++) {
+    const job = new Job("job_" + i);
+    if (bloonFilter1.isExisted(job)) {
+        console.log("existed: " + job.url);
+    }
+    else {
+        bloonFilter1.setExisted(job);
+        console.log("add: " + job.url);
+    }
+}

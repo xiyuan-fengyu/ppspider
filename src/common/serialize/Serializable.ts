@@ -300,7 +300,9 @@ export class SerializableUtil {
                 const objConstructor = obj.constructor;
                 const newF = addClassNewFunction(objConstructor);
                 const transients = transientFields[objConstructor];
-                const insObj = {};
+                let insObj;
+                let insObjs = [];
+                let keyNum = 0;
                 for (let field in obj) {
                     if (transients && transients[field]) {
                         // 忽略字段
@@ -308,7 +310,12 @@ export class SerializableUtil {
                     }
                     const value = obj[field];
                     if (this.isSimpleType(value)) {
+                        if (keyNum % 1000 == 0) {
+                            insObj = {};
+                            insObjs.push(insObj);
+                        }
                         insObj[field] = value;
+                        keyNum++;
                     }
                     else {
                         let refObjInfo = objs.get(value);
@@ -327,8 +334,12 @@ export class SerializableUtil {
                         }
                     }
                 }
-                const insObjJson = JSON.stringify(insObj);
+                let insObjJson = insObjs.length > 0 ? JSON.stringify(insObjs[0]) : "{}";
                 writer.write(`g.${objSymbol}=` + (newF ? newF + "(" + insObjJson + ")" : insObjJson) + ";");
+                for (let i = 1, len = insObjs.length; i < len; i++) {
+                    insObjJson = JSON.stringify(insObjs[i]);
+                    writer.write(`\nObject.assign(g.${objSymbol}, ${insObjJson});`);
+                }
             }
             else if (objType == "function") {
                 const classInfo = classInfos.get(obj);
@@ -417,7 +428,222 @@ export class SerializableUtil {
 /**
  * @deprecated
  */
-export class SerializableUtil_old {
+export class SerializableUtil_v2 {
+
+    /**
+     * 序列化
+     * @param obj
+     * @returns {any | string | {}}
+     */
+    static serialize(obj: any): string[] {
+        if (!this.shouldSerialize(obj)) {
+            return [
+                "-1",
+                JSON.stringify(obj)
+            ];
+        }
+
+        const serializedCaches = new Map<any, string>();
+        const magicNum = (Math.random() * 10000).toFixed(0);
+        const serializedRes = [magicNum]; // 第一行为magicNum
+        this._serialize(obj, serializedCaches, serializedRes);
+        return serializedRes;
+    }
+
+    private static shouldSerialize(obj: any) {
+        if (obj == null || obj == undefined) return false;
+
+        const objType = typeof obj;
+        return !(objType == "string" || objType == "number" || objType == "boolean");
+    }
+
+    private static _serialize(obj: any, serializedCaches: Map<any, string>, serializedRes: string[]) {
+        if (!this.shouldSerialize(obj)) {
+            return obj;
+        }
+
+        let serializedCache = serializedCaches.get(obj);
+        if (serializedCache == undefined) {
+            const objConstructor = obj.constructor;
+            if (typeof obj == "function" || !objConstructor) {
+                // 方法不需要进一步序列化
+                return undefined;
+            }
+
+            // 保存当前处理的实例的ref id
+            serializedCache = serializedRes[0] + "_" + serializedCaches.size;
+            serializedCaches.set(obj, serializedCache);
+
+            let res = null;
+            if (obj instanceof Array) {
+                res = [];
+                (obj as Array<any>).forEach((value, index) => {
+                    res.push(this._serialize(value, serializedCaches, serializedRes)); // 数组中每个元素需要进一步序列化
+                });
+            }
+            else {
+                let classInfo = classInfos.get(objConstructor);
+
+                if (res == null) {
+                    res = {};
+                    const transients = transientFields[objConstructor];
+                    for (let field in obj) {
+                        if (transients && transients[field]) {
+                            // 忽略字段
+                        }
+                        else res[field] = this._serialize(obj[field], serializedCaches, serializedRes); // 进一步序列化类成员的值
+                    }
+                    if (classInfo && classInfo.id) res.serializeClassId = classInfo.id; // 设置 classId，在反序列化时获取类信息
+                }
+            }
+            serializedRes.push(serializedCache + " " + JSON.stringify(res));
+        }
+        return "ref(" + serializedCache + ")";
+    }
+
+    /**
+     * 反序列化
+     * @param lines
+     * @returns {any}
+     */
+    static deserialize(lines: string[]): any {
+        if (lines[0] == "-1") {
+            return JSON.parse(lines[1]);
+        }
+
+        const deserializedCaches = {};
+        this._deserialize(lines, deserializedCaches, {});
+        return deserializedCaches[lines[0] + "_0"];
+    }
+
+    private static _deserialize(lines: string[], deserializedCaches: any, refCaches: any): any {
+        const magicNum = lines[0];
+        const objIdRegex = new RegExp("^ref\\((" + magicNum + "_\\d+)\\)$");
+        for (let i = 1, len = lines.length; i < len; i++) {
+            const line = lines[i];
+            const spaceI = line.indexOf(" ");
+            const objId = line.substring(0, spaceI);
+            if (!objId.startsWith(magicNum + "_")) {
+                throw new Error("bad serialized line, wrong magic num: " + line);
+            }
+
+            let obj = JSON.parse(line.substring(spaceI + 1));
+            if (obj instanceof Array) {
+                for (let j = 0, objLen = obj.length; j < objLen; j++) {
+                    this.checkRefCache(objIdRegex, obj, j, deserializedCaches, refCaches);
+                }
+            }
+            else {
+                const serializeClassId = obj.serializeClassId;
+                const serializeClassInfo = serializeClassId ? getClassInfoById(serializeClassId) : null;
+                if (serializeClassInfo) {
+                    delete obj.serializeClassId;
+                    const serializeClass = serializeClassInfo.type;
+                    const newObj = new serializeClass();
+                    Object.assign(newObj, obj);
+                    obj = newObj;
+                }
+                for (let key of Object.keys(obj)) {
+                    this.checkRefCache(objIdRegex, obj, key, deserializedCaches, refCaches);
+                }
+            }
+
+            deserializedCaches[objId] = obj;
+            let refs = refCaches[objId];
+            if (refs) {
+                for (let ref of refs) {
+                    ref.obj[ref.keyOrIndex] = obj;
+                }
+                delete refCaches[objId];
+            }
+        }
+    }
+
+    private static checkRefCache(objIdRegex: RegExp, obj: any, keyOrIndex: any, deserializedCaches: any, refCaches: any) {
+        let m;
+        const value = obj[keyOrIndex];
+        if (typeof value == "string" && (m = objIdRegex.exec(value))) {
+            let refId = m[1];
+            let refObj = deserializedCaches[refId];
+            if (refObj) {
+                obj[keyOrIndex] = refObj;
+            }
+            else {
+                let refs = refCaches[refId];
+                if (refs == null) {
+                    refs = [];
+                    refCaches[refId] = refs;
+                }
+                refs.push({
+                    obj: obj,
+                    keyOrIndex: keyOrIndex
+                });
+            }
+        }
+    }
+
+}
+
+/**
+ * @deprecated
+ */
+export class SerializableUtil_v1 {
+
+    /**
+     * 序列化
+     * @param obj
+     * @returns {any | string | {}}
+     */
+    static serialize(obj: any) {
+        const serializedCaches = new Map<any, string>();
+        return this._serialize(obj, serializedCaches, "$");
+    }
+
+    private static _serialize(obj: any, serializedCaches: Map<any, string>, path: string) {
+        // console.log(path);
+        if (obj == null || obj == undefined) return obj; // null 和 undefined 不参与序列化
+
+        const objType = typeof obj;
+        if (objType == "string" || objType == "number" || objType == "boolean") {
+            return obj; // string | number | boolean 不需要进一步序列化，直接返回原值
+        }
+
+        const serializedCache = serializedCaches.get(obj);
+        if (serializedCache !== undefined) {
+            return "ref(" + serializedCache + ")"; // 序列化过程，如果当前处理的实例在之前已经有过序列化，则返回之前实例在序列化后对象中的路径，解决循环引用的问题
+        }
+
+        // 保存当前处理的实例的路径
+        serializedCaches.set(obj, path);
+
+        let res;
+        const objConstructor = obj.constructor;
+        if (objType == "function" || !objConstructor) {
+            res = obj; // 方法不需要进一步序列化
+        }
+        else if (obj instanceof Array) {
+            res = [];
+            (obj as Array<any>).forEach((value, index) => {
+                res.push(this._serialize(value, serializedCaches, path + "[" + index + "]")); // 数组中每个元素需要进一步序列化
+            });
+        }
+        else {
+            res = {};
+            let transients = transientFields.get(objConstructor);
+            for (let field in obj) {
+                if (transients && transients[field]) {
+                    // 忽略字段
+                }
+                else res[field] = this._serialize(obj[field], serializedCaches, path + "[" + JSON.stringify(field) + "]"); // 进一步序列化类成员的值
+            }
+
+            let classInfo = classInfos.get(objConstructor);
+            if (classInfo && classInfo.id) {
+                res.serializeClassId = classInfo.id; // 设置 classId，在反序列化时获取类信息
+            }
+        }
+        return res || {};
+    }
 
     /**
      * 反序列化
@@ -462,7 +688,7 @@ export class SerializableUtil_old {
             });
         }
         else {
-            const serializeClassId = (obj as any).serializeClassId;
+            const serializeClassId = obj.serializeClassId;
             const serializeClassInfo = serializeClassId ? getClassInfoById(serializeClassId) : null;
             if (serializeClassInfo) {
                 const serializeClass = serializeClassInfo.type;

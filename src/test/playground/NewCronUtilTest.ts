@@ -1,4 +1,4 @@
-import {AddToQueue, FromQueue, Job, Launcher, logger, NedbHelperUi, NoneWorkerFactory, OnTime} from "../..";
+import {AddToQueue, FromQueue, Job, Launcher, logger, DbHelperUi, NoneWorkerFactory, OnTime} from "../..";
 
 class TestTask {
 
@@ -23,7 +23,7 @@ class TestTask {
         }
     })
     async test(useless: any, job: Job) {
-        logger.debug(job.url());
+        logger.debug(job.url);
     }
 
 }
@@ -34,7 +34,7 @@ class TestTask {
         TestTask
     ],
     dataUis: [
-        NedbHelperUi,
+        DbHelperUi,
     ],
     workerFactorys: [
     ],

@@ -17,7 +17,7 @@ import {
 } from "../Types";
 import {EventEmitter} from "events";
 import {QueueManager} from "../manager/QueueManager";
-import {existBean, getBean, registeBean} from "../..";
+import {existBean, getBean, MongodbDao, NedbDao, registeBean} from "../..";
 import {ArrayUtil} from "../../common/util/ArrayUtil";
 
 const jobConfigs: JobConfig[] = [];
@@ -158,11 +158,25 @@ export function Launcher(appConfig: AppConfig) {
             }
         }
 
-        // 等待 jobManager 初始化完成， 实际上是等待 nedb 数据库加载完成
-        logger.info("init JobManager ...");
+        // 初始化数据库
+        if (!appConfig.dbUrl) {
+            appConfig.dbUrl = "nedb://" + appConfig.workplace + "/nedb";
+        }
+
+        if (appConfig.dbUrl.startsWith("nedb://")) {
+            appInfo.db = new NedbDao(appConfig.dbUrl);
+        }
+        else if (appConfig.dbUrl.startsWith("mongodb://")) {
+            appInfo.db = new MongodbDao(appConfig.dbUrl);
+        }
+        else {
+            throw new Error("not supported db: " + appConfig.dbUrl);
+        }
+        logger.info("init db(" + appConfig.dbUrl + ") ...");
+        await appInfo.db.waitReady();
+        logger.info("init db(" + appConfig.dbUrl + ") successfully");
+
         appInfo.jobManager = new JobManager();
-        await appInfo.jobManager.init();
-        logger.info("init JobManager successfully");
 
         // 启动 QueueManager
         logger.info("init QueueManager ...");

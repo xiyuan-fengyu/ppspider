@@ -1,9 +1,8 @@
 import {
     AddToQueue, appInfo, DataUi, DataUiRequest,
-    DefaultJob, FileUtil, FromQueue,
-    Job,
+    Job, FileUtil, FromQueue,
     Launcher,
-    NedbHelperUi,
+    DbHelperUi,
     NoneWorkerFactory,
     OnStart, PuppeteerUtil,
     PuppeteerWorkerFactory
@@ -103,7 +102,7 @@ export class GeoTask {
             const res = [];
             for (let key of Object.keys(gsmMap)) {
                 const gsm = gsmMap[key];
-                const subJob  = new DefaultJob("https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=" + gsm.id);
+                const subJob  = new Job("https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=" + gsm.id);
                 subJob.datas({
                     id: gsm.id
                 });
@@ -122,7 +121,7 @@ export class GeoTask {
         name: "SRX"
     })
     async gsmPage(page: Page, job: Job) {
-        await page.goto(job.url());
+        await page.goto(job.url);
         await PuppeteerUtil.addJquery(page);
         const srx = await page.evaluate(() => {
             let res = null;
@@ -140,10 +139,10 @@ export class GeoTask {
             return res;
         });
 
-        const gsmId = job.datas().id;
+        const gsmId = job.datas.id;
         this.gsmMap[gsmId].srx = srx;
-        const subJob  = new DefaultJob("https://www.ncbi.nlm.nih.gov/sra/" + srx);
-        subJob.datas(job.datas());
+        const subJob  = new Job("https://www.ncbi.nlm.nih.gov/sra/" + srx);
+        subJob.datas(job.datas);
         return subJob;
     }
 
@@ -153,7 +152,7 @@ export class GeoTask {
         description: "提取srr编号"
     })
     async srxPage(page: Page, job: Job) {
-        await page.goto(job.url());
+        await page.goto(job.url);
         await PuppeteerUtil.addJquery(page);
         // noinspection UnnecessaryLocalVariableJS
         const srrs = await page.evaluate(() => {
@@ -167,7 +166,7 @@ export class GeoTask {
             });
             return res;
         });
-        const gsmId = job.datas().id;
+        const gsmId = job.datas.id;
         this.gsmMap[gsmId].srrs = srrs;
     }
 
@@ -206,7 +205,7 @@ export class GeoTask {
         GeoTask
     ],
     dataUis: [
-        NedbHelperUi,
+        DbHelperUi,
         GsmUi
     ],
     workerFactorys: [

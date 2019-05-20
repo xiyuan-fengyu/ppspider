@@ -1,13 +1,15 @@
 import * as Nedb from "nedb";
 import {StringUtil} from "../util/StringUtil";
 import * as fs from "fs";
-import {logger} from "../util/logger";
+import * as path from "path";
+import * as readline from "readline";
+import {DbDao, Pager, Sort} from "./DbDao";
+import {FileUtil, PromiseUtil} from "../..";
 import Persistence = require("nedb/lib/persistence");
 import Index = require("nedb/lib/indexes");
 import model = require("nedb/lib/model");
 import storage = require("nedb/lib/storage");
-import * as path from "path";
-import * as readline from "readline";
+import {Db} from "mongodb";
 
 Persistence.prototype.loadDatabase = function (cb) {
     const callback = cb || function () {};
@@ -223,98 +225,62 @@ Persistence.prototype.persistCachedDatabase = function (cb) {
     });
 };
 
-export type Sort = {[by: string]: -1 | 1};
-
-export class Pager<T> {
-
-    pageIndex: number = 0;
-
-    pageSize: number = 10;
-
-    match: any = {};
-
-    projection: any;
-
-    sort: Sort;
-
-    total: number;
-
-    list: T[];
-
+type Nedbs = {
+    [collectionName: string]: Nedb
 }
 
-export class NedbModel {
+export class NedbDao extends DbDao {
 
-    _id: string | number;
+    private readonly compactInterval: number = 600000;
 
-    createTime: number = new Date().getTime();
+    protected nedbDir: string;
 
-    updateTime: number;
+    protected nedbs: Nedbs = {};
 
-    constructor(_idOrValues?: any) {
-        if (_idOrValues != null) {
-            const t = typeof _idOrValues;
-            if (t === "object") {
-                Object.assign(this as any, _idOrValues);
+    constructor(url: string) {
+        super(url);
+
+        const ps = [];
+        this.nedbDir = url.substring("nedb;//".length);
+        FileUtil.mkdirs(this.nedbDir);
+        const files = fs.readdirSync(this.nedbDir);
+        for (let file of files) {
+            if (file.endsWith(".collection")) {
+                const collectionName = file.substring(0, file.length - 11);
+                ps.push(this.collection(collectionName));
             }
-            else if (t === "string" || t === "number") {
-                this._id = _idOrValues;
-            }
         }
-        if (this._id == null) {
-            this._id = StringUtil.id();
-        }
-    }
-
-}
-
-export class NedbDao<T extends NedbModel> {
-
-    private static _instances = {};
-
-    private readonly compactInterval: number;
-
-    protected nedbP: Promise<Nedb>;
-
-    constructor(dbDir: string, compactInterval: number = 600000) {
-        NedbDao._instances[this.constructor.name] = this;
-
-        if (compactInterval >= 0 && compactInterval < 60000) {
-            logger.warn(`auto compact interval(${compactInterval}ms) is less than 1 minute.`);
-        }
-        this.compactInterval = compactInterval;
-
-        const dbFile = dbDir + "/" + this.constructor.name + ".db";
-        this.nedbP = new Promise<Nedb>((resolve, reject) => {
-            const nedb = new Nedb({
-                filename: dbFile,
-                autoload: false
-            });
-
-            nedb.loadDatabase(error => {
-                if (error) {
-                    reject(new Error("nedb loading failed: " + dbFile));
-                }
-                else {
-                    nedb.addListener("compaction.done", () => {
-                       setTimeout(() => nedb.persistence.compactDatafile(), this.compactInterval);
-                    });
-                    resolve(nedb);
-                }
-            });
+        Promise.all(ps).then(results => {
+            this.dbResolve(this.nedbs);
         });
     }
 
-    public static dbs(): string[] {
-        return Object.keys(NedbDao._instances);
-    }
-
-    public static db(dbName: string): NedbDao<any> {
-        return NedbDao._instances[dbName];
-    }
-
-    waitNedbReady() {
-        return this.nedbP.then(nedb => true);
+    private collection(collectionName: string): Promise<Nedb> {
+        return new Promise<Nedb>((resolve, reject) => {
+            let nedb = this.nedbs[collectionName];
+            if (nedb) {
+                resolve(nedb);
+            }
+            else {
+                const collectionPath = this.nedbDir + (this.nedbDir.endsWith("/") ? "" : "/") + collectionName + ".collection";
+                nedb = new Nedb({
+                    filename: collectionPath,
+                    autoload: false
+                });
+                nedb.loadDatabase(error => {
+                    if (error) {
+                        reject(new Error("nedb loading failed: " + collectionPath));
+                    }
+                    else {
+                        nedb.addListener("compaction.done", () => {
+                            setTimeout(() => nedb.persistence.compactDatafile(), this.compactInterval);
+                        });
+                        this.nedbs[collectionName] = nedb;
+                        resolve(nedb);
+                    }
+                });
+            }
+        })
     }
 
     /**
@@ -340,62 +306,52 @@ export class NedbDao<T extends NedbModel> {
         return query;
     }
 
-    private static ifErrorRejectElseResolve(err: Error | any, reject: any, resolve?: any, res?: any) {
-        if (err && err.constructor == Error) {
-            reject(err);
-        }
-        else if (resolve) {
-            resolve(res);
-        }
-    };
-
-    save(item: T, justUpdate: boolean = false): Promise<boolean> {
-        return new Promise<boolean>((resolve, reject) => {
-            item.updateTime = new Date().getTime();
-            if (!justUpdate) {
-                this.nedbP.then(nedb => {
-                    nedb.insert(item, (err: any) => {
-                        if (err) {
-                            if (err.errorType == "uniqueViolated") {
-                                nedb.update({_id: item._id}, item, {}, err1 => {
-                                    NedbDao.ifErrorRejectElseResolve(err1, reject, resolve, true);
-                                });
-                            }
-                            else {
-                                reject(err);
-                            }
-                        }
-                        else {
-                            resolve(true);
-                        }
-                    });
-                })
-            }
-            else {
-                this.nedbP.then(nedb => {
-                    nedb.update({_id: item._id}, item, {}, err1 => {
-                        NedbDao.ifErrorRejectElseResolve(err1, reject, resolve, true);
-                    });
-                });
-            }
+    collections(): Promise<string[]> {
+        return new Promise<string[]>((resolve, reject) => {
+            this.dbPromise.then(nedbs => {
+                resolve(Object.keys(nedbs));
+            })
         });
     }
 
-    private find(query: any, projection: any, justOne: boolean, sort?: Sort, skip?: number, limit?: number): Promise<any> {
+    save(collectionName: string, item: any): Promise<boolean> {
+        return new Promise<boolean>((resolve, reject) => {
+            if (item._id == null) {
+                item._id = StringUtil.id();
+            }
+            this.collection(collectionName).then(nedb => {
+                nedb.insert(item, (err: any) => {
+                    if (err) {
+                        if (err.errorType == "uniqueViolated") {
+                            nedb.update({_id: item._id}, item, {}, err1 => {
+                                PromiseUtil.rejectOrResolve(reject, err1, resolve, true);
+                            });
+                        }
+                        else {
+                            reject(err);
+                        }
+                    }
+                    else {
+                        resolve(true);
+                    }
+                });
+            });
+        });
+    }
+
+    private find(collectionName: string, query: any, projection: any, justOne: boolean, sort?: Sort, skip?: number, limit?: number): Promise<any> {
         return new Promise<any>((resolve, reject) => {
             query = this.castRegexInMatch(query || {});
             if (!projection) {
                 projection = {};
             }
-            if (justOne) {
-                this.nedbP.then(nedb => {
+            this.collection(collectionName).then(nedb => {
+                if (justOne) {
                     nedb.findOne(query, projection, (error, doc) => {
-                        NedbDao.ifErrorRejectElseResolve(error, reject, resolve, doc);
+                        PromiseUtil.rejectOrResolve(reject, error, resolve, doc);
                     });
-                });
-            }
-            else {
-                this.nedbP.then(nedb => {
+                }
+                else {
                     const cursor = nedb.find(query, projection);
                     if (sort) {
                         let sortKeyNum = 0;
@@ -418,81 +374,81 @@ export class NedbDao<T extends NedbModel> {
                         cursor.limit(limit);
                     }
                     cursor.exec((error, docs) => {
-                        NedbDao.ifErrorRejectElseResolve(error, reject, resolve, docs);
+                        PromiseUtil.rejectOrResolve(reject, error, resolve, docs);
                     });
-                });
-            }
+                }
+            });
         });
     }
 
-    findById(_id: string, projection?: any): Promise<T> {
-        return this.find({_id: _id}, projection, true);
+    findById(collectionName: string, _id: string, projection?: any): Promise<any> {
+        return this.find(collectionName, {_id: _id}, projection, true);
     }
 
-    findOne(query: any, projection?: any): Promise<T> {
-        return this.find(query, projection, true);
+    findOne(collectionName: string, query: any, projection?: any): Promise<any> {
+        return this.find(collectionName, query, projection, true);
     }
 
-    findList(query: any, projection?: any, sort?: Sort, skip?: number, limit?: number): Promise<T[]>  {
-        return this.find(query, projection, false, sort, skip, limit);
+    findList(collectionName: string, query: any, projection?: any, sort?: Sort, skip?: number, limit?: number): Promise<any[]>  {
+        return this.find(collectionName, query, projection, false, sort, skip, limit);
     }
 
-    count(query: any): Promise<number> {
+    count(collectionName: string, query: any): Promise<number> {
         return new Promise<number>((resolve, reject) => {
             query = this.castRegexInMatch(query || {});
-            this.nedbP.then(nedb => {
+            this.collection(collectionName).then(nedb => {
                 nedb.count(query, (error, num) => {
-                    NedbDao.ifErrorRejectElseResolve(error, reject, resolve, num);
+                    PromiseUtil.rejectOrResolve(reject, error, resolve, num);
                 });
             });
         });
     }
 
-    remove(query: any, multi: boolean = true): Promise<number> {
+    remove(collectionName: string, query: any, multi: boolean = true): Promise<number> {
         return new Promise<number>((resolve, reject) => {
             query = this.castRegexInMatch(query || {});
-            this.nedbP.then(nedb => {
+            this.collection(collectionName).then(nedb => {
                 nedb.remove(query,  {
                     multi: multi
                 },(error, num) => {
-                    NedbDao.ifErrorRejectElseResolve(error, reject, resolve, num);
+                    PromiseUtil.rejectOrResolve(reject, error, resolve, num);
                 });
             });
         });
     }
 
-    update(query: any, updateQuery: any, options?: Nedb.UpdateOptions): Promise<number> {
+    update(collectionName: string, query: any, updateQuery: any, multi: boolean = true): Promise<number> {
         return new Promise<number>((resolve, reject) => {
             query = this.castRegexInMatch(query || {});
-            this.nedbP.then(nedb => {
-                nedb.update(query, updateQuery, options || {},(error, num) => {
-                    NedbDao.ifErrorRejectElseResolve(error, reject, resolve, num);
+            this.collection(collectionName).then(nedb => {
+                nedb.update(query, updateQuery, {multi: multi},(error, num) => {
+                    PromiseUtil.rejectOrResolve(reject, error, resolve, num);
                 });
             });
         });
     }
 
-    page(pager: Pager<T>): Promise<Pager<T>> {
+    page(collectionName: string, pager: Pager): Promise<Pager> {
         return new Promise<any>( (resolve, reject) => {
             const query = this.castRegexInMatch(pager.match || {});
-            this.nedbP.then(async nedb => {
-                const total = await new Promise<any>(resolve1 => {
-                    nedb.count(query, (err, n) => {
-                        resolve1(err || n);
-                    });
-                });
-                NedbDao.ifErrorRejectElseResolve(total, resolve);
+            this.collection(collectionName).then(async nedb => {
+                let total;
+                try {
+                    total = await this.count(collectionName, query);
+                }
+                catch (e) {
+                    return reject(e);
+                }
 
                 const pageSize = pager.pageSize || 10;
                 const pageIndex = Math.min(pager.pageIndex || 0, parseInt("" + (total - 1) / 10));
-                let list = null;
+                let list;
                 try {
-                    list = await this.findList(query, pager.projection || {}, pager.sort, pageIndex * pageSize, pageSize);
+                    list = await this.findList(collectionName, query, pager.projection || {}, pager.sort, pageIndex * pageSize, pageSize);
                 }
                 catch (e) {
-                    list = e;
+                    return reject(e);
                 }
-                NedbDao.ifErrorRejectElseResolve(list, reject);
 
                 pager.pageIndex = pageIndex;
                 pager.total = total;

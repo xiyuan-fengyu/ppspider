@@ -7,6 +7,7 @@ import {EventEmitter} from "events";
 import {QueueManager} from "./manager/QueueManager";
 import {LoggerSetting} from "../common/util/logger";
 import {WebServer} from "./ui/WebServer";
+import {DbDao} from "../common/db/DbDao";
 
 export type Class_Queue = new () => Queue;
 
@@ -85,6 +86,7 @@ export type DataUiRequestConfig = {
 export type AppConfig = {
     workplace: string; // 系统的工作目录
     queueCache?: string; // 运行状态保存文件的路径，默认为 this.workplace + "/queueCache.txt"
+    dbUrl?: string; // 数据库配置，支持 nedb 或 mongodb；少量数据用 nedb，url格式为：nedb://本地nedb存储文件夹；若应用要长期执行，生成数据量大，建议使用 mongodb，url格式为：mongodb://username:password@host:port/dbName
     tasks: any[]; // 任务类
     dataUis?: any[]; // 需要引入的DataUi
     workerFactorys: WorkerFactory<any>[]; // 工厂类实例
@@ -101,6 +103,8 @@ export interface AppInfo extends AppConfig {
     webServer: WebServer;
 
     eventBus: EventEmitter;
+
+    db: DbDao;
 
 }
 

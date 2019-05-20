@@ -5,7 +5,7 @@ import {Serializable} from "../../common/serialize/Serializable";
 
 /**
  * 布隆过滤器，AddToQueue 默认使用这个过滤器
- * 通过 job.key() 来判断任务是否已经存在
+ * 通过 job.key 来判断任务是否已经存在
  */
 @Serializable()
 export class BloonFilter implements Filter {
@@ -23,7 +23,7 @@ export class BloonFilter implements Filter {
     }
 
     isExisted(job: Job): boolean {
-        const key = job.key();
+        const key = job.key;
         if (!key) return this.emptyExisted;
         for (let seed of BloonFilter.seeds) {
             if (!this.bitSet.get(BloonFilter.hash(key, BloonFilter.size, seed))) return false;
@@ -32,7 +32,7 @@ export class BloonFilter implements Filter {
     }
 
     setExisted(job: Job): void {
-        const key = job.key();
+        const key = job.key;
         if (key) {
             for (let seed of BloonFilter.seeds) {
                 this.bitSet.set(BloonFilter.hash(key, BloonFilter.size, seed), 1);

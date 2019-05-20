@@ -39,4 +39,13 @@ export class PromiseUtil {
         });
     }
 
+    static rejectOrResolve(reject: any, err: Error | any, resolve?: any, res?: any) {
+        if (err instanceof Error) {
+            reject(err);
+        }
+        else if (resolve) {
+            resolve(res);
+        }
+    }
+
 }

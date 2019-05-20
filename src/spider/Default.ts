@@ -9,7 +9,7 @@ export class Defaults {
 
     static readonly exeIntervalJitterRate = 0.25;
 
-    // 设置 job.datas()._.maxTry 可以覆盖这个的最大尝试次数
+    // 设置 job.datas._.maxTry 可以覆盖这个的最大尝试次数
     static readonly maxTry = 3;
 
     static readonly jobTimeout = 300000;

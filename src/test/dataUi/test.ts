@@ -7,7 +7,7 @@ import {
     getBean,
     Job,
     Launcher,
-    logger, NedbHelperUi,
+    logger, DbHelperUi,
     NoneWorkerFactory,
     OnStart,
     OnTime,
@@ -140,7 +140,7 @@ class TestTask {
 
     @OnTime({
         urls: "",
-        cron: "* * * * * *",
+        cron: "0 */10 * * * *",
         workerFactory: NoneWorkerFactory
     })
     async onTime(useless: any, job: Job) {
@@ -174,7 +174,7 @@ class TestTask {
     })
     async test(useless: any, job: Job) {
         await PromiseUtil.sleep(10000);
-        logger.debug(job.url());
+        logger.debug(job.url);
     }
 
 }
@@ -185,7 +185,7 @@ class TestTask {
         TestTask
     ],
     dataUis: [
-        NedbHelperUi,
+        DbHelperUi,
         TestDataUi,
         TestDataUi2
     ],

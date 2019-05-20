@@ -1,6 +1,8 @@
 export {Autowired, Bean, AfterInit, getBean, registeBean, existBean} from "./common/bean/Bean";
 export {Serializable, SerializableUtil, Transient} from "./common/serialize/Serializable";
-export {Sort, Pager, NedbModel, NedbDao, NedbDaoConfig} from "./common/nedb/NedbDao";
+export {Sort, Pager, DbDao} from "./common/db/DbDao";
+export {NedbDao} from "./common/db/NedbDao";
+export {MongodbDao} from "./common/db/MongodbDao";
 export {CronUtil} from "./common/util/CronUtil";
 export {DateUtil} from "./common/util/DateUtil";
 export {DownloadResult, DownloadUtil} from "./common/util/DownloadUtil";
@@ -19,9 +21,10 @@ export {
     RequestMappingConfig,
     ViewEncapsulation,
     DataUiConfig,
+    AppConfig,
     AppInfo,
 } from "./spider/Types";
-export {NedbHelperUi} from "./spider/data-ui/NedbHelper";
+export {DbHelperUi} from "./spider/data-ui/NedbHelper";
 export {AddToQueue} from "./spider/decorators/AddToQueue";
 export {DataUi, DataUiRequest} from "./spider/decorators/DataUi";
 export {FromQueue} from "./spider/decorators/FromQueue";
@@ -33,7 +36,6 @@ export {RequestMapping} from "./spider/decorators/RequestMapping";
 export {BloonFilter} from "./spider/filter/BloonFilter";
 export {Filter} from "./spider/filter/Filter";
 export {NoFilter} from "./spider/filter/NoFilter";
-export {DefaultJob} from "./spider/job/DefaultJob";
 export {JobStatus, instanceofJob, Job} from "./spider/job/Job";
 export {DefaultPriorityQueue} from "./spider/queue/DefaultPriorityQueue";
 export {DefaultQueue} from "./spider/queue/DefaultQueue";

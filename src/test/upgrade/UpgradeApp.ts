@@ -1,10 +1,12 @@
 import {Launcher} from "../..";
-import {UpgradeQueueCacheTask} from "../../upgrade/UpgradeQueueCacheTask";
+import {QueueCache_v1ToV3Task} from "../../upgrade/QueueCache_v1ToV3Task";
+import {QueueCache_v2ToV3Task} from "../../upgrade/QueueCache_v2ToV3Task";
 
 @Launcher({
     workplace: __dirname + "/workplace",
     tasks: [
-        UpgradeQueueCacheTask
+        QueueCache_v1ToV3Task,
+        QueueCache_v2ToV3Task
     ],
     dataUis: [
     ],

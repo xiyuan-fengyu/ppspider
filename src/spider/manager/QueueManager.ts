@@ -1,4 +1,4 @@
-import {Assign, SerializableUtil, Serializable, Transient} from "../../common/serialize/Serializable";
+import {Assign, Serializable, SerializableUtil, Transient} from "../../common/serialize/Serializable";
 import {Queue} from "../queue/Queue";
 import {
     AddToQueueInfo,
@@ -22,11 +22,9 @@ import {CronUtil} from "../../common/util/CronUtil";
 import {DefaultQueue} from "../queue/DefaultQueue";
 import {NoFilter} from "../filter/NoFilter";
 import {Filter} from "../filter/Filter";
-import {DefaultJob} from "../job/DefaultJob";
 import {BloonFilter} from "../filter/BloonFilter";
 import {PromiseUtil} from "../../common/util/PromiseUtil";
-import {FileUtil, getBean} from "../..";
-import {deserializeJob} from "./JobManager";
+import {getBean} from "../..";
 
 type QueueInfo = {
 
@@ -154,17 +152,15 @@ export class QueueManager {
 
     reExecuteJob(data: any): Promise<any> {
         return new Promise<any>(resolve => {
-            appInfo.jobManager.job(data._id).then(doc => {
-                const job = deserializeJob(doc.serialize) as Job;
-
+            appInfo.jobManager.job(data._id).then(job => {
                 // 重新设置最大尝试次数
-                if (job.datas()._ == null) {
-                    job.datas()._ = {};
+                if (job.datas._ == null) {
+                    job.datas._ = {};
                 }
-                job.datas()._.maxTry = job.tryNum() + Defaults.maxTry;
+                job.datas._.maxTry = job.tryNum + Defaults.maxTry;
 
                 // 重新添加到任务队列
-                QueueManager.addJobToQueue(job, null, job.queue(), this.queueInfos[job.queue()].queue, null);
+                QueueManager.addJobToQueue(job, null, job.queue, this.queueInfos[job.queue].queue, null);
                 resolve({
                     success: true,
                     message: "add to queue success"
@@ -190,10 +186,8 @@ export class QueueManager {
                     return true;
                 }
                 else {
-                    const jobInfo = await appInfo.jobManager.job(data._id);
-                    const job = deserializeJob(jobInfo.serialize) as Job;
-                    const s = job.status();
-                    if (job.status() != JobStatus.Running) {
+                    const job = await appInfo.jobManager.job(data._id);
+                    if (job.status != JobStatus.Running) {
                         return true;
                     }
                 }
@@ -265,7 +259,7 @@ export class QueueManager {
                 queueDetail.urls = typeof urls == "string" ? [urls] : urls;
                 queueDetail.cron = queueInfo.config['cron'];
                 if (queueInfo.queue.size() > 0) {
-                    queueDetail.nextExeTime = queueInfo.queue.peek().datas()._.exeTime;
+                    queueDetail.nextExeTime = queueInfo.queue.peek().datas._.exeTime;
                 }
             }
             else {
@@ -419,8 +413,8 @@ export class QueueManager {
                 queueInfo.config['cron'] = data.value;
                 while (!queueInfo.queue.isEmpty()) {
                     const job = queueInfo.queue.pop();
-                    job.status(JobStatus.Closed);
-                    job.logs(logger.formatWithoutPos("info", "job closed because of cron change"));
+                    job.status = JobStatus.Closed;
+                    job.logs.push(logger.formatWithoutPos("info", "job closed because of cron change"));
                 }
             }
         }
@@ -648,7 +642,7 @@ export class QueueManager {
             }
         }
 
-        const nearTime = CronUtil.next((queueInfo.config as OnTimeConfig).cron, 1)[0].getTime();
+        const nearTime = +CronUtil.next((queueInfo.config as OnTimeConfig).cron, 1)[0].getTime().toFixed(0);
         return nextExeTime == null ? nearTime : Math.max(nearTime, nextExeTime);
     }
 
@@ -700,7 +694,7 @@ export class QueueManager {
                     if (jobs.constructor == String || instanceofJob(jobs)) {
                         QueueManager.addJobToQueue(jobs, parent, queueName, queue, filter, jobInfo._, this.jobOverrideConfigs[queueName]);
                     }
-                    else if (jobs.constructor == Array) {
+                    else if (jobs instanceof Array) {
                         for (let job of jobs) {
                             QueueManager.addJobToQueue(job, parent, queueName, queue, filter, jobInfo._, this.jobOverrideConfigs[queueName]);
                         }
@@ -712,14 +706,14 @@ export class QueueManager {
     }
 
     private static addJobToQueue(jobOrUrl: any, parent: Job, queueName: string, queue: Queue, filter: Filter, _?: any, jobOverrideConfig?: JobOverrideConfig) {
-        const job = instanceofJob(jobOrUrl) ? jobOrUrl as Job : new DefaultJob(jobOrUrl);
+        let job = instanceofJob(jobOrUrl) ? jobOrUrl as Job : new Job(jobOrUrl);
 
         // 设置一些默认参数
-        job.parentId(job.parentId() || "");
-        job.datas(job.datas() || {});
-        job.depth(job.depth() || 0);
-        job.tryNum(job.tryNum() || 0);
-        job.status(job.status() || JobStatus.Waiting);
+        job.parentId || (job.parentId = "");
+        job.datas || (job.datas = {});
+        job.depth || (job.depth = 0);
+        job.tryNum || (job.tryNum = 0);
+        job.status || (job.status = JobStatus.Waiting);
 
         // 重写 job 的一些信息
         if (jobOverrideConfig) {
@@ -728,30 +722,30 @@ export class QueueManager {
 
         // 添加额外信息
         if (_) {
-            let _sysData = job.datas()._;
+            let _sysData = job.datas._;
             if (!_sysData) {
-                job.datas()._ = _sysData = {};
+                job.datas._ = _sysData = {};
             }
             Object.assign(_sysData, _);
         }
 
         // 检查和修复 job 的信息
-        if (!job.queue()) job.queue(queueName);
+        if (!job.queue) job.queue = queueName;
         if (parent) {
-            if (!job.parentId()) job.parentId(parent.id());
-            if (job.depth() == 0) job.depth(parent.depth() + 1);
+            if (!job.parentId) job.parentId = parent._id;
+            if (job.depth == 0) job.depth = parent.depth + 1;
         }
 
         // 通过filter做job存在性检测
         if (!filter || !filter.isExisted(job)) {
             if (filter) filter.setExisted(job);
             queue.push(job);
-            if (job.status() != JobStatus.RetryWaiting)job.status(JobStatus.Waiting);
-            job.logs(logger.formatWithoutPos("info", "add to queue"));
+            if (job.status != JobStatus.RetryWaiting) job.status = JobStatus.Waiting;
+            job.logs.push(logger.formatWithoutPos("info", "add to queue"));
         }
         else {
-            job.status(JobStatus.Filtered);
-            job.logs(logger.formatWithoutPos("warn", "filtered"));
+            job.status = JobStatus.Filtered;
+            job.logs.push(logger.formatWithoutPos("warn", "filtered"));
         }
 
         // 保存job的当前状态信息
@@ -821,14 +815,14 @@ export class QueueManager {
                          */
                         job = queueInfo.queue.peek();
                         if (job) {
-                            if (job.datas()._.exeTime > now) job = null;
+                            if (job.datas._.exeTime > now) job = null;
                             else {
                                 queueInfo.queue.pop();
                                 if (!queueInfo.config.running) {
                                     // 队列未工作，任务进入Closed状态
-                                    job.status(JobStatus.Closed);
-                                    job.logs(logger.formatWithoutPos("warn","the OnTime queue is not running"));
-                                    appInfo.jobManager.save(job);
+                                    job.status = JobStatus.Closed;
+                                    job.logs.push(logger.formatWithoutPos("warn","the OnTime queue is not running"));
+                                    appInfo.jobManager.update(job, ["status", "logs"]);
                                     job = null;
                                 }
                             }
@@ -854,6 +848,28 @@ export class QueueManager {
         }
     }
 
+    private jobSnapshot(job: Job) {
+        const res: any = {};
+        for (let key in job) {
+            res[key] = JSON.stringify(job[key]);
+        }
+        return res;
+    }
+
+    private jobChangedFields(jobSnapshot1, jobSnapshot2) {
+        const all = {};
+        Object.assign(all, jobSnapshot1);
+        Object.assign(all, jobSnapshot2);
+        let keys = Object.keys(all);
+        let fields = [];
+        for (let key of keys) {
+            if (jobSnapshot1[key] != jobSnapshot2[key]) {
+                fields.push(key);
+            }
+        }
+        return fields;
+    }
+
     /**
      * 执行一个任务
      */
@@ -861,6 +877,7 @@ export class QueueManager {
         queueInfo.curParallel = (queueInfo.curParallel || 0) + 1;
         queueInfo.lastExeTime = new Date().getTime();
 
+        let jobSnap1;
         const workerFactory = getBean<WorkerFactory<any>>(queueInfo.config.workerFactory);
         return workerFactory.get().then(async worker => {
             const target = queueInfo.config["target"];
@@ -869,10 +886,11 @@ export class QueueManager {
             this.runningNum++;
             this.delayPushInfo();
 
-            job.logs(logger.formatWithoutPos("info","start execution"));
-            job.status(JobStatus.Running);
-            job.tryNum((job.tryNum() || 0) + 1);
-            appInfo.jobManager.save(job);
+            job.logs.push(logger.formatWithoutPos("info","start execution"));
+            job.status = JobStatus.Running;
+            job.tryNum++;
+            appInfo.jobManager.update(job, ["logs", "status", "tryNum"]);
+            jobSnap1 = this.jobSnapshot(job);
 
             try {
                 await new Promise(async (resolve, reject) => {
@@ -885,7 +903,7 @@ export class QueueManager {
                    }
 
                     const listenInterrupt = (jobId, reason) => {
-                        if (jobId == null || jobId == job.id()) {
+                        if (jobId == null || jobId == job._id) {
                             // 强制停止任务
                             reject(new Error(Events.QueueManager_InterruptJob + ": " + reason));
                             if (jobId) {
@@ -908,21 +926,21 @@ export class QueueManager {
                     appInfo.eventBus.removeListener(Events.QueueManager_InterruptJob, listenInterrupt);
                 });
 
-                job.status(JobStatus.Success);
-                job.logs(logger.formatWithoutPos("info","executed successfully"));
+                job.status = JobStatus.Success;
+                job.logs.push(logger.formatWithoutPos("info","executed successfully"));
                 this.successNum++;
             }
             catch (e) {
-                if (job.tryNum() >= (((job.datas() || {})._ || {}).maxTry || Defaults.maxTry)) {
+                if (job.tryNum >= ((job.datas._ || {}).maxTry || Defaults.maxTry)) {
                     // 重试次数达到最大，任务失败
-                    job.status(JobStatus.Fail);
+                    job.status = JobStatus.Fail;
                     this.failNum++;
                 }
                 else {
                     // 还有重试机会，置为重试等待状态
-                    job.status(JobStatus.RetryWaiting);
+                    job.status = JobStatus.RetryWaiting;
                 }
-                job.logs(logger.formatWithoutPos("error", e));
+                job.logs.push(logger.formatWithoutPos("error", e));
                 logger.error(job, e);
             }
 
@@ -930,7 +948,7 @@ export class QueueManager {
             queueInfo.curParallel--;
             return worker;
         }).then(async worker => {
-            if (job.status() == JobStatus.Success) {
+            if (job.status == JobStatus.Success) {
                 queueInfo.success = (queueInfo.success || 0) + 1;
             }
             else {
@@ -938,11 +956,15 @@ export class QueueManager {
                 queueInfo.fail = (queueInfo.fail || 0) + 1;
             }
 
-            if (job.status() == JobStatus.RetryWaiting) {
-                QueueManager.addJobToQueue(job, null, job.queue(), queueInfo.queue, null);
+            if (job.status == JobStatus.RetryWaiting) {
+                QueueManager.addJobToQueue(job, null, job.queue, queueInfo.queue, null);
+            }
+            else {
+                const changedFields = this.jobChangedFields(jobSnap1, this.jobSnapshot(job));
+                appInfo.jobManager.update(job, changedFields);
+                jobSnap1 = null;
             }
 
-            appInfo.jobManager.save(job);
             this.delayPushInfo();
 
             // 释放worker

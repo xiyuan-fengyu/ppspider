@@ -1,89 +1,21 @@
 import {Job, JobStatus} from "../job/Job";
-import {getClassInfoByConstructor, getClassInfoById} from "../../common/serialize/Serializable";
-import {NedbDao, NedbModel, Pager, Sort} from "../../common/nedb/NedbDao";
-import {appInfo} from "../decorators/Launcher";
 import {ObjectUtil} from "../../common/util/ObjectUtil";
 import {DateUtil} from "../../common/util/DateUtil";
 import {logger} from "../../common/util/logger";
-
-export function serializeJob(job: Job) {
-    const ser: any = {};
-    Object.assign(ser, job);
-    const jobClassInfo = getClassInfoByConstructor(job.constructor);
-    if (jobClassInfo) {
-        ser.serializeClassId = jobClassInfo.id;
-    }
-    return ser;
-}
-
-export function deserializeJob(ser: any): Job {
-    let res;
-    if (ser.serializeClassId) {
-        const jobClassInfo = getClassInfoById(ser.serializeClassId);
-        res = jobClassInfo == null ? {} : new jobClassInfo.type();
-    }
-    else {
-        res = {};
-    }
-    Object.assign(res, ser);
-    return res;
-}
-
-class JobWrapper extends NedbModel {
-
-    parentId: string;
-
-    queue: string;
-
-    url: string;
-
-    depth: number;
-
-    tryNum: number;
-
-    status: JobStatus;
-
-    serialize: any;
-
-    autoRelease: boolean;
-
-    constructor(job: Job) {
-        super(job.id());
-        this.parentId = job.parentId();
-        this.queue = job.queue();
-        this.url = job.url();
-        this.depth = job.depth();
-        this.createTime = job.createTime();
-        this.tryNum = job.tryNum();
-        this.status = job.status();
-        this.serialize = serializeJob(job);
-        this.updateTime = new Date().getTime();
-        if (job.status() == JobStatus.Filtered) {
-            this.autoRelease = true;
-        }
-    }
-
-}
-
-class JobDao extends NedbDao<JobWrapper> {
-
-}
+import {appInfo, Pager, Sort} from "../..";
 
 /**
  * 使用 nedb 保存 job，用于查询回顾 job 信息
  */
 export class JobManager {
 
-    private jobDao: JobDao;
-
-    init() {
-        this.jobDao = new JobDao(appInfo.workplace + "/nedb");
-        return this.jobDao.waitNedbReady().then(res => this.autoReleaseLoop());
+    constructor() {
+        this.autoReleaseLoop();
     }
 
     private autoReleaseLoop() {
         const autoRelease = () => {
-            this.jobDao.remove({autoRelease: true, createTime: {"$lte": new Date().getTime() - 1000 * 120}},
+            appInfo.db.remove("job", {autoRelease: true, createTime: {"$lte": new Date().getTime() - 1000 * 120}},
                 true).then(res => {
                 setTimeout(autoRelease, 120000);
             });
@@ -96,12 +28,22 @@ export class JobManager {
      * @param {Job} job
      */
     save(job: Job) {
-        const jobWrapper = new JobWrapper(job);
-        return this.jobDao.save(jobWrapper);
+        return appInfo.db.save("job", job);
     }
 
-    job(_id: any): Promise<any> {
-        return this.jobDao.findById(_id);
+    update(job: Job, fields: string[]) {
+        const setOps: any = {};
+        for (let field of fields) {
+            setOps[field] = job[field];
+        }
+        return appInfo.db.update("job", {_id: job._id}, {$set: setOps}, false);
+    }
+
+    job(_id: any): Promise<Job> {
+        return appInfo.db.findById("job", _id).then(doc => {
+            const job = new Job(doc);
+            return job;
+        });
     }
 
     /**
@@ -113,7 +55,7 @@ export class JobManager {
         return Promise.all([
             new Promise<any>(resolve => {
                 if (pager.requires && pager.requires.queues) {
-                    this.jobDao.findList({}, {queue: 1}).then(docs => {
+                    appInfo.db.findList("job", {}, {queue: 1}).then(docs => {
                         const queues: any = {};
                         docs.forEach(doc => queues[doc.queue] = 1);
                         resolve(Object.keys(queues));
@@ -121,19 +63,16 @@ export class JobManager {
                 }
                 else resolve();
             }),
-            new Promise<Pager<JobWrapper>>(resolve => {
+            new Promise<Pager>(resolve => {
                 if (pager.requires && pager.requires.jobs) {
-                    const tempPager = new Pager<JobWrapper>();
+                    const tempPager = new Pager();
                     tempPager.pageSize = pager.pageSize;
                     tempPager.pageIndex = pager.pageIndex;
                     tempPager.match = pager.match;
-                    tempPager.projection = {
-                        serialize: 0
-                    };
                     tempPager.sort = {
                         createTime: -1
                     } as Sort;
-                    this.jobDao.page(tempPager).then(pagerRes => {
+                    appInfo.db.page("job", tempPager).then(pagerRes => {
                         resolve(pagerRes);
                     });
                 }
@@ -167,8 +106,9 @@ export class JobManager {
     }
 
     deleteJobs(pager: any): Promise<any> {
+        pager.collection = "job";
         return new Promise<any>(resolve => {
-            this.jobDao.remove(pager.match, true).then(res => {
+            appInfo.db.remove(pager.match, true).then(res => {
                 resolve({
                     success: true,
                     message: "delete " + res + " jobs"
@@ -185,10 +125,10 @@ export class JobManager {
 
     jobDetail(data: any): Promise<any> {
         return new Promise<any> (resolve => {
-            this.jobDao.findById(data._id).then(doc => {
+            appInfo.db.findById("job", data._id).then(doc => {
                 resolve({
                     success: true,
-                    data: doc ? this.transformToJob(doc.serialize) : {
+                    data: doc ? this.transformToJob(doc) : {
                         error: "job not found"
                     }
                 });
@@ -204,15 +144,16 @@ export class JobManager {
 
     /**
      * 将时间戳转换为字符串，便于UI界面阅读
-     * @param obj
+     * @param job
      * @returns {any}
      */
-    private transformToJob(obj: any) {
-        const job = deserializeJob(obj) as Job;
-        job.status(JobStatus[job.status()] as any);
+    private transformToJob(job: Job) {
+        const jobForUi: any = {};
+        Object.assign(jobForUi, job);
+        jobForUi.status = (JobStatus[job.status] as any);
         // 仅前端获取父任务id 时会使用到，且前端获取这个字段的值后，会删除这个字段
-        job["_parentId_justForParentFetch"] = job.parentId();
-        return ObjectUtil.transform(job, value => {
+        jobForUi["_parentId_justForParentFetch"] = job.parentId;
+        return ObjectUtil.transform(jobForUi, value => {
             if (value.constructor == Number && ("" + value).length == 13) {
                 return DateUtil.toStr(new Date(value));
             }

@@ -12,7 +12,7 @@ import {Serializable} from "../../common/serialize/Serializable";
 @Serializable()
 export class DefaultPriorityQueue extends AbsQueue{
 
-    private readonly queue = new PriorityQueue<Job>((j1, j2) => j1.priority() - j2.priority());
+    private readonly queue = new PriorityQueue<Job>((j1, j2) => j1.priority - j2.priority);
 
     isEmpty(): boolean {
         return this.queue.isEmpty();
