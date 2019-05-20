@@ -54,7 +54,11 @@ export class DbDao {
     }
 
     collections(): Promise<string[]> {
-        throw new Error("getCollections is not implemented");
+        throw new Error("collections is not implemented");
+    }
+
+    collection(collectionName: string): Promise<any> {
+        throw new Error("collection is not implemented");
     }
 
     save(collectionName, item: any): Promise<boolean> {

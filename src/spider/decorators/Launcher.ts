@@ -174,6 +174,7 @@ export function Launcher(appConfig: AppConfig) {
         }
         logger.info("init db(" + appConfig.dbUrl + ") ...");
         await appInfo.db.waitReady();
+        await appInfo.db.collection("job");
         logger.info("init db(" + appConfig.dbUrl + ") successfully");
 
         appInfo.jobManager = new JobManager();

@@ -256,34 +256,6 @@ export class NedbDao extends DbDao {
         });
     }
 
-    private collection(collectionName: string): Promise<Nedb> {
-        return new Promise<Nedb>((resolve, reject) => {
-            let nedb = this.nedbs[collectionName];
-            if (nedb) {
-                resolve(nedb);
-            }
-            else {
-                const collectionPath = this.nedbDir + (this.nedbDir.endsWith("/") ? "" : "/") + collectionName + ".collection";
-                nedb = new Nedb({
-                    filename: collectionPath,
-                    autoload: false
-                });
-                nedb.loadDatabase(error => {
-                    if (error) {
-                        reject(new Error("nedb loading failed: " + collectionPath));
-                    }
-                    else {
-                        nedb.addListener("compaction.done", () => {
-                            setTimeout(() => nedb.persistence.compactDatafile(), this.compactInterval);
-                        });
-                        this.nedbs[collectionName] = nedb;
-                        resolve(nedb);
-                    }
-                });
-            }
-        })
-    }
-
     /**
      * 将查询语句中的regex string转换为Regex对象实例，因为nedb的$regex操作只接受 Regex对象实例
      * @param query
@@ -313,6 +285,34 @@ export class NedbDao extends DbDao {
                 resolve(Object.keys(nedbs));
             })
         });
+    }
+
+    collection(collectionName: string): Promise<Nedb> {
+        return new Promise<Nedb>((resolve, reject) => {
+            let nedb = this.nedbs[collectionName];
+            if (nedb) {
+                resolve(nedb);
+            }
+            else {
+                const collectionPath = this.nedbDir + (this.nedbDir.endsWith("/") ? "" : "/") + collectionName + ".collection";
+                nedb = new Nedb({
+                    filename: collectionPath,
+                    autoload: false
+                });
+                nedb.loadDatabase(error => {
+                    if (error) {
+                        reject(new Error("nedb loading failed: " + collectionPath));
+                    }
+                    else {
+                        nedb.addListener("compaction.done", () => {
+                            setTimeout(() => nedb.persistence.compactDatafile(), this.compactInterval);
+                        });
+                        this.nedbs[collectionName] = nedb;
+                        resolve(nedb);
+                    }
+                });
+            }
+        })
     }
 
     save(collectionName: string, item: any): Promise<boolean> {

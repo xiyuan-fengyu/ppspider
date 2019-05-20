@@ -822,7 +822,7 @@ export class QueueManager {
                                     // 队列未工作，任务进入Closed状态
                                     job.status = JobStatus.Closed;
                                     job.logs.push(logger.formatWithoutPos("warn","the OnTime queue is not running"));
-                                    appInfo.jobManager.update(job, ["status", "logs"]);
+                                    appInfo.jobManager.save(job);
                                     job = null;
                                 }
                             }
@@ -848,28 +848,6 @@ export class QueueManager {
         }
     }
 
-    private jobSnapshot(job: Job) {
-        const res: any = {};
-        for (let key in job) {
-            res[key] = JSON.stringify(job[key]);
-        }
-        return res;
-    }
-
-    private jobChangedFields(jobSnapshot1, jobSnapshot2) {
-        const all = {};
-        Object.assign(all, jobSnapshot1);
-        Object.assign(all, jobSnapshot2);
-        let keys = Object.keys(all);
-        let fields = [];
-        for (let key of keys) {
-            if (jobSnapshot1[key] != jobSnapshot2[key]) {
-                fields.push(key);
-            }
-        }
-        return fields;
-    }
-
     /**
      * 执行一个任务
      */
@@ -877,7 +855,6 @@ export class QueueManager {
         queueInfo.curParallel = (queueInfo.curParallel || 0) + 1;
         queueInfo.lastExeTime = new Date().getTime();
 
-        let jobSnap1;
         const workerFactory = getBean<WorkerFactory<any>>(queueInfo.config.workerFactory);
         return workerFactory.get().then(async worker => {
             const target = queueInfo.config["target"];
@@ -889,8 +866,7 @@ export class QueueManager {
             job.logs.push(logger.formatWithoutPos("info","start execution"));
             job.status = JobStatus.Running;
             job.tryNum++;
-            appInfo.jobManager.update(job, ["logs", "status", "tryNum"]);
-            jobSnap1 = this.jobSnapshot(job);
+            appInfo.jobManager.save(job);
 
             try {
                 await new Promise(async (resolve, reject) => {
@@ -960,9 +936,7 @@ export class QueueManager {
                 QueueManager.addJobToQueue(job, null, job.queue, queueInfo.queue, null);
             }
             else {
-                const changedFields = this.jobChangedFields(jobSnap1, this.jobSnapshot(job));
-                appInfo.jobManager.update(job, changedFields);
-                jobSnap1 = null;
+                appInfo.jobManager.save(job);
             }
 
             this.delayPushInfo();

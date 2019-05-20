@@ -1,7 +1,7 @@
 import {PromiseUtil} from "../util/PromiseUtil";
 import {StringUtil} from "../util/StringUtil";
 import {DbDao, Pager, Sort} from "./DbDao";
-import {Db, MongoClient} from "mongodb";
+import {Collection, Db, MongoClient} from "mongodb";
 
 export class MongodbDao extends DbDao {
 
@@ -36,6 +36,10 @@ export class MongodbDao extends DbDao {
                 }).catch(err => reject(err));
             })
         });
+    }
+
+    collection(collectionName: string): Promise<Collection<any>> {
+        return this.dbPromise.then((db: Db) => db.collection(collectionName));
     }
 
     save(collectionName: string, item: any): Promise<boolean> {

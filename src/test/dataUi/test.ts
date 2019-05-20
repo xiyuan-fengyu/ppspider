@@ -140,7 +140,7 @@ class TestTask {
 
     @OnTime({
         urls: "",
-        cron: "0 */10 * * * *",
+        cron: "*/1 * * * * *",
         workerFactory: NoneWorkerFactory
     })
     async onTime(useless: any, job: Job) {

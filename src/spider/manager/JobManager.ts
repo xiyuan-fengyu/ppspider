@@ -31,18 +31,9 @@ export class JobManager {
         return appInfo.db.save("job", job);
     }
 
-    update(job: Job, fields: string[]) {
-        const setOps: any = {};
-        for (let field of fields) {
-            setOps[field] = job[field];
-        }
-        return appInfo.db.update("job", {_id: job._id}, {$set: setOps}, false);
-    }
-
     job(_id: any): Promise<Job> {
         return appInfo.db.findById("job", _id).then(doc => {
-            const job = new Job(doc);
-            return job;
+            return new Job(doc);
         });
     }
 
