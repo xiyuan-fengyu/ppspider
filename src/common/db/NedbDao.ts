@@ -9,7 +9,6 @@ import Persistence = require("nedb/lib/persistence");
 import Index = require("nedb/lib/indexes");
 import model = require("nedb/lib/model");
 import storage = require("nedb/lib/storage");
-import {Db} from "mongodb";
 
 Persistence.prototype.loadDatabase = function (cb) {
     const callback = cb || function () {};
@@ -198,10 +197,12 @@ Persistence.prototype.persistCachedDatabase = function (cb) {
                 if (writeErr) {
                     return callback(writeErr);
                 }
+                writer.close();
                 rename();
             });
         }
         else {
+            writer.close();
             rename();
         }
     };
