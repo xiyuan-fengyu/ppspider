@@ -37,12 +37,15 @@
     + [PuppeteerUtil.scrollToBottom](#puppeteerutilscrolltobottom)
     + [PuppeteerUtil.parseCookies](#puppeteerutilparsecookies)
     + [PuppeteerUtil example](#puppeteerutil-example)
+  * [NetworkTracing](#networktracing)
+  * [Database](#database)
   * [logger](#logger)
 - [Debug](#debug)
 - [Related Information](#related-information)
   * [jQuery](#jquery)
   * [puppeteer](#puppeteer)
   * [nedb](#nedb)
+  * [mongodb](#mongodb)
   * [Angular](#angular)
   * [G2](#g2)
   * [bootstrap](#bootstrap)
@@ -127,6 +130,9 @@ export type AppConfig = {
     
     // file path to save the running status，default is workplace + "/queueCache.json"
     queueCache?: string; 
+    
+    // database url, nedb or mongodb is supported. When the app will generate a little amount of data, use nedb, the url format: nedb://nedbDirPath; Otherwise, mongodb is recommended, the url format: mongodb://username:password@host:port/dbName. The default value is "nedb://" + appInfo.workplace + "/nedb"
+    dbUrl?: string; 
     
     // import all task class   
     tasks: any[]; 
@@ -319,7 +325,7 @@ Returning the crawl results requires self-implementation (such as asynchronous u
 You can define you own tab page in UI(http://localhost:webPort) by this which can extend support for data visualization and user interaction  
 You should import the DataUiClass in @Launcher appConfig.dataUis        
 
-There is a built-in DataUi NedbHelperUi which can support nedb search function        
+There is a built-in DataUi DbHelperUi which can support db search        
   
 [example 1 DataUi basic usage](https://github.com/xiyuan-fengyu/ppspider/blob/master/src/test/dataUi/test.ts)  
 ![nedbHelper.png](https://i.loli.net/2019/04/04/5ca5c313d92c4.png)  
@@ -387,6 +393,18 @@ cid	sasdasdada	.sm.ms	/	2037-12-31T23:55:55.900Z	27
 ### PuppeteerUtil example
 [PuppeteerUtil example](https://github.com/xiyuan-fengyu/ppspider_example/tree/master/src/puppeteerUtil)
 
+
+## NetworkTracing  
+Recode all requests during page opening [NetworkTracing example](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/dataUi/NetworkTracingTest.ts)
+
+## Database
+Nedb is supported by NedbDao.  
+Mongodb is supported by MongodbDao.  
+You can set the "dbUrl" in @Launcher parameters, then use appInfo.db to visist db. All metheds defined in src/common/db/DbDao.  
+Nedb is a server-less database, no need to install the server end, the data will be persisted to the local file. Url format: nedb://nedbDirectoryPath. When the amount of data is large, the data query speed is slow, and it will take a lot of time to load data each time you restart the application, so use it only if the data is small.            
+Mongodb needs to install the mongo server. The url format: mongodb://username:password@host:port/dbName. It is recommended to save a large amount of data.  
+
+After the application is started, a job collection is automatically created to save the job info during execution.  
 
 ## logger
 Use logger.debug, logger.info, logger.warn or logger.error to print log.  
@@ -468,6 +486,9 @@ https://github.com/GoogleChrome/puppeteer/blob/master/docs/api.md
 ## nedb
 https://github.com/louischatriot/nedb  
 
+## mongodb
+https://docs.mongodb.com/manual/reference/method/js-collection/  
+
 ## Angular  
 https://angular.io/  
 
@@ -490,6 +511,12 @@ Job panel: search jobs and view details
 ![ppspiderJobs.en.png](https://i.loli.net/2018/08/29/5b862f27e2809.png)
 
 # Update Note
+2019-05-21 v2.1.0
+1. Rewrite the serialization and deserialization process to solve the problem of large object serialization failure.    
+2. Delete DefaultJob, change interface Job to class Job, and the methods are changed to corresponding fields. This change causes historical QueueCache data to be incompatible.    
+3. Override the process of loading and saving Nedb to support reading and writing large amounts of data.    
+4. Rewrite NedbDao, provide new mongodb support: MongodbDao. They two are compatible with reading and writing data. Users can directly use @Launcher dbUrl to configure the database, and operate the database through appInfo.db.  
+
 2019-05-09 v2.0.5  
 1. Change cron lib: later -> cron  
 2. Update the logic to calculate the next execution time of OnTime Job  

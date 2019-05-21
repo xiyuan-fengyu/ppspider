@@ -37,12 +37,15 @@
     + [PuppeteerUtil.scrollToBottom](#puppeteerutilscrolltobottom)
     + [PuppeteerUtil.parseCookies](#puppeteerutilparsecookies)
     + [PuppeteerUtil 例子](#puppeteerutil-%E4%BE%8B%E5%AD%90)
+  * [NetworkTracing](#networktracing)
+  * [数据库](#%E6%95%B0%E6%8D%AE%E5%BA%93)
   * [日志](#%E6%97%A5%E5%BF%97)
 - [调试](#%E8%B0%83%E8%AF%95)
 - [相关知识](#%E7%9B%B8%E5%85%B3%E7%9F%A5%E8%AF%86)
   * [jQuery](#jquery)
   * [puppeteer](#puppeteer)
   * [nedb](#nedb)
+  * [mongodb](#mongodb)
   * [Angular](#angular)
   * [G2](#g2)
   * [bootstrap](#bootstrap)
@@ -139,6 +142,7 @@ export function Launcher(appConfig: AppConfig)
 export type AppConfig = {
     workplace: string; // 系统的工作目录
     queueCache?: string; // 运行状态保存文件的路径，默认为 workplace + "/queueCache.json"
+    dbUrl?: string; // 数据库配置，支持 nedb 或 mongodb；少量数据用 nedb，url格式为：nedb://本地nedb存储文件夹；若应用要长期执行，生成数据量大，建议使用 mongodb，url格式为：mongodb://username:password@host:port/dbName；默认："nedb://" + appInfo.workplace + "/nedb"
     tasks: any[]; // 任务类
     dataUis?: any[]; // 需要引入的DataUi
     workerFactorys: WorkerFactory<any>[]; // 工厂类实例
@@ -285,7 +289,7 @@ export function RequestMapping(url: string, method: "" | "GET" | "POST" = "") {}
 在控制界面定制动态界面的功能，为数据可视化、用户交互提供了扩展支持，通过 Angular 动态编译组件实现，简化了数据通信（主动请求数据和被动接受推送数据）      
 需要在 @Launcher appConfig.dataUis 中导入 DataUi 定义类  
 
-系统内置了一个NedbHelperUi，引入这个DataUi后，在UI界面上添加一个名为“Nedb Helper”的tab页，可以辅助查询nedb中的数据    
+系统内置了一个DbHelperUi，引入这个DataUi后，在UI界面上添加一个名为“Db Helper”的tab页，可以辅助查询数据库中的数据    
   
 [example 1 DataUi 基本功能演示](https://github.com/xiyuan-fengyu/ppspider/blob/master/src/test/dataUi/test.ts)  
 ![nedbHelper.png](https://i.loli.net/2019/04/04/5ca5c313d92c4.png)  
@@ -352,6 +356,16 @@ cid	sasdasdada	.sm.ms	/	2037-12-31T23:55:55.900Z	27
 ### PuppeteerUtil 例子
 [PuppeteerUtil example](https://github.com/xiyuan-fengyu/ppspider_example/tree/master/src/puppeteerUtil)
 
+## NetworkTracing  
+用于记录打开一个页面过程中的请求情况 [NetworkTracing example](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/dataUi/NetworkTracingTest.ts)
+
+## 数据库
+目前提供了 nedb 和 mongodb 支持，分别通过 NedbDao, MongodbDao 进行封装  
+通过 @Launcher 的 dbUrl 参数设置数据库连接，之后便可以通过 appInfo.db 来操作数据库，具体可用的方法参考 src/common/db/DbDao      
+nedb 是一个 server-less 数据库，不需要额外安装服务端，数据会持久化到本地文件，url格式：nedb://nedbDirectoryPath，当存储数据量较大时，数据查询速度较慢，且每次重启应用需要加载数据，耗时较多，所以只适用于数据量较小的应用场景    
+mongodb 需要额外安装mongo服务端，url格式： mongodb://username:password@host:port/dbName，适用于数据量较大的场景    
+
+应用启动后，会自动创建一个 job collection，用于保存执行过程中的任务记录  
 
 ## 日志
 通过 src/common/util/logger.ts 中定义的 logger.debug, logger.info, logger.warn, logger.error 方法输出日志  
@@ -433,7 +447,10 @@ https://github.com/GoogleChrome/puppeteer/blob/master/docs/api.md
 ## nedb
 https://github.com/louischatriot/nedb  
 基于内存和日志的serverless轻量级数据库，类Mongodb的查询方式  
-src/common/nedb/NedbDao.ts 对nedb的加载，数据压缩，基础查询做了进一步封装，方便用户继承使用  
+src/common/db/NedbDao.ts 对nedb的加载，数据压缩，基础查询做了进一步封装，方便用户继承使用  
+
+## mongodb
+https://docs.mongodb.com/manual/reference/method/js-collection/  
 
 ## Angular  
 https://angular.io/  
@@ -456,6 +473,12 @@ Job 面板可以对所有子任务实例进行搜索，查看任务详情
 ![ppspiderJobs.cn.png](https://i.loli.net/2018/08/29/5b862ef9b9dd5.png)
 
 # 更新日志
+2019-05-21 v2.1.0
+1. 重写 序列化/反序列化 过程，解决大对象序列化失败的问题  
+2. 删除 DefaultJob， 将 interface Job 改为 class Job，其中的方法都改为了对应的字段，这一改动导致历史 QueueCache 数据不兼容  
+3. 重写 Nedb 加载和保存的过程，使其支持大量数据的读写  
+4. 重写 NedbDao，提供新的 mongodb支持： MongodbDao，两者对数据的读写是兼容的；用户可直接使用 @Launcher dbUrl 来配置数据库，通过 appInfo.db 来操作数据库        
+
 2019-05-09 v2.0.5  
 1. 更改cron依赖包：later -> cron  
 2. 调整OnTime Job计算下一次执行时间的逻辑  
