@@ -2,7 +2,7 @@ import {Job, JobStatus} from "../job/Job";
 import {ObjectUtil} from "../../common/util/ObjectUtil";
 import {DateUtil} from "../../common/util/DateUtil";
 import {logger} from "../../common/util/logger";
-import {appInfo, Pager, Sort} from "../..";
+import {appInfo, NedbDao, Pager, Sort} from "../..";
 
 /**
  * 使用 nedb 保存 job，用于查询回顾 job 信息
@@ -10,6 +10,10 @@ import {appInfo, Pager, Sort} from "../..";
 export class JobManager {
 
     constructor() {
+        if (appInfo.db instanceof NedbDao) {
+            // 每10分钟压缩一次数据
+            appInfo.db.collection("job").then(nedb => nedb.persistence.setAutocompactionInterval(600000));
+        }
         this.autoReleaseLoop();
     }
 

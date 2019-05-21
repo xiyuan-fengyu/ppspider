@@ -163,6 +163,7 @@ export function Launcher(appConfig: AppConfig) {
             appConfig.dbUrl = "nedb://" + appConfig.workplace + "/nedb";
         }
 
+        logger.info("init db(" + appConfig.dbUrl + ") ...");
         if (appConfig.dbUrl.startsWith("nedb://")) {
             appInfo.db = new NedbDao(appConfig.dbUrl);
         }
@@ -172,7 +173,6 @@ export function Launcher(appConfig: AppConfig) {
         else {
             throw new Error("not supported db: " + appConfig.dbUrl);
         }
-        logger.info("init db(" + appConfig.dbUrl + ") ...");
         await appInfo.db.waitReady();
         logger.info("init db(" + appConfig.dbUrl + ") successfully");
 

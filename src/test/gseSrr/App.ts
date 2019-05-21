@@ -103,9 +103,9 @@ export class GeoTask {
             for (let key of Object.keys(gsmMap)) {
                 const gsm = gsmMap[key];
                 const subJob  = new Job("https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=" + gsm.id);
-                subJob.datas({
+                subJob.datas = {
                     id: gsm.id
-                });
+                };
                 res.push(subJob);
             }
             return res;
@@ -142,7 +142,7 @@ export class GeoTask {
         const gsmId = job.datas.id;
         this.gsmMap[gsmId].srx = srx;
         const subJob  = new Job("https://www.ncbi.nlm.nih.gov/sra/" + srx);
-        subJob.datas(job.datas);
+        subJob.datas = job.datas;
         return subJob;
     }
 

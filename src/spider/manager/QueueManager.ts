@@ -452,7 +452,7 @@ export class QueueManager {
         }
 
         if (queueInfo.config["type"] == "OnTime" && queueInfo.queue.size() > 0) {
-            queueInfo.queue.peek().datas()._.exeTime = this.computeNextExeTimeForOnTimeJob(queueInfo);
+            queueInfo.queue.peek().datas._.exeTime = this.computeNextExeTimeForOnTimeJob(queueInfo);
         }
     }
 

@@ -10,6 +10,10 @@ import Index = require("nedb/lib/indexes");
 import model = require("nedb/lib/model");
 import storage = require("nedb/lib/storage");
 
+Persistence.prototype.setAutocompactionInterval = function(interval) {
+    this.compactInterval = Math.max(interval || 0, 60000);
+};
+
 Persistence.prototype.loadDatabase = function (cb) {
     const callback = cb || function () {};
     const self = this;
@@ -232,8 +236,6 @@ type Nedbs = {
 
 export class NedbDao extends DbDao {
 
-    private readonly compactInterval: number = 600000;
-
     protected nedbDir: string;
 
     protected nedbs: Nedbs = {};
@@ -303,7 +305,10 @@ export class NedbDao extends DbDao {
                     }
                     else {
                         nedb.addListener("compaction.done", () => {
-                            setTimeout(() => nedb.persistence.compactDatafile(), this.compactInterval);
+                            const compactInterval = nedb.persistence["compactInterval"];
+                            if (compactInterval) {
+                                setTimeout(() => nedb.persistence.compactDatafile(), compactInterval);
+                            }
                         });
                         resolve(nedb);
                         logger.info(`load nedb collection(${collectionName}) successfully`);
