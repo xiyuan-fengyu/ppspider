@@ -17,7 +17,10 @@ export class MongodbDao extends DbDao {
         }
         this.dbName = pathSplit[0];
 
-        MongoClient.connect(url, { useNewUrlParser: true }, (err, client) => {
+        MongoClient.connect(url, {
+            useNewUrlParser: true,
+
+        }, (err, client) => {
             if (err) {
                 throw err;
             }
@@ -94,7 +97,7 @@ export class MongodbDao extends DbDao {
                     skip && aggOpt.push({ $skip: skip});
                     limit && aggOpt.push({ $limit: limit});
 
-                    collection.aggregate(aggOpt).toArray((err, docs) => {
+                    collection.aggregate(aggOpt, { allowDiskUse: true }).toArray((err, docs) => {
                         PromiseUtil.rejectOrResolve(reject, err, resolve, docs);
                     });
                 }
