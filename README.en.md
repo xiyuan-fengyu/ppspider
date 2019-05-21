@@ -513,7 +513,7 @@ Job panel: search jobs and view details
 ![ppspiderJobs.en.png](https://i.loli.net/2018/08/29/5b862f27e2809.png)
 
 # Update Note
-2019-05-21 v2.1.1
+2019-05-21 v2.1.2
 1. Rewrite the serialization and deserialization process to solve the problem of large object serialization failure.    
 2. Delete DefaultJob, change interface Job to class Job, and the methods are changed to corresponding fields. This change causes historical QueueCache data to be incompatible.    
 3. Override the process of loading and saving Nedb to support reading and writing large amounts of data.    

@@ -475,7 +475,7 @@ Job 面板可以对所有子任务实例进行搜索，查看任务详情
 ![ppspiderJobs.cn.png](https://i.loli.net/2018/08/29/5b862ef9b9dd5.png)
 
 # 更新日志
-2019-05-21 v2.1.1
+2019-05-21 v2.1.2
 1. 重写 序列化/反序列化 过程，解决大对象序列化失败的问题  
 2. 删除 DefaultJob， 将 interface Job 改为 class Job，其中的方法都改为了对应的字段，这一改动导致历史 QueueCache 数据不兼容  
 3. 重写 Nedb 加载和保存的过程，使其支持大量数据的读写  

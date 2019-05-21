@@ -19,7 +19,7 @@ export class JobManager {
 
     private autoReleaseLoop() {
         const autoRelease = () => {
-            appInfo.db.remove("job", {autoRelease: true, createTime: {"$lte": new Date().getTime() - 1000 * 120}},
+            appInfo.db.remove("job", {status: JobStatus.Filtered, createTime: {"$lte": new Date().getTime() - 1000 * 120}},
                 true).then(res => {
                 setTimeout(autoRelease, 120000);
             });
