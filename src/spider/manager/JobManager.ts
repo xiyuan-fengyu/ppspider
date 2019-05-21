@@ -21,7 +21,7 @@ export class JobManager {
         const autoRelease = () => {
             appInfo.db.remove("job", {status: JobStatus.Filtered, createTime: {"$lte": new Date().getTime() - 1000 * 120}},
                 true).then(res => {
-                setTimeout(autoRelease, 120000);
+                setTimeout(autoRelease, 60000);
             });
         };
         autoRelease();
