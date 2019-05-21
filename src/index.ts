@@ -24,7 +24,7 @@ export {
     AppConfig,
     AppInfo,
 } from "./spider/Types";
-export {DbHelperUi} from "./spider/data-ui/NedbHelper";
+export {DbHelperUi} from "./spider/data-ui/DbHelper";
 export {AddToQueue} from "./spider/decorators/AddToQueue";
 export {DataUi, DataUiRequest} from "./spider/decorators/DataUi";
 export {FromQueue} from "./spider/decorators/FromQueue";

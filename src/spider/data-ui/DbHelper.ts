@@ -120,7 +120,7 @@ export class DbHelperUi {
     loadConnections() {
         if (this.db) {
             this.dbCollections(this.db).then(res => {
-                this.collections = res;
+                this.collections = res.sort();
                 this.collection = this.collections[0];
             });
         }

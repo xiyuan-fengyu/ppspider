@@ -367,6 +367,8 @@ mongodb 需要额外安装mongo服务端，url格式： mongodb://username:passw
 
 应用启动后，会自动创建一个 job collection，用于保存执行过程中的任务记录  
 
+[数据库相关例子](https://github.com/xiyuan-fengyu/ppspider_example/tree/master/src/db)
+
 ## 日志
 通过 src/common/util/logger.ts 中定义的 logger.debug, logger.info, logger.warn, logger.error 方法输出日志  
 输出的日志中包含时间，等级，源文件位置这些额外信息      

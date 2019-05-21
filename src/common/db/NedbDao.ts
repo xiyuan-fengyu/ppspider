@@ -319,15 +319,15 @@ export class NedbDao extends DbDao {
         return nedbP;
     }
 
-    save(collectionName: string, item: any, skipInsert: boolean = false): Promise<boolean> {
-        return new Promise<boolean>((resolve, reject) => {
+    save(collectionName: string, item: any, skipInsert: boolean = false): Promise<"insert" | "replace"> {
+        return new Promise((resolve, reject) => {
             if (item._id == null) {
                 item._id = StringUtil.id();
             }
             this.collection(collectionName).then(nedb => {
                 if (skipInsert) {
                     nedb.update({_id: item._id}, item, {}, err1 => {
-                        PromiseUtil.rejectOrResolve(reject, err1, resolve, true);
+                        PromiseUtil.rejectOrResolve(reject, err1, resolve, "replace");
                     });
                 }
                 else {
@@ -335,7 +335,7 @@ export class NedbDao extends DbDao {
                         if (err) {
                             if (err.errorType == "uniqueViolated") {
                                 nedb.update({_id: item._id}, item, {}, err1 => {
-                                    PromiseUtil.rejectOrResolve(reject, err1, resolve, true);
+                                    PromiseUtil.rejectOrResolve(reject, err1, resolve, "replace");
                                 });
                             }
                             else {
@@ -343,7 +343,7 @@ export class NedbDao extends DbDao {
                             }
                         }
                         else {
-                            resolve(true);
+                            resolve("insert");
                         }
                     });
                 }

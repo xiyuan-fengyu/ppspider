@@ -406,6 +406,8 @@ Mongodb needs to install the mongo server. The url format: mongodb://username:pa
 
 After the application is started, a job collection is automatically created to save the job info during execution.  
 
+[database example](https://github.com/xiyuan-fengyu/ppspider_example/tree/master/src/db)
+
 ## logger
 Use logger.debug, logger.info, logger.warn or logger.error to print log.  
 Those functions are defined in src/common/util/logger.ts.  
