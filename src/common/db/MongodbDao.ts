@@ -17,10 +17,7 @@ export class MongodbDao extends DbDao {
         }
         this.dbName = pathSplit[0];
 
-        MongoClient.connect(url, {
-            useNewUrlParser: true,
-
-        }, (err, client) => {
+        MongoClient.connect(url, { useNewUrlParser: true }, (err, client) => {
             if (err) {
                 throw err;
             }
