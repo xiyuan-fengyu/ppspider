@@ -42,21 +42,28 @@ export class MongodbDao extends DbDao {
         return this.dbPromise.then((db: Db) => db.collection(collectionName));
     }
 
-    save(collectionName: string, item: any): Promise<boolean> {
+    save(collectionName: string, item: any, skipInsert: boolean = false): Promise<boolean> {
         return new Promise<boolean>((resolve, reject) => {
             if (item._id == null) {
                 item._id = StringUtil.id();
             }
             this.dbPromise.then((db: Db) => {
                 const collection = db.collection(collectionName);
-                collection.insertOne(item, err => {
-                    if (err) {
-                        // 文档已存在，替换
-                        collection.replaceOne({_id: item._id}, item, err => {
-                            PromiseUtil.rejectOrResolve(reject, err, resolve);
-                        });
-                    }
-                });
+                if (skipInsert) {
+                    collection.replaceOne({_id: item._id}, item, err => {
+                        PromiseUtil.rejectOrResolve(reject, err, resolve);
+                    });
+                }
+                else {
+                    collection.insertOne(item, err => {
+                        if (err) {
+                            // 文档已存在，替换
+                            collection.replaceOne({_id: item._id}, item, err => {
+                                PromiseUtil.rejectOrResolve(reject, err, resolve);
+                            });
+                        }
+                    });
+                }
             })
         });
     }

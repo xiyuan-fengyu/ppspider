@@ -26,9 +26,10 @@ export class JobManager {
     /**
      * 保存job，不存在则新增，已存在则更新
      * @param {Job} job
+     * @param justUpdate
      */
-    save(job: Job) {
-        return appInfo.db.save("job", job);
+    save(job: Job, skipInsert: boolean = false) {
+        return appInfo.db.save("job", job, skipInsert);
     }
 
     job(_id: any): Promise<Job> {

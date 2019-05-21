@@ -4,7 +4,7 @@ import * as fs from "fs";
 import * as path from "path";
 import * as readline from "readline";
 import {DbDao, Pager, Sort} from "./DbDao";
-import {FileUtil, PromiseUtil} from "../..";
+import {FileUtil, logger, PromiseUtil} from "../..";
 import Persistence = require("nedb/lib/persistence");
 import Index = require("nedb/lib/indexes");
 import model = require("nedb/lib/model");
@@ -227,7 +227,7 @@ Persistence.prototype.persistCachedDatabase = function (cb) {
 };
 
 type Nedbs = {
-    [collectionName: string]: Nedb
+    [collectionName: string]: Promise<Nedb>
 }
 
 export class NedbDao extends DbDao {
@@ -288,14 +288,12 @@ export class NedbDao extends DbDao {
     }
 
     collection(collectionName: string): Promise<Nedb> {
-        return new Promise<Nedb>((resolve, reject) => {
-            let nedb = this.nedbs[collectionName];
-            if (nedb) {
-                resolve(nedb);
-            }
-            else {
+        let nedbP = this.nedbs[collectionName];
+        if (!nedbP) {
+            this.nedbs[collectionName] = nedbP = new Promise<Nedb>((resolve, reject) => {
                 const collectionPath = this.nedbDir + (this.nedbDir.endsWith("/") ? "" : "/") + collectionName + ".collection";
-                nedb = new Nedb({
+                logger.info(`load nedb collection(${collectionName}) from ${collectionPath}`);
+                const nedb = new Nedb({
                     filename: collectionPath,
                     autoload: false
                 });
@@ -307,35 +305,43 @@ export class NedbDao extends DbDao {
                         nedb.addListener("compaction.done", () => {
                             setTimeout(() => nedb.persistence.compactDatafile(), this.compactInterval);
                         });
-                        this.nedbs[collectionName] = nedb;
                         resolve(nedb);
+                        logger.info(`load nedb collection(${collectionName}) successfully`);
                     }
                 });
-            }
-        })
+            });
+        }
+        return nedbP;
     }
 
-    save(collectionName: string, item: any): Promise<boolean> {
+    save(collectionName: string, item: any, skipInsert: boolean = false): Promise<boolean> {
         return new Promise<boolean>((resolve, reject) => {
             if (item._id == null) {
                 item._id = StringUtil.id();
             }
             this.collection(collectionName).then(nedb => {
-                nedb.insert(item, (err: any) => {
-                    if (err) {
-                        if (err.errorType == "uniqueViolated") {
-                            nedb.update({_id: item._id}, item, {}, err1 => {
-                                PromiseUtil.rejectOrResolve(reject, err1, resolve, true);
-                            });
+                if (skipInsert) {
+                    nedb.update({_id: item._id}, item, {}, err1 => {
+                        PromiseUtil.rejectOrResolve(reject, err1, resolve, true);
+                    });
+                }
+                else {
+                    nedb.insert(item, (err: any) => {
+                        if (err) {
+                            if (err.errorType == "uniqueViolated") {
+                                nedb.update({_id: item._id}, item, {}, err1 => {
+                                    PromiseUtil.rejectOrResolve(reject, err1, resolve, true);
+                                });
+                            }
+                            else {
+                                reject(err);
+                            }
                         }
                         else {
-                            reject(err);
+                            resolve(true);
                         }
-                    }
-                    else {
-                        resolve(true);
-                    }
-                });
+                    });
+                }
             });
         });
     }

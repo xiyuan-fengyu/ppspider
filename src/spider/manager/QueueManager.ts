@@ -822,7 +822,7 @@ export class QueueManager {
                                     // 队列未工作，任务进入Closed状态
                                     job.status = JobStatus.Closed;
                                     job.logs.push(logger.formatWithoutPos("warn","the OnTime queue is not running"));
-                                    appInfo.jobManager.save(job);
+                                    appInfo.jobManager.save(job, true);
                                     job = null;
                                 }
                             }
@@ -866,7 +866,7 @@ export class QueueManager {
             job.logs.push(logger.formatWithoutPos("info","start execution"));
             job.status = JobStatus.Running;
             job.tryNum++;
-            appInfo.jobManager.save(job);
+            appInfo.jobManager.save(job, true);
 
             try {
                 await new Promise(async (resolve, reject) => {
@@ -936,7 +936,7 @@ export class QueueManager {
                 QueueManager.addJobToQueue(job, null, job.queue, queueInfo.queue, null);
             }
             else {
-                appInfo.jobManager.save(job);
+                appInfo.jobManager.save(job, true);
             }
 
             this.delayPushInfo();

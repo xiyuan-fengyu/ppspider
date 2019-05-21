@@ -61,7 +61,7 @@ export class DbDao {
         throw new Error("collection is not implemented");
     }
 
-    save(collectionName, item: any): Promise<boolean> {
+    save(collectionName, item: any, skipInsert: boolean = false): Promise<boolean> {
         throw new Error("save is not implemented");
     }
 

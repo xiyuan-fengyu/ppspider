@@ -347,7 +347,7 @@ export class SerializableUtil {
                     writer.write(`g.${objSymbol}=getClass(${JSON.stringify(classInfo.id)});`);
                 }
                 else {
-                    writer.write(`g.${objSymbol}=(${obj.toString().replace(/\n/g, ";")});`);
+                    writer.write(`g.${objSymbol}=(${obj.toString().replace(/\r?\n/g, ";")});`);
                 }
             }
             for (let refInfo of existedObjRefs) {
