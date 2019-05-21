@@ -181,6 +181,7 @@ class TestTask {
 
 @Launcher({
     workplace: __dirname + "/workplace",
+    dbUrl: "mongodb://192.168.1.150:27017/ppspider",
     tasks: [
         TestTask
     ],

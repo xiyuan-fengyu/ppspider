@@ -17,7 +17,7 @@ export class MongodbDao extends DbDao {
         }
         this.dbName = pathSplit[0];
 
-        MongoClient.connect(url, (err, client) => {
+        MongoClient.connect(url, { useNewUrlParser: true }, (err, client) => {
             if (err) {
                 throw err;
             }
@@ -84,15 +84,12 @@ export class MongodbDao extends DbDao {
                     });
                 }
                 else {
-                    const aggOpt: any[] = [
-                        { $mathch: query },
-                        { $sort: sort},
-                        { $skip: skip },
-                        { $limit: limit }
-                    ];
-                    if (Object.keys(projection).length > 0) {
-                        aggOpt.splice(2, 0, { $project: projection });
-                    }
+                    const aggOpt: any[] = [];
+                    aggOpt.push({ $match: query || {}});
+                    sort && aggOpt.push({ $sort: sort});
+                    projection && Object.keys(projection).length > 0 && aggOpt.push({ $project: projection});
+                    skip && aggOpt.push({ $skip: skip});
+                    limit && aggOpt.push({ $limit: limit});
 
                     collection.aggregate(aggOpt).toArray((err, docs) => {
                         PromiseUtil.rejectOrResolve(reject, err, resolve, docs);
@@ -118,7 +115,7 @@ export class MongodbDao extends DbDao {
         return new Promise<number>((resolve, reject) => {
             this.dbPromise.then((db: Db) => {
                 const collection = db.collection(collectionName);
-                collection.count(query, (error, num) => {
+                collection.countDocuments(query, (error, num) => {
                     PromiseUtil.rejectOrResolve(reject, error, resolve, num);
                 });
             });
