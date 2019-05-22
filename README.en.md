@@ -301,9 +301,8 @@ Otherwise, the class info will lose when serializing.
     
 @Transient is used to mark a field which will be ignored when serializing and deserializing.
 Warn: static field will not be serialized.   
-These three are mainly used to save running status. You can use @Transient to ignore fields which are not 
-related with running status, then the output file will be smaller in size 
-and the possible error caused by deep nested object during deserializing will be avoid.  
+These two are mainly used to save running status. You can use @Transient to ignore fields which are not 
+related with running status, then the output file will be smaller in size.  
 [example](https://github.com/xiyuan-fengyu/ppspider/blob/master/src/test/SerializeTest.ts)  
 
 

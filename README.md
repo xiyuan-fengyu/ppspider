@@ -268,8 +268,8 @@ export function Transient() { ... }
 序列化之后会丢失类的信息  
     
 @Transient 用于标记类成员，在序列化时忽略该字段。注意：类静态成员不参与序列化  
-这三个主要为关闭系统时保存运行状态提供支持，在实际使用的时候，如果有些类成员和运行状态没有直接关联，不需要序列化保存的
-时候，一定要用 @Transient 来忽略该字段，可以减小序列化后文件的大小，也可以避免对象嵌套太深导致的反序列化失败  
+这两个主要为关闭系统时保存运行状态提供支持，在实际使用的时候，如果有些类成员和运行状态没有直接关联，不需要序列化保存的
+时候，一定要用 @Transient 来忽略该字段，可以减小序列化后文件的大小    
 [example](https://github.com/xiyuan-fengyu/ppspider/blob/master/src/test/component/SerializeTest.ts)  
 
 
