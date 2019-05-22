@@ -69,7 +69,6 @@ export class Job {
         else {
             Object.assign(this, urlOrParams);
         }
-        this.key = this.url;
     }
 
 }
