@@ -11,7 +11,6 @@
     + [Install npm dependencies](#install-npm-dependencies)
     + [Run tsc](#run-tsc)
     + [Startup ppspider App](#startup-ppspider-app)
-- [Question](#question)
 - [ppspider System Introduction](#ppspider-system-introduction)
   * [Decorator](#decorator)
     + [@Launcher](#launcher)
@@ -50,6 +49,8 @@
   * [G2](#g2)
   * [bootstrap](#bootstrap)
 - [WebUI](#webui)
+- [Question](#question)
+- [Examples](#examples)
 - [Update Note](#update-note)
 
 <!-- tocstop -->
@@ -98,11 +99,6 @@ tsc is a TypeScript compiler which can auto compile the ts file to js file after
 ### Startup ppspider App
 Run lib/quickstart/App.js    
 Open http://localhost:9000 in the browser to check the ppspider's status  
-
-# Question
-1. When running an app in idea under debug mode after a long time, the app gets stucked
-    on a code line just like a breakpoint stop. It is due to low memory, just add a node 
-    paramter "--max-old-space-size=8192" to solve it.
 
 # ppspider System Introduction
 ## Decorator
@@ -510,6 +506,17 @@ Queue panel: view and control app status
 
 Job panel: search jobs and view details  
 ![ppspiderJobs.en.png](https://i.loli.net/2018/08/29/5b862f27e2809.png)
+
+# Question
+1. When running an app in idea under debug mode after a long time, the application may get stucked
+    on a code line just like a breakpoint stop. It is due to low memory, just add a node 
+    paramter "--max-old-space-size=8192" to solve it.
+    This situation has often appeared in previous versions, mainly due to nedb write/read process or serialization/deserialization process of QueueManager.  
+  In the new version (v2.1.2), it has been optimized.  
+
+# Examples
+1. Monitor website access speed, visualize real-time statistics, and view the details of all requests in the process of opening a web page [ppspider-webMonitor](https://github.com/xiyuan-fengyu/ppspider-webMonitor)   
+
 
 # Update Note
 2019-05-21 v2.1.2
