@@ -55,13 +55,11 @@
           *ngIf="condition.field?.type == 'date'"
           class="value date"
           [floatLabel]="'never'">
-          <mat-datepicker-toggle matPrefix [for]="picker"></mat-datepicker-toggle>
           <input
             name="value"
             [(ngModel)]="condition.value"
             (change)="saveSearchState()"
-            matInput [matDatepicker]="picker" class="date" placeholder="choose a date">
-          <mat-datepicker #picker></mat-datepicker>
+            matInput type="text" class="date" placeholder="format: yyyy-MM-dd HH:mm:ss OR yyyy-MM-dd HH:mm:ss.SSS">
         </mat-form-field>
         <mat-form-field
           *ngIf="condition.field?.type != 'date'"

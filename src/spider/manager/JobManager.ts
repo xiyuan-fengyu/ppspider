@@ -102,9 +102,8 @@ export class JobManager {
     }
 
     deleteJobs(pager: any): Promise<any> {
-        pager.collection = "job";
         return new Promise<any>(resolve => {
-            appInfo.db.remove(pager.match, true).then(res => {
+            appInfo.db.remove("job", pager.match, true).then(res => {
                 resolve({
                     success: true,
                     message: "delete " + res + " jobs"
