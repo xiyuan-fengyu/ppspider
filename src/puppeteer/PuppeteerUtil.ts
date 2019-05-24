@@ -5,6 +5,7 @@ import {DownloadUtil} from "../common/util/DownloadUtil";
 import {logger} from "../common/util/logger";
 import {FileUtil} from "../common/util/FileUtil";
 import * as moment from "moment";
+import {isUndefined} from "util";
 
 export type ResponseListener = (response: Response) => any;
 
@@ -612,13 +613,16 @@ export class PuppeteerUtil {
     static parseCookies(cookiesStr: string) {
         const cookieLines = cookiesStr.split("\n");
         const cookies: SetCookie[] = [];
-        const expiresToDateTime = expires => {
+        const expiresToSeconds = expires => {
             try {
-                return moment(expires).toDate().getTime();
+                const time = new Date(expires).getTime();
+                if (!isNaN(time)) {
+                    return time / 1000;
+                }
             }
             catch (e) {
-                return null;
             }
+            return undefined;
         };
         cookieLines.forEach(cookieLine => {
             if (cookieLine && cookieLine.trim()) {
@@ -628,7 +632,7 @@ export class PuppeteerUtil {
                     value: value,
                     domain: domain,
                     path: path,
-                    expires: expiresToDateTime(expires),
+                    expires: expiresToSeconds(expires),
                     httpOnly: http === "✓",
                     secure: secure === "✓",
                     sameSite: sameSite
