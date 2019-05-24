@@ -26,6 +26,41 @@ export class CronUtil {
         return (nexts as Moment[]).map(item => item.toDate());
     }
 
+    static prev(cron: string, now: number = new Date().getTime()): Date {
+        const cronTime = this.getCronJob(cron)["cronTime"];
+        let lastDiff = 0;
+        let diff = 3600000;
+        let lastDate: Date;
+        let isTimeout = false;
+        let timeout = 5000;
+        setTimeout(() => isTimeout = true, timeout);
+        while (true) {
+            if (isTimeout) {
+                throw new Error(`Find previous date timeout(${timeout}ms) with cron exp(${cron})`);
+            }
+            let tempLastDate = cronTime["_getNextDateFrom"](now - diff);
+            if (tempLastDate) {
+                tempLastDate = tempLastDate.toDate();
+                if (tempLastDate.getTime() >= now) {
+                    lastDiff = diff;
+                    diff *= 2;
+                }
+                else {
+                    lastDate = tempLastDate;
+                    if (diff - lastDiff < 1000) {
+                        break;
+                    }
+                    diff = +((diff + lastDiff) / 2).toFixed(0);
+                }
+            }
+            else {
+                lastDiff = diff;
+                diff *= 2;
+            }
+        }
+        return lastDate;
+    }
+
     static setInterval(cron: string, func: Function): {
         cron: string,
         callback: Function,

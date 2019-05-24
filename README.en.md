@@ -516,9 +516,15 @@ Job panel: search jobs and view details
 
 # Examples
 1. Monitor website access speed, visualize real-time statistics, and view the details of all requests in the process of opening a web page [ppspider-webMonitor](https://github.com/xiyuan-fengyu/ppspider-webMonitor)   
-
+2. Dynamically set task parallel via cron expressions [DynamicParallelApp](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/examples/DynamicParallelApp.ts)
+3. If you wants some queues to not be executed immediately after the application is started, look this [QueueWaitToRunApp](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/examples/QueueWaitToRunApp.ts)
 
 # Update Note
+2019-05-24 v2.1.3
+1. On Job panel of ui interface, change "createTime" to text input, accurate to milliseconds  
+2. Fix bug during deleting job.  
+3. Rewrite the method to set parallel by cron expressions, then the parallel will be setted immediately after the application launch.    
+
 2019-05-21 v2.1.2
 1. Rewrite the serialization and deserialization process to solve the problem of large object serialization failure.    
 2. Delete DefaultJob, change interface Job to class Job, and the methods are changed to corresponding fields. This change causes historical QueueCache data to be incompatible.    

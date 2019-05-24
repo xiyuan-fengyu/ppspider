@@ -479,7 +479,7 @@ export class QueueManager {
             else if (parallelType == Object) {
                 // 根据cron动态更新
                 queueInfo.parallelIntervals = [];
-                for (let cron of Object.keys(queueInfo.config.parallel)) {
+                for (let cron in queueInfo.config.parallel) {
                     const para = queueInfo.config.parallel[cron];
                     if (typeof para == "number") {
                         const interval = CronUtil.setInterval(cron, () => {
@@ -487,6 +487,30 @@ export class QueueManager {
                         });
                         queueInfo.parallelIntervals.push(interval);
                     }
+                }
+
+                // 根据 queueInfo.config.parallel 中的cron表达式，计算出各 cron 表达式上一次可执行的时间
+                // 将 queueInfo.curMaxParallel 设置为上一次可执行时间最接近当前时间的 cron 对应的 parallel
+                let nearestDate = null;
+                let nearestCronParallel = null;
+                const now = new Date().getTime();
+                for (let cron in queueInfo.config.parallel) {
+                    const para = queueInfo.config.parallel[cron];
+                    if (typeof para == "number") {
+                        try {
+                            const prevDate = CronUtil.prev(cron, now);
+                            if (nearestDate == null || nearestDate < prevDate) {
+                                nearestDate = prevDate;
+                                nearestCronParallel = para;
+                            }
+                        }
+                        catch (e) {
+                            logger.warn(e);
+                        }
+                    }
+                }
+                if (nearestCronParallel != null) {
+                    queueInfo.curMaxParallel = nearestCronParallel;
                 }
             }
         }

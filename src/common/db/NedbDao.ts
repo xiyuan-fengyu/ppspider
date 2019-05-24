@@ -299,8 +299,8 @@ export class NedbDao extends DbDao {
                     filename: collectionPath,
                     autoload: false
                 });
-                nedb.loadDatabase(error => {
-                    if (error) {
+                nedb.loadDatabase(res => {
+                    if (res) {
                         reject(new Error("nedb loading failed: " + collectionPath));
                     }
                     else {

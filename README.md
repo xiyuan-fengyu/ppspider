@@ -479,9 +479,15 @@ Job 面板可以对所有子任务实例进行搜索，查看任务详情
           
 # 例子
 1. 监控网站访问速度，实时统计结果可视化，可以查看打开一个网页过程中的所有请求的具体情况 [ppspider-webMonitor](https://github.com/xiyuan-fengyu/ppspider-webMonitor)   
-
+2. 通过cron表达式动态设置任务并行数 [DynamicParallelApp](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/examples/DynamicParallelApp.ts)    
+3. 如果用户希望一些队列在应用启动后不立即执行，需要等到特殊条件达成后开始执行，可以参考这里 [QueueWaitToRunApp](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/examples/QueueWaitToRunApp.ts)   
 
 # 更新日志
+2019-05-24 v2.1.3
+1. ui界面Job面板，createTime改为文本输入，精确到毫秒  
+2. 修复删除job的bug  
+3. 调整 cron 动态设置 parallel 的功能，使得应用启动后立即设置一次parallel  
+
 2019-05-21 v2.1.2
 1. 重写 序列化/反序列化 过程，解决大对象序列化失败的问题  
 2. 删除 DefaultJob， 将 interface Job 改为 class Job，其中的方法都改为了对应的字段，这一改动导致历史 QueueCache 数据不兼容  
