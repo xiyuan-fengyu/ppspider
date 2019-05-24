@@ -612,6 +612,14 @@ export class PuppeteerUtil {
     static parseCookies(cookiesStr: string) {
         const cookieLines = cookiesStr.split("\n");
         const cookies: SetCookie[] = [];
+        const expiresToDateTime = expires => {
+            try {
+                return moment(expires).toDate().getTime();
+            }
+            catch (e) {
+                return null;
+            }
+        };
         cookieLines.forEach(cookieLine => {
             if (cookieLine && cookieLine.trim()) {
                 const [name, value, domain, path, expires, size, http, secure, sameSite] = cookieLine.split("\t");
@@ -620,7 +628,7 @@ export class PuppeteerUtil {
                     value: value,
                     domain: domain,
                     path: path,
-                    expires: moment(expires).toDate().getTime(),
+                    expires: expiresToDateTime(expires),
                     httpOnly: http === "✓",
                     secure: secure === "✓",
                     sameSite: sameSite
