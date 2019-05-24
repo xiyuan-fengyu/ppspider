@@ -481,6 +481,7 @@ Job 面板可以对所有子任务实例进行搜索，查看任务详情
 1. 监控网站访问速度，实时统计结果可视化，可以查看打开一个网页过程中的所有请求的具体情况 [ppspider-webMonitor](https://github.com/xiyuan-fengyu/ppspider-webMonitor)   
 2. 通过cron表达式动态设置任务并行数 [DynamicParallelApp](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/examples/DynamicParallelApp.ts)    
 3. 如果用户希望一些队列在应用启动后不立即执行，需要等到特殊条件达成后开始执行，可以参考这里 [QueueWaitToRunApp](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/examples/QueueWaitToRunApp.ts)   
+4. 网页截图，支持超长网页截图 [ScreenshotApp](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/dataUi/ScreenshotApp.ts)   
 
 # 更新日志
 2019-05-24 v2.1.3

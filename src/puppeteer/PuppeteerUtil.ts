@@ -613,7 +613,7 @@ export class PuppeteerUtil {
         const cookieLines = cookiesStr.split("\n");
         const cookies: SetCookie[] = [];
         cookieLines.forEach(cookieLine => {
-            if (cookieLine) {
+            if (cookieLine && cookieLine.trim()) {
                 const [name, value, domain, path, expires, size, http, secure, sameSite] = cookieLine.split("\t");
                 cookies.push({
                     name: name,

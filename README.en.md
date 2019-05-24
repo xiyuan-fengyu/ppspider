@@ -518,6 +518,7 @@ Job panel: search jobs and view details
 1. Monitor website access speed, visualize real-time statistics, and view the details of all requests in the process of opening a web page [ppspider-webMonitor](https://github.com/xiyuan-fengyu/ppspider-webMonitor)   
 2. Dynamically set task parallel via cron expressions [DynamicParallelApp](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/examples/DynamicParallelApp.ts)
 3. If you wants some queues to not be executed immediately after the application is started, look this [QueueWaitToRunApp](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/examples/QueueWaitToRunApp.ts)
+4. Web page screenshot, super long page is supported [ScreenshotApp](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/dataUi/ScreenshotApp.ts)  
 
 # Update Note
 2019-05-24 v2.1.3
