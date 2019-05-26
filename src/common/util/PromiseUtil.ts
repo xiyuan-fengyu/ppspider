@@ -1,4 +1,3 @@
-
 export class PromiseUtil {
 
     /**
@@ -46,6 +45,16 @@ export class PromiseUtil {
         else if (resolve) {
             resolve(res);
         }
+    }
+
+    static createPromiseResolve() {
+        let aResolve;
+        let aReject;
+        const aPromise = new Promise((resolve, reject) => {
+            aResolve = resolve;
+            aReject =  reject;
+        });
+        return [aPromise, aResolve, aReject];
     }
 
 }
