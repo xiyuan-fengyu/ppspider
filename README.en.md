@@ -522,7 +522,7 @@ Job panel: search jobs and view details
 5. Get video's infos and comments from https://www.bilibili.com [BilibiliApp](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/examples/BilibiliApp.ts)  
 
 # Update Note
-2019-05-28 v2.1.4
+2019-05-28 v2.1.6
 1. Fix a wrong ref of URL model in MongodbDao    
 2. Fix a bug to parse date in PuppeteerUtil.parseCookie      
 
