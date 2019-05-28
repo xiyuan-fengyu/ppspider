@@ -29,6 +29,7 @@
     "mongodb": "^3.2.5",
     "puppeteer": "1.15.0",
     "request": "^2.88.0",
+    "https-proxy-agent": "^2.2.1",
     "socket.io": "^2.2.0",
     "source-map-support": "^0.5.11",
     "typescript": "^3.3.3",
