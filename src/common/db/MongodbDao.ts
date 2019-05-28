@@ -2,6 +2,7 @@ import {PromiseUtil} from "../util/PromiseUtil";
 import {StringUtil} from "../util/StringUtil";
 import {DbDao, Pager, Sort} from "./DbDao";
 import {Collection, Db, MongoClient} from "mongodb";
+import {URL} from "url";
 
 export class MongodbDao extends DbDao {
 
