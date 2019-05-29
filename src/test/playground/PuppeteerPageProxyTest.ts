@@ -6,6 +6,12 @@ import * as https from "https";
 import * as HttpProxyAgent from 'http-proxy-agent';
 import * as HttpsProxyAgent from 'https-proxy-agent';
 
+//  https proxy
+// https://www.vanamco.com/2014/06/24/proxy-requests-in-node-js/
+
+// 获取证书
+// https://github.com/GoogleChrome/puppeteer/issues/719
+
 // https://stackoverflow.com/questions/21491567/how-to-implement-a-writable-stream
 const stream = require('stream');
 const util = require('util');
