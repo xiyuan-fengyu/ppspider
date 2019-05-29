@@ -30,58 +30,61 @@ ResStream.prototype.getBody = function () {
     });
     const page = await browser.newPage();
     await page.setViewport({width: 1920, height: 1080});
-    // await page.setRequestInterception(true);
-    // page.on("request", (req: Request) => {
-    //     if (req.url().startsWith("http____")) {
-    //         const reqInfo = {
-    //             id: req["_requestId"],
-    //             url: req.url(),
-    //             method: req.method(),
-    //             headers: req.headers(),
-    //             postData: req.postData(),
-    //             proxy: "http://127.0.0.1:2007"
-    //         };
-    //
-    //         const options = url.parse(reqInfo.url);
-    //         options["method"] = reqInfo.method;
-    //         options["headers"] = reqInfo.headers;
-    //
-    //         const resHandler = (proxyRes: IncomingMessage) => {
-    //             const stream = new ResStream();
-    //             proxyRes.pipe(stream as any);
-    //             stream.on("finish", () => {
-    //                 const body = stream.getBody();
-    //                 req.respond({
-    //                     status: proxyRes.statusCode,
-    //                     headers: proxyRes.headers as any,
-    //                     body: body
-    //                 });
-    //             });
-    //             stream.on("error", (err: Error) => {
-    //                 req.abort("failed");
-    //             });
-    //         };
-    //
-    //         const proxy = reqInfo.proxy;
-    //         let proxyReq;
-    //         if (options.protocol == "http:") {
-    //             options["agent"] = new HttpProxyAgent(proxy);
-    //             proxyReq = http.request(options, resHandler);
-    //         }
-    //         else {
-    //             options["agent"] = new HttpsProxyAgent(proxy);
-    //             proxyReq = https.request(options, resHandler);
-    //         }
-    //
-    //         if (reqInfo.postData) {
-    //             proxyReq.write(reqInfo.postData);
-    //         }
-    //         proxyReq.end();
-    //     }
-    //     else {
-    //         req.continue();
-    //     }
-    // });
+    await page.setRequestInterception(true);
+    page.on("request", (req: Request) => {
+        if (req.url().startsWith("http")) {
+            const reqInfo = {
+                id: req["_requestId"],
+                url: req.url(),
+                method: req.method(),
+                headers: req.headers(),
+                postData: req.postData(),
+                proxy: "http://127.0.0.1:2007"
+            };
+
+            const options = url.parse(reqInfo.url);
+            options["method"] = reqInfo.method;
+            options["headers"] = reqInfo.headers;
+
+            const resHandler = (proxyRes: IncomingMessage) => {
+                const stream = new ResStream();
+                proxyRes.pipe(stream as any);
+                stream.on("finish", () => {
+                    let body = stream.getBody();
+                    if ((proxyRes.headers["content-type"] || "").toLowerCase().indexOf("charset=utf-8") > -1) {
+                        body = body.toString("utf-8");
+                    }
+                    req.respond({
+                        status: proxyRes.statusCode,
+                        headers: proxyRes.headers as any,
+                        body: body
+                    });
+                });
+                stream.on("error", (err: Error) => {
+                    req.abort("failed");
+                });
+            };
+
+            const proxy = reqInfo.proxy;
+            let proxyReq;
+            if (options.protocol == "http:") {
+                options["agent"] = new HttpProxyAgent(proxy);
+                proxyReq = http.request(options, resHandler);
+            }
+            else {
+                options["agent"] = new HttpsProxyAgent(proxy);
+                proxyReq = https.request(options, resHandler);
+            }
+
+            if (reqInfo.postData) {
+                proxyReq.write(reqInfo.postData);
+            }
+            proxyReq.end();
+        }
+        else {
+            req.continue();
+        }
+    });
     page.on("response", resp => {
         if (resp.fromCache()) {
             console.log(
@@ -96,10 +99,5 @@ ResStream.prototype.getBody = function () {
     });
     await page.goto("https://www.bilibili.com/");
     // await page.goto("https://www.google.com/");
-    page["_client"].send("CacheStorage.requestCacheNames", {
-        securityOrigin: "www.bilibili.com"
-    }, res => {
-        console.log(res);
-    });
     console.log();
 })();
