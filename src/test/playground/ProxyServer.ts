@@ -1,24 +1,9 @@
-var http = require('http');
+/*
+模拟一个 proxy server
+ */
 
-http.createServer(onRequest).listen(3000);
+const net = require('net');
 
-function onRequest(client_req, client_res) {
-    var options = {
-        hostname: 'www.google.com',
-        port: 80,
-        path: client_req.url,
-        method: client_req.method,
-        headers: client_req.headers
-    };
-
-    var proxy = http.request(options, function (res) {
-        client_res.writeHead(res.statusCode, res.headers);
-        res.pipe(client_res, {
-            end: true
-        });
-    });
-
-    client_req.pipe(proxy, {
-        end: true
-    });
-}
+net.createServer(socket => {
+    socket.pipe(process.stdout);
+}).listen(3000, '127.0.0.1');

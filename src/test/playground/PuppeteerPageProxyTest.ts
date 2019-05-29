@@ -26,13 +26,13 @@ ResStream.prototype.getBody = function () {
     const browser = await launch({
         headless: false,
         devtools: true,
-        args: [ '--proxy-server=127.0.0.1:3000' ]
+        // args: [ '--proxy-server=127.0.0.1:3000' ]
     });
     const page = await browser.newPage();
     await page.setViewport({width: 1920, height: 1080});
     // await page.setRequestInterception(true);
     // page.on("request", (req: Request) => {
-    //     if (req.url().startsWith("http")) {
+    //     if (req.url().startsWith("http____")) {
     //         const reqInfo = {
     //             id: req["_requestId"],
     //             url: req.url(),
@@ -96,5 +96,10 @@ ResStream.prototype.getBody = function () {
     });
     await page.goto("https://www.bilibili.com/");
     // await page.goto("https://www.google.com/");
+    page["_client"].send("CacheStorage.requestCacheNames", {
+        securityOrigin: "www.bilibili.com"
+    }, res => {
+        console.log(res);
+    });
     console.log();
 })();
