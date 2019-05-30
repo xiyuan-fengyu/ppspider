@@ -81,7 +81,7 @@ BufferStream.prototype.toBuffer = function (): Buffer {
                         case "br":
                             pipes = pipes.pipe(zlib.createBrotliDecompress());
                             break;
-                        case "":
+                        case "deflate":
                             pipes = pipes.pipe(zlib.createInflate());
                             break;
                     }
