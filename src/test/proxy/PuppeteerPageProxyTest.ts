@@ -8,6 +8,7 @@ import * as HttpsProxyAgent from 'https-proxy-agent';
 import * as stream from "stream";
 import * as util from "util";
 import * as zlib from "zlib";
+import {logger} from "../..";
 
 // https://stackoverflow.com/questions/21491567/how-to-implement-a-writable-stream
 function BufferStream() {
@@ -32,7 +33,11 @@ BufferStream.prototype.toBuffer = function (): Buffer {
     await page.setViewport({width: 1920, height: 1080});
     await page.setRequestInterception(true);
     page.on("request", (req: Request) => {
-        if (req.url().startsWith("http")) {
+        if (req["_interceptionHandled"]) {
+            logger.warn(`request(${req.url()}) handled`);
+            return;
+        }
+        else if (req.url().startsWith("http")) {
             const options = url.parse(req.url());
             options["method"] = req.method();
             options["headers"] = req.headers();
@@ -178,18 +183,6 @@ BufferStream.prototype.toBuffer = function (): Buffer {
             req.continue().catch(err => {});
         }
     });
-    // page.on("response", resp => {
-    //     if (resp.fromCache()) {
-    //         console.log(
-    //             "Received: " +
-    //             resp.fromCache() +
-    //             " " +
-    //             resp.status() +
-    //             " " +
-    //             resp.url()
-    //         );
-    //     }
-    // });
     // await page.goto("https://www.bilibili.com/");
     await page.goto("https://www.google.com/");
     console.log();
