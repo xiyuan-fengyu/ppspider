@@ -52,13 +52,14 @@ BufferStream.prototype.toBuffer = function (): Buffer {
                     }
                 }, req.url());
                 if (responseCache) {
-                    let [expires, statusCodeStr, headersStr, bodyBase64] = responseCache.split("\n");
+                    let [expires, statusCodeStr, bodyBase64] = responseCache.split("\n");
                     const statusCode = +statusCodeStr;
-                    const headers = JSON.parse(headersStr);
                     const body = Buffer.from(bodyBase64, "base64");
                     return req.respond({
                         status: statusCode,
-                        headers: headers,
+                        headers: {
+                            cache: "from-local-storage"
+                        },
                         body: body
                     });
                 }
@@ -185,7 +186,7 @@ BufferStream.prototype.toBuffer = function (): Buffer {
                     const expires = new Date(headers.expires).getTime();
                     if (expires > new Date().getTime()) {
                         const bodyBase64 = body.toString("base64");
-                        const responseCache = `${expires}\n${statusCode}\n${JSON.stringify(headers)}\n${bodyBase64}`;
+                        const responseCache = `${expires}\n${statusCode}\n${bodyBase64}`;
                         page.evaluate((url, responseCache) => {
                             localStorage.setItem(url, responseCache);
                         }, req.url(), responseCache).catch(err => {});
