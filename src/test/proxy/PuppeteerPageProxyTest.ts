@@ -32,12 +32,38 @@ BufferStream.prototype.toBuffer = function (): Buffer {
     const page = await browser.newPage();
     await page.setViewport({width: 1920, height: 1080});
     await page.setRequestInterception(true);
-    page.on("request", (req: Request) => {
+    page.on("request", async (req: Request) => {
         if (req["_interceptionHandled"]) {
             logger.warn(`request(${req.url()}) handled`);
             return;
         }
         else if (req.url().startsWith("http")) {
+            if (!req.isNavigationRequest()) {
+                const responseCache = await page.evaluate(url => {
+                    const cache = localStorage.getItem(url);
+                    if (cache) {
+                        if (parseInt(cache.substring(0, cache.indexOf("\n"))) <= new Date().getTime()) {
+                            // 已过期
+                            localStorage.removeItem(url);
+                        }
+                        else {
+                            return cache;
+                        }
+                    }
+                }, req.url());
+                if (responseCache) {
+                    let [expires, statusCodeStr, headersStr, bodyBase64] = responseCache.split("\n");
+                    const statusCode = +statusCodeStr;
+                    const headers = JSON.parse(headersStr);
+                    const body = Buffer.from(bodyBase64, "base64");
+                    return req.respond({
+                        status: statusCode,
+                        headers: headers,
+                        body: body
+                    });
+                }
+            }
+
             const options = url.parse(req.url());
             options["method"] = req.method();
             options["headers"] = req.headers();
@@ -62,17 +88,12 @@ BufferStream.prototype.toBuffer = function (): Buffer {
 
                 let lastReceiveTime = 0;
                 pipes.on("data", () => {
-                    if (lastReceiveTime == 0) {
-                        lastReceiveTime = new Date().getTime();
-                    }
-                    else {
-                        lastReceiveTime = new Date().getTime();
-                        setTimeout(() => {
-                            if (new Date().getTime() - lastReceiveTime >= 495) {
-                                pipes.emit("close");
-                            }
-                        }, 500);
-                    }
+                    lastReceiveTime = new Date().getTime();
+                    setTimeout(() => {
+                        if (new Date().getTime() - lastReceiveTime >= 495) {
+                            pipes.emit("close");
+                        }
+                    }, 500);
                 });
 
                 const bufferStream = new BufferStream();
@@ -139,7 +160,7 @@ BufferStream.prototype.toBuffer = function (): Buffer {
                                     });
                                     setCookies.push(setCookie);
                                 }
-                                page.setCookie(...setCookies).catch();
+                                page.setCookie(...setCookies).catch(err => {});
                                 delete headers[name];
                             }
                         }
@@ -153,11 +174,23 @@ BufferStream.prototype.toBuffer = function (): Buffer {
                         }
                     }
                     const body = bufferStream.toBuffer();
+
                     req.respond({
                         status: statusCode,
                         headers: headers as any,
                         body: body
-                    }).catch();
+                    }).catch(err => {});
+
+                    //  如果有 Expires ，则保存缓存
+                    const expires = new Date(headers.expires).getTime();
+                    if (expires > new Date().getTime()) {
+                        const bodyBase64 = body.toString("base64");
+                        const responseCache = `${expires}\n${statusCode}\n${JSON.stringify(headers)}\n${bodyBase64}`;
+                        page.evaluate((url, responseCache) => {
+                            localStorage.setItem(url, responseCache);
+                        }, req.url(), responseCache).catch(err => {});
+                    }
+
                     proxyRes.destroy();
                 });
             };
@@ -183,7 +216,7 @@ BufferStream.prototype.toBuffer = function (): Buffer {
             req.continue().catch(err => {});
         }
     });
-    // await page.goto("https://www.bilibili.com/");
-    await page.goto("https://www.google.com/");
+    await page.goto("https://www.bilibili.com/");
+    // await page.goto("https://www.google.com/");
     console.log();
 })();
