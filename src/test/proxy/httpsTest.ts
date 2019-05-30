@@ -36,7 +36,7 @@ options["headers"] = {
     "Referer": "https://www.bilibili.com/",
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3765.0 Safari/537.36"
 };
-// options["agent"] = new HttpsProxyAgent('http://127.0.0.1:2007');
+options["agent"] = new HttpsProxyAgent('http://127.0.0.1:3000');
 
 https.request(options, (res: IncomingMessage) => {
     let pipes: stream = res;
@@ -59,6 +59,7 @@ https.request(options, (res: IncomingMessage) => {
     const bufferStream = new BufferStream();
     pipes.pipe(bufferStream);
     let receiveNum = 0;
+    let lastReceiveTime = 0;
     const waitReceiveLoop = (lastReceiveNum) => {
         setTimeout(() => {
             if (receiveNum == lastReceiveNum) {
@@ -71,7 +72,13 @@ https.request(options, (res: IncomingMessage) => {
     };
     pipes.on("data", () => {
         if (receiveNum == 0) {
+            lastReceiveTime = new Date().getTime();
             waitReceiveLoop(receiveNum);
+        }
+        else {
+            const now = new Date().getTime();
+            console.log("delta: " + (now - lastReceiveTime));
+            lastReceiveTime = now;
         }
         receiveNum++;
     }).once("close", () => {
@@ -80,6 +87,5 @@ https.request(options, (res: IncomingMessage) => {
         const body = bufferStream.toBuffer();
         console.log(body.toString("utf-8"));
         res.destroy();
-
     });
 }).end();

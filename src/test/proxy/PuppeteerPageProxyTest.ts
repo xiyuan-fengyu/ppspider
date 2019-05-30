@@ -1,4 +1,4 @@
-import {launch, Request} from "puppeteer";
+import {launch, Request, SetCookie} from "puppeteer";
 import * as url from "url";
 import * as http from "http";
 import {IncomingMessage} from "http";
@@ -11,32 +11,14 @@ import * as zlib from "zlib";
 
 // https://stackoverflow.com/questions/21491567/how-to-implement-a-writable-stream
 function BufferStream() {
-    // this.receiveLen = 0;
     this.chunks = [];
     stream.Writable.call(this);
 }
 util.inherits(BufferStream, stream.Writable);
 BufferStream.prototype._write = function (chunk, encoding, done) {
     this.chunks.push(chunk);
-    // if (this.receiveLen == 0) {
-    //     this._waitReceiveLoop();
-    // }
-    // this.receiveLen += chunk.length;
     done();
 };
-// BufferStream.prototype._waitReceiveLoop = function () {
-//     const waitReceiveLoop = (lastReceiveLen) => {
-//         setTimeout(() => {
-//             if (this.receiveLen == lastReceiveLen) {
-//                 this.emit("close");
-//             }
-//             else {
-//                 waitReceiveLoop(this.receiveLen);
-//             }
-//         }, 1000);
-//     };
-//     waitReceiveLoop(this.receiveLen);
-// };
 BufferStream.prototype.toBuffer = function (): Buffer {
     return Buffer.concat(this.chunks);
 };
@@ -44,19 +26,13 @@ BufferStream.prototype.toBuffer = function (): Buffer {
 (async () => {
     const browser = await launch({
         headless: false,
-        devtools: true,
-        // args: [ '--proxy-server=127.0.0.1:2007' ]
+        devtools: true
     });
     const page = await browser.newPage();
     await page.setViewport({width: 1920, height: 1080});
     await page.setRequestInterception(true);
     page.on("request", (req: Request) => {
         if (req.url().startsWith("http")) {
-            // req.continue({
-            //     url: "http://localhost:3000/proxy?url=" + encodeURIComponent(req.url()) + "&proxy=" + encodeURIComponent("http://127.0.0.1:2007") + "&headers=" + encodeURIComponent(JSON.stringify(req.headers())),
-            //     postData: req.postData()
-            // });
-
             const options = url.parse(req.url());
             options["method"] = req.method();
             options["headers"] = req.headers();
@@ -79,41 +55,104 @@ BufferStream.prototype.toBuffer = function (): Buffer {
                     }
                 }
 
-                // const contentLen = parseInt(proxyRes.headers["content-length"]);
-                // let receiveLen = 0;
-                // if (!isNaN(contentLen)) {
-                //     if (proxyRes == pipes) {
-                //         proxyRes.on("data", chunk => {
-                //             receiveLen += chunk.length;
-                //             if (receiveLen >= contentLen) {
-                //                 pipes.emit("close");
-                //             }
-                //         });
-                //     }
-                //     else {
-                //         proxyRes.on("data", chunk => {
-                //             receiveLen += chunk.length;
-                //         });
-                //         pipes.on("data", chunk => {
-                //             if (receiveLen >= contentLen) {
-                //                 pipes.emit("close");
-                //             }
-                //         });
-                //     }
-                // }
+                let lastReceiveTime = 0;
+                pipes.on("data", () => {
+                    if (lastReceiveTime == 0) {
+                        lastReceiveTime = new Date().getTime();
+                    }
+                    else {
+                        lastReceiveTime = new Date().getTime();
+                        setTimeout(() => {
+                            if (new Date().getTime() - lastReceiveTime >= 495) {
+                                pipes.emit("close");
+                            }
+                        }, 500);
+                    }
+                });
 
                 const bufferStream = new BufferStream();
                 pipes.pipe(bufferStream);
                 pipes.once("close", () => {
                     const statusCode = proxyRes.statusCode;
                     const headers = proxyRes.headers;
-                    delete headers["set-cookie"];
+                    for (let name in headers) {
+                        const value = headers[name];
+
+                        if (name == "set-cookie") {
+                            if (value.length == 0) {
+                                headers[name] = ("" + value[0]) as any;
+                            }
+                            else {
+                                const setCookies: SetCookie[] = [];
+                                for (let item of value) {
+                                    const setCookie: SetCookie = {
+                                        name: null,
+                                        value: null
+                                    };
+                                    item.split("; ").forEach((keyVal, keyValI) => {
+                                        const eqI = keyVal.indexOf("=");
+                                        let key;
+                                        let value;
+                                        if (eqI > -1) {
+                                            key = keyVal.substring(0, eqI);
+                                            value = keyVal.substring(eqI + 1);
+                                        }
+                                        else {
+                                            key = keyVal;
+                                            value = "";
+                                        }
+                                        const lowerKey = key.toLowerCase();
+
+                                        if (keyValI == 0) {
+                                            setCookie.name = key;
+                                            setCookie.value = value;
+                                        }
+                                        else if (lowerKey == "expires") {
+                                            const expires = new Date(value).getTime();
+                                            if (!isNaN(expires)) {
+                                                setCookie.expires = +(expires / 1000).toFixed(0);
+                                            }
+                                        }
+                                        else if (lowerKey == "max-age") {
+                                            const expires = +value;
+                                            if (!isNaN(expires)) {
+                                                setCookie.expires = expires;
+                                            }
+                                        }
+                                        else if (lowerKey == "path" || key == "domain") {
+                                            setCookie[lowerKey] = value;
+                                        }
+                                        else if (lowerKey == "samesite") {
+                                            setCookie.httpOnly = true;
+                                        }
+                                        else if (lowerKey == "httponly") {
+                                            setCookie.httpOnly = true;
+                                        }
+                                        else if (lowerKey == "secure") {
+                                            setCookie.secure = true;
+                                        }
+                                    });
+                                    setCookies.push(setCookie);
+                                }
+                                page.setCookie(...setCookies).catch();
+                                delete headers[name];
+                            }
+                        }
+                        else if (typeof value != "string") {
+                            if (value instanceof Array) {
+                                headers[name] = JSON.stringify(value);
+                            }
+                            else {
+                                headers[name] = "" + value;
+                            }
+                        }
+                    }
                     const body = bufferStream.toBuffer();
                     req.respond({
                         status: statusCode,
                         headers: headers as any,
                         body: body
-                    }).catch(err => {});
+                    }).catch();
                     proxyRes.destroy();
                 });
             };
@@ -151,7 +190,7 @@ BufferStream.prototype.toBuffer = function (): Buffer {
     //         );
     //     }
     // });
-    await page.goto("https://www.bilibili.com/");
-    // await page.goto("https://www.google.com/");
+    // await page.goto("https://www.bilibili.com/");
+    await page.goto("https://www.google.com/");
     console.log();
 })();
