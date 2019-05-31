@@ -5,6 +5,7 @@ import * as url from "url";
 import {IncomingMessage} from "http";
 import * as stream from "stream";
 import * as util from "util";
+import {SetCookie} from "puppeteer";
 
 
 // pipe 顺序测试
@@ -38,102 +39,87 @@ options["headers"] = {
 };
 options["agent"] = new HttpsProxyAgent('http://127.0.0.1:2007');
 
-const req = https.request(options, (res: IncomingMessage) => {
-    const lengths = new Map();
-    let lastReceiveTime = 0;
-    res.on("data", chunk => {
-        lengths.set(chunk.length, (lengths.get(chunk.length) || 0) + 1);
-        const tempReceiveTime = new Date().getTime();
-        if (tempReceiveTime != lastReceiveTime) {
-            lastReceiveTime = tempReceiveTime;
-            setTimeout(() => {
-                if (lastReceiveTime == tempReceiveTime) {
-                    for (let entry of lengths.entries()) {
-                        console.log(entry[0] + "\t" + entry[1]);
-                    }
-                }
-            }, 4000);
+const req = https.request(options, (proxyRes: IncomingMessage) => {
+    const parser = req["parser"];
+    if (parser) {
+        for (let field in parser) {
+            const value = parser[field];
+            if (typeof value == "function" && value.name == "parserOnBody") {
+                parser[field] = (chunk, start, len) => {
+                    value.call(parser, chunk, start, len);
+                };
+            }
+            else if (typeof value == "function" && value.name == "parserOnMessageComplete") {
+                parser[field] = () => {
+                    console.log("finish");
+                    value.call(parser);
+                };
+            }
         }
+    }
+
+    let pipes: stream = proxyRes;
+    const contentEncodings = (proxyRes.headers["content-encoding"] || "").split(/, ?/).filter(item => item != "").reverse();
+    for (let contentEncoding of contentEncodings) {
+        switch (contentEncoding) {
+            case "gzip":
+            case "x-gzip":
+                pipes = pipes.pipe(zlib.createGunzip());
+                break;
+            case "br":
+                pipes = pipes.pipe(zlib.createBrotliDecompress());
+                break;
+            case "deflate":
+                pipes = pipes.pipe(zlib.createInflate());
+                break;
+        }
+    }
+
+    let contentLength = +proxyRes.headers["content-lenght"];
+    isNaN(contentLength) && (contentLength = -1);
+    if (contentLength > -1) {
+        let receiveLen = 0;
+        proxyRes.on("data", chunk => {
+            receiveLen += chunk.length;
+            if (receiveLen >= contentLength) {
+                proxyRes.emit("close");
+            }
+        });
+    }
+
+    // let lastReceiveTime = 0;
+    // pipes.on("data", () => {
+    //     lastReceiveTime = new Date().getTime();
+    //     setTimeout(() => {
+    //         if (new Date().getTime() - lastReceiveTime >= 495) {
+    //             pipes.emit("close");
+    //         }
+    //     }, 500);
+    // });
+
+    let lastChunk: Buffer;
+    pipes.on("data", chunk => {
+        lastChunk = chunk;
     });
 
-    /*
-583	1
-1389	150
-76	1
-153	1
-821	4
-972	1
-722	1
-123	1
-655	1
-885	1
+    setInterval(() => {
+        const endChunk = lastChunk.subarray(lastChunk.length - 10);
+        const lastStr = endChunk.toString("utf-8");
+        req["length"];
+        proxyRes["length"];
+        console.log(lastChunk.length);
+    }, 1000);
 
-583	1
-1389	144
-1289	1
-180	1
-821	4
-235	1
-1233	1
-39	1
-672	1
-288	1
- */
+    const bufferStream = new BufferStream();
+    pipes.pipe(bufferStream);
+    pipes.once("close", () => {
+        const statusCode = proxyRes.statusCode;
+        const headers = proxyRes.headers;
+        const body = bufferStream.toBuffer();
+        console.log(body.length);
+        proxyRes.destroy();
+    });
+});
 
-    // let pipes: stream = res;
-    // const contentEncodings = (res.headers["content-encoding"] || "").split(/, ?/).filter(item => item != "").reverse();
-    // for (let contentEncoding of contentEncodings) {
-    //     switch (contentEncoding) {
-    //         case "gzip":
-    //         case "x-gzip":
-    //             pipes = pipes.pipe(zlib.createGunzip());
-    //             break;
-    //         case "br":
-    //             pipes = pipes.pipe(zlib.createBrotliDecompress());
-    //             break;
-    //         case "":
-    //             pipes = pipes.pipe(zlib.createInflate());
-    //             break;
-    //     }
-    // }
-    //
-    // const bufferStream = new BufferStream();
-    // pipes.pipe(bufferStream);
-    //
-    // let receiveNum = 0;
-    // let lastReceiveTime = 0;
-    // const waitReceiveLoop = (lastReceiveNum) => {
-    //     setTimeout(() => {
-    //         if (receiveNum == lastReceiveNum) {
-    //             // pipes.emit("close");
-    //             console.log(res);
-    //         }
-    //         else {
-    //             waitReceiveLoop(receiveNum);
-    //         }
-    //     }, 100);
-    // };
-    // pipes.on("data", () => {
-    //     if (receiveNum == 0) {
-    //         lastReceiveTime = new Date().getTime();
-    //         waitReceiveLoop(receiveNum);
-    //     }
-    //     else {
-    //         const now = new Date().getTime();
-    //         // console.log("delta: " + (now - lastReceiveTime));
-    //         lastReceiveTime = now;
-    //     }
-    //     receiveNum++;
-    // }).once("close", () => {
-    //     const statusCode = res.statusCode;
-    //     const headers = res.headers;
-    //     const body = bufferStream.toBuffer();
-    //     console.log(body.toString("utf-8"));
-    //     res.destroy();
-    // });
-});
-req.on("end", () => {
-    console.log("req end");
-});
 req.end();
 

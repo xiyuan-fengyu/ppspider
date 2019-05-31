@@ -87,15 +87,27 @@ BufferStream.prototype.toBuffer = function (): Buffer {
                     }
                 }
 
-                let lastReceiveTime = 0;
-                pipes.on("data", () => {
-                    lastReceiveTime = new Date().getTime();
-                    setTimeout(() => {
-                        if (new Date().getTime() - lastReceiveTime >= 495) {
-                            pipes.emit("close");
+                let contentLength = +proxyRes.headers["content-lenght"];
+                isNaN(contentLength) && (contentLength = -1);
+                if (contentLength > -1) {
+                    let receiveLen = 0;
+                    proxyRes.on("data", chunk => {
+                        receiveLen += chunk.length;
+                        if (receiveLen >= contentLength) {
+                            proxyRes.emit("close");
                         }
-                    }, 500);
-                });
+                    });
+                }
+
+                // let lastReceiveTime = 0;
+                // pipes.on("data", () => {
+                //     lastReceiveTime = new Date().getTime();
+                //     setTimeout(() => {
+                //         if (new Date().getTime() - lastReceiveTime >= 495) {
+                //             pipes.emit("close");
+                //         }
+                //     }, 500);
+                // });
 
                 const bufferStream = new BufferStream();
                 pipes.pipe(bufferStream);
@@ -217,7 +229,7 @@ BufferStream.prototype.toBuffer = function (): Buffer {
             req.continue().catch(err => {});
         }
     });
-    await page.goto("https://www.bilibili.com/");
-    // await page.goto("https://www.google.com/");
+    // await page.goto("https://www.bilibili.com/");
+    await page.goto("https://www.google.com/");
     console.log();
 })();
