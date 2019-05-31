@@ -39,57 +39,101 @@ options["headers"] = {
 options["agent"] = new HttpsProxyAgent('http://127.0.0.1:2007');
 
 const req = https.request(options, (res: IncomingMessage) => {
-    let pipes: stream = res;
-    const contentEncodings = (res.headers["content-encoding"] || "").split(/, ?/).filter(item => item != "").reverse();
-    for (let contentEncoding of contentEncodings) {
-        switch (contentEncoding) {
-            case "gzip":
-            case "x-gzip":
-                pipes = pipes.pipe(zlib.createGunzip());
-                break;
-            case "br":
-                pipes = pipes.pipe(zlib.createBrotliDecompress());
-                break;
-            case "":
-                pipes = pipes.pipe(zlib.createInflate());
-                break;
-        }
-    }
-
-    const bufferStream = new BufferStream();
-    pipes.pipe(bufferStream);
-
-    let receiveNum = 0;
+    const lengths = new Map();
     let lastReceiveTime = 0;
-    const waitReceiveLoop = (lastReceiveNum) => {
-        setTimeout(() => {
-            if (receiveNum == lastReceiveNum) {
-                // pipes.emit("close");
-                console.log(res);
-            }
-            else {
-                waitReceiveLoop(receiveNum);
-            }
-        }, 100);
-    };
-    pipes.on("data", () => {
-        if (receiveNum == 0) {
-            lastReceiveTime = new Date().getTime();
-            waitReceiveLoop(receiveNum);
+    res.on("data", chunk => {
+        lengths.set(chunk.length, (lengths.get(chunk.length) || 0) + 1);
+        const tempReceiveTime = new Date().getTime();
+        if (tempReceiveTime != lastReceiveTime) {
+            lastReceiveTime = tempReceiveTime;
+            setTimeout(() => {
+                if (lastReceiveTime == tempReceiveTime) {
+                    for (let entry of lengths.entries()) {
+                        console.log(entry[0] + "\t" + entry[1]);
+                    }
+                }
+            }, 4000);
         }
-        else {
-            const now = new Date().getTime();
-            // console.log("delta: " + (now - lastReceiveTime));
-            lastReceiveTime = now;
-        }
-        receiveNum++;
-    }).once("close", () => {
-        const statusCode = res.statusCode;
-        const headers = res.headers;
-        const body = bufferStream.toBuffer();
-        console.log(body.toString("utf-8"));
-        res.destroy();
     });
+
+    /*
+583	1
+1389	150
+76	1
+153	1
+821	4
+972	1
+722	1
+123	1
+655	1
+885	1
+
+583	1
+1389	144
+1289	1
+180	1
+821	4
+235	1
+1233	1
+39	1
+672	1
+288	1
+ */
+
+    // let pipes: stream = res;
+    // const contentEncodings = (res.headers["content-encoding"] || "").split(/, ?/).filter(item => item != "").reverse();
+    // for (let contentEncoding of contentEncodings) {
+    //     switch (contentEncoding) {
+    //         case "gzip":
+    //         case "x-gzip":
+    //             pipes = pipes.pipe(zlib.createGunzip());
+    //             break;
+    //         case "br":
+    //             pipes = pipes.pipe(zlib.createBrotliDecompress());
+    //             break;
+    //         case "":
+    //             pipes = pipes.pipe(zlib.createInflate());
+    //             break;
+    //     }
+    // }
+    //
+    // const bufferStream = new BufferStream();
+    // pipes.pipe(bufferStream);
+    //
+    // let receiveNum = 0;
+    // let lastReceiveTime = 0;
+    // const waitReceiveLoop = (lastReceiveNum) => {
+    //     setTimeout(() => {
+    //         if (receiveNum == lastReceiveNum) {
+    //             // pipes.emit("close");
+    //             console.log(res);
+    //         }
+    //         else {
+    //             waitReceiveLoop(receiveNum);
+    //         }
+    //     }, 100);
+    // };
+    // pipes.on("data", () => {
+    //     if (receiveNum == 0) {
+    //         lastReceiveTime = new Date().getTime();
+    //         waitReceiveLoop(receiveNum);
+    //     }
+    //     else {
+    //         const now = new Date().getTime();
+    //         // console.log("delta: " + (now - lastReceiveTime));
+    //         lastReceiveTime = now;
+    //     }
+    //     receiveNum++;
+    // }).once("close", () => {
+    //     const statusCode = res.statusCode;
+    //     const headers = res.headers;
+    //     const body = bufferStream.toBuffer();
+    //     console.log(body.toString("utf-8"));
+    //     res.destroy();
+    // });
+});
+req.on("end", () => {
+    console.log("req end");
 });
 req.end();
 
