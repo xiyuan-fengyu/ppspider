@@ -351,7 +351,8 @@ cid	sasdasdada	.sm.ms	/	2037-12-31T23:55:55.900Z	27
 ```
 
 ### PuppeteerUtil 例子
-[PuppeteerUtil example](https://github.com/xiyuan-fengyu/ppspider_example/tree/master/src/puppeteerUtil)
+[PuppeteerUtil example](https://github.com/xiyuan-fengyu/ppspider_example/tree/master/src/puppeteerUtil)  
+[单页面代理](https://github.com/xiyuan-fengyu/ppspider/blob/master/src/test/component/ProxyTest.ts)  
 
 ## NetworkTracing  
 用于记录打开一个页面过程中的请求情况 [NetworkTracing example](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/dataUi/NetworkTracingTest.ts)
