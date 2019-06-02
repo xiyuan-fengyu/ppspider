@@ -51,7 +51,7 @@ BufferStream.prototype.toBuffer = function (): Buffer {
                             return cache;
                         }
                     }
-                }, req.url());
+                }, req.url()).catch(err => {});
                 if (responseCache) {
                     let [expires, statusCodeStr, bodyBase64] = responseCache.split("\n");
                     const statusCode = +statusCodeStr;
