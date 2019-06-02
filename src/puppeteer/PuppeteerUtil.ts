@@ -81,7 +81,6 @@ export type LinkPredictMap = {
     [groupName: string]: LinkPredict
 }
 
-const kRequestInterceptionNum = "_requestInterceptionNum";
 const kRequestInterception_ImgLoad = "_requestListener_imgLoad";
 
 const kResponseCheckUrls = "_responseCheckUrls";
@@ -154,13 +153,6 @@ export class PuppeteerUtil {
         }
     }
 
-    private static async requestInterceptionNumDelta(page: Page, delta: number) {
-        let requestInterceptionNum = (page[kRequestInterceptionNum] || 0) + delta;
-        if (requestInterceptionNum < 0) requestInterceptionNum = 0;
-        page[kRequestInterceptionNum] = requestInterceptionNum;
-        await page.setRequestInterception(requestInterceptionNum > 0);
-    }
-
     /**
      * 是指是否阻止图片加载
      * @param {Page} page
@@ -168,13 +160,13 @@ export class PuppeteerUtil {
      * @returns {Promise<void>}
      */
     static async setImgLoad(page: Page, enable: boolean) {
-        await this.requestInterceptionNumDelta(page, enable ? -1 : 1);
         if (enable) {
             if (page[kRequestInterception_ImgLoad]) {
                 page.removeListener("request", page[kRequestInterception_ImgLoad]);
             }
         }
         else {
+            await page.setRequestInterception(true);
             if (!page[kRequestInterception_ImgLoad]) {
                 page[kRequestInterception_ImgLoad] = (request: Request) => {
                     const interceptionHandled = request["_interceptionHandled"];
@@ -677,9 +669,10 @@ export class PuppeteerUtil {
         page["_enableCacheInProxy"] = enableCache;
         await page.setRequestInterception(true);
         if (!page["_proxyHandler"]) {
-            const proxy = page["_proxy"];
-            const enableCache = page["_enableCacheInProxy"];
             const _proxyHandler = async (req: Request) => {
+                const proxy = page["_proxy"];
+                const enableCache = page["_enableCacheInProxy"];
+
                 if (req["_interceptionHandled"]) {
                     logger.warn(`request(${req.url()}) handled`);
                     return;

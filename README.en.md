@@ -526,7 +526,7 @@ Job panel: search jobs and view details
 5. Get video's infos and comments from https://www.bilibili.com [BilibiliApp](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/examples/BilibiliApp.ts)  
 
 # Update Note
-2019-06-02 v2.1.7
+2019-06-02 v2.1.8
 1. Add new method: PuppeteerUtil.useProxy, to support single page proxy      
 2. update puppeteer version to 1.17.0      
 
