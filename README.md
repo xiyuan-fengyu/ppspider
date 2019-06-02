@@ -35,6 +35,7 @@
     + [PuppeteerUtil.specifyIdByJquery](#puppeteerutilspecifyidbyjquery)
     + [PuppeteerUtil.scrollToBottom](#puppeteerutilscrolltobottom)
     + [PuppeteerUtil.parseCookies](#puppeteerutilparsecookies)
+    + [PuppeteerUtil.useProxy](#puppeteerutiluseproxy)
     + [PuppeteerUtil 例子](#puppeteerutil-%E4%BE%8B%E5%AD%90)
   * [NetworkTracing](#networktracing)
   * [数据库](#%E6%95%B0%E6%8D%AE%E5%BA%93)
