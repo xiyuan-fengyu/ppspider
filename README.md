@@ -350,6 +350,9 @@ PHPSESSID	ifmn12345678	sm.ms	/	N/A	35
 cid	sasdasdada	.sm.ms	/	2037-12-31T23:55:55.900Z	27			
 ```
 
+### PuppeteerUtil.useProxy
+为单个page设置动态的代理  
+
 ### PuppeteerUtil 例子
 [PuppeteerUtil example](https://github.com/xiyuan-fengyu/ppspider_example/tree/master/src/puppeteerUtil)  
 [单页面代理](https://github.com/xiyuan-fengyu/ppspider/blob/master/src/test/component/ProxyTest.ts)  

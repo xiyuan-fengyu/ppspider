@@ -385,9 +385,12 @@ PHPSESSID	ifmn12345678	sm.ms	/	N/A	35
 cid	sasdasdada	.sm.ms	/	2037-12-31T23:55:55.900Z	27			
 ```
 
+### PuppeteerUtil.useProxy
+Set dynamic proxy for a single page  
+
 ### PuppeteerUtil example
-[PuppeteerUtil example](https://github.com/xiyuan-fengyu/ppspider_example/tree/master/src/puppeteerUtil)
-[Single Page Proxy](https://github.com/xiyuan-fengyu/ppspider/blob/master/src/test/component/ProxyTest.ts)  
+[PuppeteerUtil example](https://github.com/xiyuan-fengyu/ppspider_example/tree/master/src/puppeteerUtil)  
+[Single Page Proxy](https://github.com/xiyuan-fengyu/ppspider/blob/master/src/test/component/ProxyTest.ts)   
 
 ## NetworkTracing  
 Recode all requests during page opening [NetworkTracing example](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/dataUi/NetworkTracingTest.ts)
