@@ -27,7 +27,8 @@ BufferStream.prototype.toBuffer = function (): Buffer {
 (async () => {
     const browser = await launch({
         headless: false,
-        devtools: true
+        devtools: true,
+        // args: [ '--proxy-server=127.0.0.1:3000' ]
     });
     const page = await browser.newPage();
     await page.setViewport({width: 1920, height: 1080});
@@ -68,6 +69,9 @@ BufferStream.prototype.toBuffer = function (): Buffer {
             const options = url.parse(req.url());
             options["method"] = req.method();
             options["headers"] = req.headers();
+            // 解决一些请求（例如 https://www.google.com/）响应头既不包含 content-length，又不包含 transfer-encoding:chunked 的情况
+            // 支持 br 的node版本较高，所以这里不启用
+            options["headers"]["accept-encoding"] = "identity, gzip, deflate";
 
             const resHandler = (proxyRes: IncomingMessage) => {
                 let pipes: stream = proxyRes;
@@ -75,43 +79,19 @@ BufferStream.prototype.toBuffer = function (): Buffer {
                 for (let contentEncoding of contentEncodings) {
                     switch (contentEncoding) {
                         case "gzip":
-                        case "x-gzip":
                             pipes = pipes.pipe(zlib.createGunzip());
                             break;
-                        case "br":
-                            pipes = pipes.pipe(zlib.createBrotliDecompress());
-                            break;
+                        // case "br":
+                        //     pipes = pipes.pipe(zlib.createBrotliDecompress());
+                        //     break;
                         case "deflate":
                             pipes = pipes.pipe(zlib.createInflate());
                             break;
                     }
                 }
 
-                let contentLength = +proxyRes.headers["content-lenght"];
-                isNaN(contentLength) && (contentLength = -1);
-                if (contentLength > -1) {
-                    let receiveLen = 0;
-                    proxyRes.on("data", chunk => {
-                        receiveLen += chunk.length;
-                        if (receiveLen >= contentLength) {
-                            proxyRes.emit("close");
-                        }
-                    });
-                }
-
-                // let lastReceiveTime = 0;
-                // pipes.on("data", () => {
-                //     lastReceiveTime = new Date().getTime();
-                //     setTimeout(() => {
-                //         if (new Date().getTime() - lastReceiveTime >= 495) {
-                //             pipes.emit("close");
-                //         }
-                //     }, 500);
-                // });
-
-                const bufferStream = new BufferStream();
-                pipes.pipe(bufferStream);
-                pipes.once("close", () => {
+                const bodyStream = new BufferStream();
+                const onBodyEnd = () => {
                     const statusCode = proxyRes.statusCode;
                     const headers = proxyRes.headers;
                     for (let name in headers) {
@@ -186,7 +166,7 @@ BufferStream.prototype.toBuffer = function (): Buffer {
                             }
                         }
                     }
-                    const body = bufferStream.toBuffer();
+                    const body = bodyStream.toBuffer();
 
                     req.respond({
                         status: statusCode,
@@ -205,7 +185,34 @@ BufferStream.prototype.toBuffer = function (): Buffer {
                     }
 
                     proxyRes.destroy();
-                });
+                };
+
+                let contentLength = +proxyRes.headers["content-length"];
+                isNaN(contentLength) && (contentLength = -1);
+                if (contentLength == 0) {
+                    onBodyEnd();
+                }
+                else {
+                    if (contentLength > 0) {
+                        let receiveLen = 0;
+                        proxyRes.on("data", chunk => {
+                            receiveLen += chunk.length;
+                            if (receiveLen >= contentLength) {
+                                setTimeout(() => {
+                                    proxyRes.emit("close");
+                                }, 0);
+                            }
+                        });
+                    }
+                    else {
+                        // transfer-encoding:chunked
+                        // const transferEncoding = proxyRes.headers["transfer-encoding"];
+                        // transferEncoding == null;
+                    }
+
+                    pipes.pipe(bodyStream);
+                    pipes.once("close", onBodyEnd);
+                }
             };
 
             const proxy = "http://127.0.0.1:2007";
@@ -229,7 +236,7 @@ BufferStream.prototype.toBuffer = function (): Buffer {
             req.continue().catch(err => {});
         }
     });
-    // await page.goto("https://www.bilibili.com/");
-    await page.goto("https://www.google.com/");
+    await page.goto("https://www.bilibili.com/");
+    // await page.goto("https://www.google.com/");
     console.log();
 })();
