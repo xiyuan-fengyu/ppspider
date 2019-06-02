@@ -68,9 +68,9 @@ BufferStream.prototype.toBuffer = function (): Buffer {
 
             const options = url.parse(req.url());
             options["method"] = req.method();
-            options["headers"] = req.headers();
+            options["headers"] = req.headers() || {};
             // 解决一些请求（例如 https://www.google.com/）响应头既不包含 content-length，又不包含 transfer-encoding:chunked 的情况
-            // 支持 br 的node版本较高，所以这里不启用
+            // 支持 br 的node版本较高，所以这里不启用br
             options["headers"]["accept-encoding"] = "identity, gzip, deflate";
 
             const resHandler = (proxyRes: IncomingMessage) => {

@@ -485,6 +485,10 @@ Job 面板可以对所有子任务实例进行搜索，查看任务详情
 5. B站视屏信息和评论抓取 [BilibiliApp](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/examples/BilibiliApp.ts)  
 
 # 更新日志
+2019-06-02 v2.1.7
+1. 增加新的方法：PuppeteerUtil.useProxy，用于支持设置page动态代理    
+2. 更新puppeteer版本：1.17.0  
+
 2019-05-28 v2.1.6
 1. 修复 MongodbDao 中URL模块引用错误的bug  
 2. 修复 PuppeteerUtil.parseCookie 解析日期的bug     

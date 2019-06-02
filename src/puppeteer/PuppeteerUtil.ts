@@ -4,8 +4,32 @@ import * as fs from "fs";
 import {DownloadUtil} from "../common/util/DownloadUtil";
 import {logger} from "../common/util/logger";
 import {FileUtil} from "../common/util/FileUtil";
-import * as moment from "moment";
-import {isUndefined} from "util";
+import * as url from "url";
+import {IncomingMessage} from "http";
+import * as stream from "stream";
+import * as zlib from "zlib";
+import * as http from "http";
+import * as https from "https";
+import * as HttpProxyAgent from 'http-proxy-agent';
+import * as HttpsProxyAgent from 'https-proxy-agent';
+import * as util from "util";
+
+
+
+function BufferStream() {
+    this.chunks = [];
+    stream.Writable.call(this);
+}
+util.inherits(BufferStream, stream.Writable);
+BufferStream.prototype._write = function (chunk, encoding, done) {
+    this.chunks.push(chunk);
+    done();
+};
+BufferStream.prototype.toBuffer = function (): Buffer {
+    return Buffer.concat(this.chunks);
+};
+
+
 
 export type ResponseListener = (response: Response) => any;
 
@@ -640,6 +664,226 @@ export class PuppeteerUtil {
             }
         });
         return cookies;
+    }
+
+    /**
+     * 页面使用单独的proxy
+     * @param page
+     * @param proxy 代理服务器地址，例如：http://127.0.0.1:2007
+     * @param enableCache 代理请求的过程中是否启用缓存
+     */
+    static async useProxy(page: Page, proxy: string, enableCache: boolean = true) {
+        page["_proxy"] = proxy;
+        page["_enableCacheInProxy"] = enableCache;
+        await page.setRequestInterception(true);
+        if (!page["_proxyHandler"]) {
+            const proxy = page["_proxy"];
+            const enableCache = page["_enableCacheInProxy"];
+            const _proxyHandler = async (req: Request) => {
+                if (req["_interceptionHandled"]) {
+                    logger.warn(`request(${req.url()}) handled`);
+                    return;
+                }
+                else if (proxy && req.url().startsWith("http")) {
+                    if (!req.isNavigationRequest()) {
+                        // nav请求始终不缓存
+                        const responseCache = enableCache ? await page.evaluate(url => {
+                            const cache = localStorage.getItem(url);
+                            if (cache) {
+                                if (parseInt(cache.substring(0, cache.indexOf("\n"))) <= new Date().getTime()) {
+                                    // 已过期
+                                    localStorage.removeItem(url);
+                                }
+                                else {
+                                    return cache;
+                                }
+                            }
+                        }, req.url()).catch(err => {}) : null;
+                        if (responseCache) {
+                            let [expires, statusCodeStr, bodyBase64] = responseCache.split("\n");
+                            const statusCode = +statusCodeStr;
+                            const body = Buffer.from(bodyBase64, "base64");
+                            return req.respond({
+                                status: statusCode,
+                                headers: {
+                                    cache: "from-local-storage"
+                                },
+                                body: body
+                            });
+                        }
+                    }
+
+                    const options = url.parse(req.url());
+                    options["method"] = req.method();
+                    options["headers"] = req.headers() || {};
+                    // 解决一些请求（例如 https://www.google.com/）响应头既不包含 content-length，又不包含 transfer-encoding:chunked 的情况
+                    // 支持 br 的node版本较高，所以这里不启用br
+                    options["headers"]["accept-encoding"] = "identity, gzip, deflate";
+
+                    const resHandler = (proxyRes: IncomingMessage) => {
+                        let pipes: stream = proxyRes;
+                        const contentEncodings = (proxyRes.headers["content-encoding"] || "").split(/, ?/).filter(item => item != "").reverse();
+                        for (let contentEncoding of contentEncodings) {
+                            switch (contentEncoding) {
+                                case "gzip":
+                                    pipes = pipes.pipe(zlib.createGunzip());
+                                    break;
+                                // case "br":
+                                //     pipes = pipes.pipe(zlib.createBrotliDecompress());
+                                //     break;
+                                case "deflate":
+                                    pipes = pipes.pipe(zlib.createInflate());
+                                    break;
+                            }
+                        }
+
+                        const bodyStream = new BufferStream();
+                        const onBodyEnd = () => {
+                            const statusCode = proxyRes.statusCode;
+                            const headers = proxyRes.headers;
+                            for (let name in headers) {
+                                const value = headers[name];
+
+                                if (name == "set-cookie") {
+                                    if (value.length == 0) {
+                                        headers[name] = ("" + value[0]) as any;
+                                    }
+                                    else {
+                                        const setCookies: SetCookie[] = [];
+                                        for (let item of value) {
+                                            const setCookie: SetCookie = {
+                                                name: null,
+                                                value: null
+                                            };
+                                            item.split("; ").forEach((keyVal, keyValI) => {
+                                                const eqI = keyVal.indexOf("=");
+                                                let key;
+                                                let value;
+                                                if (eqI > -1) {
+                                                    key = keyVal.substring(0, eqI);
+                                                    value = keyVal.substring(eqI + 1);
+                                                }
+                                                else {
+                                                    key = keyVal;
+                                                    value = "";
+                                                }
+                                                const lowerKey = key.toLowerCase();
+
+                                                if (keyValI == 0) {
+                                                    setCookie.name = key;
+                                                    setCookie.value = value;
+                                                }
+                                                else if (lowerKey == "expires") {
+                                                    const expires = new Date(value).getTime();
+                                                    if (!isNaN(expires)) {
+                                                        setCookie.expires = +(expires / 1000).toFixed(0);
+                                                    }
+                                                }
+                                                else if (lowerKey == "max-age") {
+                                                    const expires = +value;
+                                                    if (!isNaN(expires)) {
+                                                        setCookie.expires = expires;
+                                                    }
+                                                }
+                                                else if (lowerKey == "path" || key == "domain") {
+                                                    setCookie[lowerKey] = value;
+                                                }
+                                                else if (lowerKey == "samesite") {
+                                                    setCookie.httpOnly = true;
+                                                }
+                                                else if (lowerKey == "httponly") {
+                                                    setCookie.httpOnly = true;
+                                                }
+                                                else if (lowerKey == "secure") {
+                                                    setCookie.secure = true;
+                                                }
+                                            });
+                                            setCookies.push(setCookie);
+                                        }
+                                        page.setCookie(...setCookies).catch(err => {});
+                                        delete headers[name];
+                                    }
+                                }
+                                else if (typeof value != "string") {
+                                    if (value instanceof Array) {
+                                        headers[name] = JSON.stringify(value);
+                                    }
+                                    else {
+                                        headers[name] = "" + value;
+                                    }
+                                }
+                            }
+                            const body = bodyStream.toBuffer();
+
+                            req.respond({
+                                status: statusCode,
+                                headers: headers as any,
+                                body: body
+                            }).catch(err => {});
+
+                            //  如果有 Expires ，则保存缓存
+                            const expires = new Date(headers.expires).getTime();
+                            if (enableCache && expires > new Date().getTime()) {
+                                const bodyBase64 = body.toString("base64");
+                                const responseCache = `${expires}\n${statusCode}\n${bodyBase64}`;
+                                page.evaluate((url, responseCache) => {
+                                    localStorage.setItem(url, responseCache);
+                                }, req.url(), responseCache).catch(err => {});
+                            }
+
+                            proxyRes.destroy();
+                        };
+
+                        let contentLength = +proxyRes.headers["content-length"];
+                        isNaN(contentLength) && (contentLength = -1);
+                        if (contentLength == 0) {
+                            onBodyEnd();
+                        }
+                        else {
+                            if (contentLength > 0) {
+                                let receiveLen = 0;
+                                proxyRes.on("data", chunk => {
+                                    receiveLen += chunk.length;
+                                    if (receiveLen >= contentLength) {
+                                        setTimeout(() => {
+                                            proxyRes.emit("close");
+                                        }, 0);
+                                    }
+                                });
+                            }
+                            else {
+                                // transfer-encoding:chunked
+                                // const transferEncoding = proxyRes.headers["transfer-encoding"];
+                                // transferEncoding == null;
+                            }
+
+                            pipes.pipe(bodyStream);
+                            pipes.once("close", onBodyEnd);
+                        }
+                    };
+
+                    let proxyReq;
+                    if (options.protocol == "http:") {
+                        options["agent"] = new HttpProxyAgent(proxy);
+                        proxyReq = http.request(options, resHandler);
+                    }
+                    else {
+                        options["agent"] = new HttpsProxyAgent(proxy);
+                        proxyReq = https.request(options, resHandler);
+                    }
+
+                    const postData = req.postData();
+                    if (postData) {
+                        proxyReq.write(postData);
+                    }
+                    proxyReq.end();
+                }
+                else {
+                    req.continue().catch(err => {});
+                }
+            };
+            page.on("request", _proxyHandler);
+        }
     }
 
 }
