@@ -488,6 +488,7 @@ Job 面板可以对所有子任务实例进行搜索，查看任务详情
 3. 如果用户希望一些队列在应用启动后不立即执行，需要等到特殊条件达成后开始执行，可以参考这里 [QueueWaitToRunApp](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/examples/QueueWaitToRunApp.ts)   
 4. 网页截图，支持超长网页截图 [ScreenshotApp](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/dataUi/ScreenshotApp.ts)   
 5. B站视屏信息和评论抓取 [BilibiliApp](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/examples/BilibiliApp.ts)  
+6. 为单个page设置代理 [Page Proxy](https://github.com/xiyuan-fengyu/ppspider/blob/master/src/test/component/ProxyTest.ts)    
 
 # 更新日志
 2019-06-02 v2.1.8

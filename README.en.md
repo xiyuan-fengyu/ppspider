@@ -524,6 +524,7 @@ Job panel: search jobs and view details
 3. If you wants some queues to not be executed immediately after the application is started, look this [QueueWaitToRunApp](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/examples/QueueWaitToRunApp.ts)
 4. Web page screenshot, super long page is supported [ScreenshotApp](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/dataUi/ScreenshotApp.ts)  
 5. Get video's infos and comments from https://www.bilibili.com [BilibiliApp](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/examples/BilibiliApp.ts)  
+6. Set proxy for a page [Page Proxy](https://github.com/xiyuan-fengyu/ppspider/blob/master/src/test/component/ProxyTest.ts)    
 
 # Update Note
 2019-06-02 v2.1.8
