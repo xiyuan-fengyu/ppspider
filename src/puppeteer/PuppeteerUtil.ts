@@ -864,6 +864,9 @@ export class PuppeteerUtil {
                         options["agent"] = new HttpsProxyAgent(proxy);
                         proxyReq = https.request(options, resHandler);
                     }
+                    proxyReq.on("error", err => {
+                        req.abort("failed").catch(err => {});
+                    });
 
                     const postData = req.postData();
                     if (postData) {
