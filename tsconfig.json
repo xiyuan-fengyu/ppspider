@@ -11,6 +11,10 @@
     "experimentalDecorators": true,
     "watch":true
   },
+  "lib": [
+    "es6",
+    "dom"
+  ],
   "include":[
     "./src/**/*"
   ],
