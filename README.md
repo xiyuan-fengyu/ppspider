@@ -491,6 +491,9 @@ Job 面板可以对所有子任务实例进行搜索，查看任务详情
 6. 为单个page设置代理 [Page Proxy](https://github.com/xiyuan-fengyu/ppspider/blob/master/src/test/component/ProxyTest.ts)    
 
 # 更新日志
+2019-06-03 v2.1.9
+1. 修复 PuppeteerUtil.useProxy 代理请求出现异常后，应用崩溃的bug  
+
 2019-06-02 v2.1.8
 1. 增加新的方法：PuppeteerUtil.useProxy，用于支持设置page动态代理    
 2. 更新puppeteer版本：1.17.0  

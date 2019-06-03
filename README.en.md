@@ -527,6 +527,9 @@ Job panel: search jobs and view details
 6. Set proxy for a page [Page Proxy](https://github.com/xiyuan-fengyu/ppspider/blob/master/src/test/component/ProxyTest.ts)    
 
 # Update Note
+2019-06-03 v2.1.9
+1. Fix bug: app stoped if exception occurred during request proxy in PuppeteerUtil.useProxy     
+
 2019-06-02 v2.1.8
 1. Add new method: PuppeteerUtil.useProxy, to support single page proxy      
 2. update puppeteer version to 1.17.0      
