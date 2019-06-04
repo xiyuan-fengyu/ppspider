@@ -674,7 +674,6 @@ export class PuppeteerUtil {
                 const enableCache = page["_enableCacheInProxy"];
 
                 if (req["_interceptionHandled"]) {
-                    logger.warn(`request(${req.url()}) handled`);
                     return;
                 }
                 else if (proxy && req.url().startsWith("http")) {

@@ -1,4 +1,4 @@
-import {Browser, launch, LaunchOptions, Page} from "puppeteer";
+import {Browser, launch, LaunchOptions, Page, Request} from "puppeteer";
 import {WorkerFactory} from "../spider/worker/WorkerFactory";
 import {Serializable} from "../common/serialize/Serializable";
 import {logger} from "../common/util/logger";
@@ -83,6 +83,28 @@ export class PuppeteerWorkerFactory implements WorkerFactory<Page> {
                 }
             };
         });
+
+        // 解决多个 request handler 时，修正 continue 逻辑， 使得可以多次 continue，当多个 handler 都 continue 时，才调用真正的continue
+        const firstHandlerForRequest = (req: Request) => {
+            const oldContinue = req.continue;
+            let continueNum = 0;
+            req.continue = (override?: any) => {
+                if (override) {
+                    return oldContinue.call(req, override);
+                }
+                else {
+                    continueNum++;
+                    if (continueNum == page.listeners("request").length) {
+                        return oldContinue.call(req);
+                    }
+                    else {
+                        return new Promise(resolve => resolve());
+                    }
+                }
+            };
+            return req.continue();
+        };
+        page.on("request", firstHandlerForRequest);
 
         return page;
     }

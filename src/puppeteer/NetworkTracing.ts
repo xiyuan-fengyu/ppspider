@@ -1,4 +1,4 @@
-import {Page, Response} from "puppeteer";
+import {Page, Request, Response} from "puppeteer";
 
 export type PageRequest = {
     id: string,
@@ -41,33 +41,36 @@ export class NetworkTracing {
 
     constructor(page: Page) {
         let requestIndex = 0;
-        page.on("request", this.onRequest = event => {
-            const _requestId = event["_requestId"];
+        page.on("request", this.onRequest = (req: Request) => {
+            const _requestId = req["_requestId"];
             this.requestMap[_requestId] = {
                 id: _requestId,
                 sort: requestIndex++,
-                url: event.url(),
-                method: event.method,
+                url: req.url(),
+                method: req.method,
                 time: new Date().getTime()
             };
+            if (req["_allowInterception"] && !req["_interceptionHandled"]) {
+                req.continue();
+            }
         });
 
-        page.on("response", this.onResponse = async event => {
-            const response = this.requestMap[event["_request"]["_requestId"]].response = {
-                status: event["_status"],
-                contentType: event["_headers"]["content-type"],
-                contentLength: event["_headers"]["content-length"],
-                fromCache: event["_fromDiskCache"],
-                fromServiceWorker: event["_fromServiceWorker"],
+        page.on("response", this.onResponse = async res => {
+            const response = this.requestMap[res["_request"]["_requestId"]].response = {
+                status: res["_status"],
+                contentType: res["_headers"]["content-type"],
+                contentLength: res["_headers"]["content-length"],
+                fromCache: res["_fromDiskCache"],
+                fromServiceWorker: res["_fromServiceWorker"],
                 time: new Date().getTime()
             };
 
             if (response.status == 302) {
-                (response as any).location = event["_headers"]["location"]
+                (response as any).location = res["_headers"]["location"]
             }
 
             if (response.contentLength == null) {
-                await event.buffer()
+                await res.buffer()
                     .then(res => {
                         response.contentLength = res.length
                     })
