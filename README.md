@@ -489,6 +489,7 @@ Job 面板可以对所有子任务实例进行搜索，查看任务详情
 4. 网页截图，支持超长网页截图 [ScreenshotApp](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/dataUi/ScreenshotApp.ts)   
 5. B站视屏信息和评论抓取 [BilibiliApp](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/examples/BilibiliApp.ts)  
 6. 为单个page设置代理 [Page Proxy](https://github.com/xiyuan-fengyu/ppspider/blob/master/src/test/component/ProxyTest.ts)    
+7. QQ音乐信息和评论 [QQ Music](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/examples/QqMusicApp.ts)  
 
 # 更新日志
 2019-06-03 v2.1.9

@@ -525,6 +525,7 @@ Job panel: search jobs and view details
 4. Web page screenshot, super long page is supported [ScreenshotApp](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/dataUi/ScreenshotApp.ts)  
 5. Get video's infos and comments from https://www.bilibili.com [BilibiliApp](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/examples/BilibiliApp.ts)  
 6. Set proxy for a page [Page Proxy](https://github.com/xiyuan-fengyu/ppspider/blob/master/src/test/component/ProxyTest.ts)    
+7. QQ music info and comments [QQ Music](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/examples/QqMusicApp.ts)  
 
 # Update Note
 2019-06-03 v2.1.9
