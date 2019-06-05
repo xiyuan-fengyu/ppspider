@@ -85,9 +85,10 @@ export class PuppeteerWorkerFactory implements WorkerFactory<Page> {
         });
 
         // 解决多个 request handler 时，修正 continue 逻辑， 使得可以多次 continue，当多个 handler 都 continue 时，才调用真正的continue
-        const firstHandlerForRequest = (req: Request) => {
+        page.on("request", (req: Request) => {
             const oldContinue = req.continue;
             let continueNum = 0;
+            // override request.continue
             req.continue = (override?: any) => {
                 if (override) {
                     return oldContinue.call(req, override);
@@ -97,14 +98,10 @@ export class PuppeteerWorkerFactory implements WorkerFactory<Page> {
                     if (continueNum == page.listeners("request").length) {
                         return oldContinue.call(req);
                     }
-                    else {
-                        return new Promise(resolve => resolve());
-                    }
                 }
             };
             return req.continue();
-        };
-        page.on("request", firstHandlerForRequest);
+        });
 
         return page;
     }
