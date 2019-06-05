@@ -726,7 +726,6 @@ export class QueueManager {
                     }
                 }
             }
-            this.delayPushInfo();
         }
     }
 
@@ -773,6 +772,8 @@ export class QueueManager {
             job.logs.push(logger.formatWithoutPos("info", "add to queue"));
         }
         await appInfo.jobManager.save(job);
+
+        this.delayPushInfo();
     }
 
     startDispatchLoop() {
@@ -878,11 +879,11 @@ export class QueueManager {
         queueInfo.curParallel = (queueInfo.curParallel || 0) + 1;
         queueInfo.lastExeTime = new Date().getTime();
 
+        const target = queueInfo.config["target"];
+        const method = target[queueInfo.config["method"]];
+
         const workerFactory = getBean<WorkerFactory<any>>(queueInfo.config.workerFactory);
         return workerFactory.get().then(async worker => {
-            const target = queueInfo.config["target"];
-            const method = target[queueInfo.config["method"]];
-
             this.runningNum++;
             this.delayPushInfo();
 
@@ -891,8 +892,9 @@ export class QueueManager {
             job.tryNum++;
             await appInfo.jobManager.save(job, true);
 
+            let res;
             try {
-                const res = await new Promise(async (resolve, reject) => {
+                res = await new Promise(async (resolve, reject) => {
                     // 如果任务设置有超时时间，则设置超时回调
                    if (queueInfo.config.timeout == null || queueInfo.config.timeout >= 0) {
                        const timeout = queueInfo.config.timeout || Defaults.jobTimeout;
@@ -914,7 +916,7 @@ export class QueueManager {
                         }
                     };
 
-                    appInfo.eventBus.on(Events.QueueManager_InterruptJob, listenInterrupt);
+                    appInfo.eventBus.once(Events.QueueManager_InterruptJob, listenInterrupt);
                     try {
                         const res = await method.call(target, worker, job);
                         resolve(res);
@@ -928,14 +930,6 @@ export class QueueManager {
                 job.status = JobStatus.Success;
                 job.logs.push(logger.formatWithoutPos("info","executed successfully"));
                 this.successNum++;
-
-                if (res) {
-                    // 将返回结果添加到队列
-                    const addToQueueDatas = transformResToAddToQueueInfos(method, res);
-                    if (addToQueueDatas.length) {
-                        await this.addToQueue(job, addToQueueDatas);
-                    }
-                }
             }
             catch (e) {
                 if (job.tryNum >= ((job.datas._ || {}).maxTry || Defaults.maxTry)) {
@@ -953,8 +947,7 @@ export class QueueManager {
 
             this.runningNum--;
             queueInfo.curParallel--;
-            return worker;
-        }).then(async worker => {
+
             if (job.status == JobStatus.Success) {
                 queueInfo.success = (queueInfo.success || 0) + 1;
             }
@@ -971,6 +964,12 @@ export class QueueManager {
             }
 
             this.delayPushInfo();
+
+            if (res) {
+                // 将返回结果添加到队列
+                const addToQueueDatas = transformResToAddToQueueInfos(method, res);
+                addToQueueDatas.length && await this.addToQueue(job, addToQueueDatas);
+            }
 
             // 释放worker
             await workerFactory.release(worker);
