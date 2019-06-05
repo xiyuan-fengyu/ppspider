@@ -761,7 +761,7 @@ export class QueueManager {
         }
 
         // 通过filter做job存在性检测；增加异步检测的支持
-        if (!filter || (await filter.isExisted(job)) == true) {
+        if (filter && (await filter.isExisted(job)) == true) {
             job.status = JobStatus.Filtered;
             job.logs.push(logger.formatWithoutPos("warn", "filtered"));
         }

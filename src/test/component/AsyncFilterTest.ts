@@ -32,7 +32,12 @@ class TestTask {
         workerFactory: NoneWorkerFactory
     })
     async test(useless: any, job: Job) {
-        logger.debug(job.url);
+        if (job.tryNum == 1) {
+            throw new Error("trigger for retry");
+        }
+        else {
+            logger.debug(job.url);
+        }
     }
 
 }
