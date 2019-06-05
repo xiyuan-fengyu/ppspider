@@ -965,14 +965,14 @@ export class QueueManager {
 
             this.delayPushInfo();
 
+            // 释放worker
+            await workerFactory.release(worker);
+
             if (res) {
                 // 将返回结果添加到队列
                 const addToQueueDatas = transformResToAddToQueueInfos(method, res);
                 addToQueueDatas.length && await this.addToQueue(job, addToQueueDatas);
             }
-
-            // 释放worker
-            await workerFactory.release(worker);
         });
     }
 
