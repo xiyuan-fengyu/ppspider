@@ -25,6 +25,7 @@ import {Filter} from "../filter/Filter";
 import {BloonFilter} from "../filter/BloonFilter";
 import {PromiseUtil} from "../../common/util/PromiseUtil";
 import {getBean} from "../..";
+import {transformResToAddToQueueInfos} from "../decorators/AddToQueue";
 
 type QueueInfo = {
 
@@ -160,7 +161,7 @@ export class QueueManager {
                 job.datas._.maxTry = job.tryNum + Defaults.maxTry;
 
                 // 重新添加到任务队列
-                QueueManager.addJobToQueue(job, null, job.queue, this.queueInfos[job.queue].queue, null);
+                this.addJobToQueue(job, null, job.queue, this.queueInfos[job.queue].queue, null);
                 resolve({
                     success: true,
                     message: "add to queue success"
@@ -679,7 +680,7 @@ export class QueueManager {
      * @param {Job} parent
      * @param {AddToQueueInfos} datas
      */
-    addToQueue(parent: Job, datas: AddToQueueInfos) {
+    async addToQueue(parent: Job, datas: AddToQueueInfos) {
         if (datas) {
             if (!(datas instanceof Array)) {
                 datas = [datas] as AddToQueueInfos;
@@ -716,11 +717,11 @@ export class QueueManager {
                 const jobs = jobInfo.jobs;
                 if (jobs != null) {
                     if (jobs.constructor == String || instanceofJob(jobs)) {
-                        QueueManager.addJobToQueue(jobs, parent, queueName, queue, filter, jobInfo._, this.jobOverrideConfigs[queueName]);
+                        await this.addJobToQueue(jobs, parent, queueName, queue, filter, jobInfo._, this.jobOverrideConfigs[queueName]);
                     }
                     else if (jobs instanceof Array) {
                         for (let job of jobs) {
-                            QueueManager.addJobToQueue(job, parent, queueName, queue, filter, jobInfo._, this.jobOverrideConfigs[queueName]);
+                            await this.addJobToQueue(job, parent, queueName, queue, filter, jobInfo._, this.jobOverrideConfigs[queueName]);
                         }
                     }
                 }
@@ -729,7 +730,7 @@ export class QueueManager {
         }
     }
 
-    private static addJobToQueue(jobOrUrl: any, parent: Job, queueName: string, queue: Queue, filter: Filter, _?: any, jobOverrideConfig?: JobOverrideConfig) {
+    private async addJobToQueue(jobOrUrl: any, parent: Job, queueName: string, queue: Queue, filter: Filter, _?: any, jobOverrideConfig?: JobOverrideConfig) {
         let job = instanceofJob(jobOrUrl) ? jobOrUrl as Job : new Job(jobOrUrl);
 
         // 设置一些默认参数
@@ -760,20 +761,18 @@ export class QueueManager {
             if (job.depth == 0) job.depth = parent.depth + 1;
         }
 
-        // 通过filter做job存在性检测
-        if (!filter || !filter.isExisted(job)) {
-            if (filter) filter.setExisted(job);
+        // 通过filter做job存在性检测；增加异步检测的支持
+        if (!filter || (await filter.isExisted(job)) == true) {
+            job.status = JobStatus.Filtered;
+            job.logs.push(logger.formatWithoutPos("warn", "filtered"));
+        }
+        else {
+            filter && await filter.setExisted(job);
             queue.push(job);
             if (job.status != JobStatus.RetryWaiting) job.status = JobStatus.Waiting;
             job.logs.push(logger.formatWithoutPos("info", "add to queue"));
         }
-        else {
-            job.status = JobStatus.Filtered;
-            job.logs.push(logger.formatWithoutPos("warn", "filtered"));
-        }
-
-        // 保存job的当前状态信息
-        appInfo.jobManager.save(job);
+        await appInfo.jobManager.save(job);
     }
 
     startDispatchLoop() {
@@ -890,10 +889,10 @@ export class QueueManager {
             job.logs.push(logger.formatWithoutPos("info","start execution"));
             job.status = JobStatus.Running;
             job.tryNum++;
-            appInfo.jobManager.save(job, true);
+            await appInfo.jobManager.save(job, true);
 
             try {
-                await new Promise(async (resolve, reject) => {
+                const res = await new Promise(async (resolve, reject) => {
                     // 如果任务设置有超时时间，则设置超时回调
                    if (queueInfo.config.timeout == null || queueInfo.config.timeout >= 0) {
                        const timeout = queueInfo.config.timeout || Defaults.jobTimeout;
@@ -917,8 +916,8 @@ export class QueueManager {
 
                     appInfo.eventBus.on(Events.QueueManager_InterruptJob, listenInterrupt);
                     try {
-                        await method.call(target, worker, job);
-                        resolve();
+                        const res = await method.call(target, worker, job);
+                        resolve(res);
                     }
                     catch (e) {
                         reject(e);
@@ -929,6 +928,14 @@ export class QueueManager {
                 job.status = JobStatus.Success;
                 job.logs.push(logger.formatWithoutPos("info","executed successfully"));
                 this.successNum++;
+
+                if (res) {
+                    // 将返回结果添加到队列
+                    const addToQueueDatas = transformResToAddToQueueInfos(method, res);
+                    if (addToQueueDatas.length) {
+                        await this.addToQueue(job, addToQueueDatas);
+                    }
+                }
             }
             catch (e) {
                 if (job.tryNum >= ((job.datas._ || {}).maxTry || Defaults.maxTry)) {
@@ -957,10 +964,10 @@ export class QueueManager {
             }
 
             if (job.status == JobStatus.RetryWaiting) {
-                QueueManager.addJobToQueue(job, null, job.queue, queueInfo.queue, null);
+                await this.addJobToQueue(job, null, job.queue, queueInfo.queue, null);
             }
             else {
-                appInfo.jobManager.save(job, true);
+                await appInfo.jobManager.save(job, true);
             }
 
             this.delayPushInfo();

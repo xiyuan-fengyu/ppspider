@@ -2,7 +2,7 @@
   "name": "ppspider",
   "author": "xiyuan_fengyu <xiyuan_fengyu@163.com> (https://github.com/xiyuan-fengyu)",
   "homepage": "github.com/xiyuan-fengyu/ppspider",
-  "version": "2.1.9",
+  "version": "2.1.10-preview.1559713782910",
   "description": "web spider build with puppeteer, include task queue manager and dispatcher",
   "main": "./lib/index.js",
   "types": "./lib/index.d.ts",

@@ -6,10 +6,10 @@ import {Job} from "../job/Job";
  */
 export interface Filter {
 
-    setExisted(job: Job): void;
+    setExisted(job: Job): any | Promise<any>;
 
-    isExisted(job: Job): boolean;
+    isExisted(job: Job): boolean | Promise<boolean>;
 
-    clear(): void;
+    clear(): any | Promise<any>;
 
 }

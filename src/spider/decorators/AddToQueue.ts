@@ -1,8 +1,7 @@
-import {instanceofJob, Job} from "../job/Job";
-import {appInfo} from "./Launcher";
 import {logger} from "../../common/util/logger";
 import {AddToQueueConfig, AddToQueueInfo} from "../Types";
-import {getBean} from "../..";
+
+const addToQueueConfigs = new Map<Function, AddToQueueConfig | AddToQueueConfig[]>();
 
 function getAddToQueueConfig(queueConfigs: AddToQueueConfig | AddToQueueConfig[], queueName: string): AddToQueueConfig {
     let config: AddToQueueConfig = null;
@@ -46,6 +45,40 @@ function getAddToQueueConfig(queueConfigs: AddToQueueConfig | AddToQueueConfig[]
     return config;
 }
 
+export function transformResToAddToQueueInfos(method: Function, res: any) {
+    const addToQueueDatas: AddToQueueInfo[] = [];
+    const queueConfigs = addToQueueConfigs.get(method);
+    if (queueConfigs) {
+        if (res.constructor == Object) {
+            // 多个队列
+            for (let queueName of Object.keys(res)) {
+                const queueConfig = getAddToQueueConfig(queueConfigs, queueName);
+                if (queueConfig) {
+                    addToQueueDatas.push({
+                        queueName: queueConfig.name,
+                        jobs: res[queueName],
+                        queueType: queueConfig.queueType,
+                        filterType: queueConfig.filterType
+                    });
+                }
+            }
+        }
+        else {
+            // 单个队列
+            const queueConfig = getAddToQueueConfig(queueConfigs, null);
+            if (queueConfig) {
+                addToQueueDatas.push({
+                    queueName: queueConfig.name,
+                    jobs: res,
+                    queueType: queueConfig.queueType,
+                    filterType: queueConfig.filterType
+                });
+            }
+        }
+    }
+    return addToQueueDatas;
+}
+
 /**
  * 将被装饰的方法的返回值添加到队列中
  * @param {AddToQueueConfig | AddToQueueConfig[]} queueConfigs
@@ -54,51 +87,7 @@ function getAddToQueueConfig(queueConfigs: AddToQueueConfig | AddToQueueConfig[]
  */
 export function AddToQueue(queueConfigs: AddToQueueConfig | AddToQueueConfig[]) {
     return function (target, key, descriptor) {
-        const oriFun = descriptor.value;
-        descriptor.value = async (...args) => {
-            const targetIns = getBean(target.constructor);
-            const res = await oriFun.apply(targetIns, args);
-            if (res != null) {
-                // 在参数中找到当前job
-                let curJob: Job = null;
-                for (let arg of args) {
-                    if (instanceofJob(arg)) {
-                        curJob = arg as Job;
-                        break;
-                    }
-                }
-
-                const addToQueueDatas: AddToQueueInfo[] = [];
-                if (res.constructor == Object) {
-                    // 多个队列
-                    for (let queueName of Object.keys(res)) {
-                        const queueConfig = getAddToQueueConfig(queueConfigs, queueName);
-                        if (queueConfig) {
-                            addToQueueDatas.push({
-                                queueName: queueConfig.name,
-                                jobs: res[queueName],
-                                queueType: queueConfig.queueType,
-                                filterType: queueConfig.filterType
-                            });
-                        }
-                    }
-                }
-                else {
-                    // 单个队列
-                    const queueConfig = getAddToQueueConfig(queueConfigs, null);
-                    if (queueConfig) {
-                        addToQueueDatas.push({
-                            queueName: queueConfig.name,
-                            jobs: res,
-                            queueType: queueConfig.queueType,
-                            filterType: queueConfig.filterType
-                        });
-                    }
-                }
-                appInfo.queueManager.addToQueue(curJob, addToQueueDatas);
-            }
-            return res;
-        };
+        addToQueueConfigs.set(descriptor.value, queueConfigs);
         return descriptor;
     }
 }
