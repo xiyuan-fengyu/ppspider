@@ -11,9 +11,8 @@ export class RequestUtil {
     /**
      * 将代理和返回body的解压缩过程进行封装，返回只包含 status, headers, body 的简单结果
      * @param options
-     * @param body
      */
-    static simple(options: (UriOptions | UrlOptions) & CoreOptions, body?: any) {
+    static simple(options: (UriOptions | UrlOptions) & CoreOptions) {
         // body 采用 Buffer 格式返回
         options.encoding = null;
 
@@ -89,9 +88,6 @@ export class RequestUtil {
                     resolve(simpleRes);
                 }
             });
-            if (body) {
-                req.write(body, err => reject(err));
-            }
         });
     }
 

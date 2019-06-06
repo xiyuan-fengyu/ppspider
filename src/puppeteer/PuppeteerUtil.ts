@@ -694,10 +694,11 @@ export class PuppeteerUtil {
                         url: req.url(),
                         method: req.method(),
                         headers: req.headers(),
+                        body: req.postData(),
                         proxy: proxy
                     };
 
-                    RequestUtil.simple(options, req.postData()).then(proxyRes => {
+                    RequestUtil.simple(options).then(proxyRes => {
                         const headers = proxyRes.headers;
                         // 处理返回结果的 header；主要是处理 set-cookie
                         for (let name in headers) {
