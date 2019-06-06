@@ -1,20 +1,19 @@
 import {
-    AddToQueue, appInfo,
+    AddToQueue,
     DataUi,
     DataUiRequest,
     DateUtil,
+    DbHelperUi,
     FromQueue,
     getBean,
     Job,
     Launcher,
-    logger, DbHelperUi,
+    logger,
     NoneWorkerFactory,
     OnStart,
     OnTime,
-    PromiseUtil, RequestMapping
+    PromiseUtil
 } from "../..";
-import {Request, Response} from "express";
-import * as fs from "fs";
 
 @DataUi({
     label: "DataUi测试",
@@ -181,7 +180,7 @@ class TestTask {
 
 @Launcher({
     workplace: __dirname + "/workplace",
-    dbUrl: "mongodb://192.168.1.150:27017/ppspider",
+    // dbUrl: "mongodb://192.168.1.150:27017/ppspider",
     tasks: [
         TestTask
     ],

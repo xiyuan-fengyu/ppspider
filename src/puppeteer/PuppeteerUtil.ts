@@ -4,16 +4,8 @@ import * as fs from "fs";
 import {DownloadUtil} from "../common/util/DownloadUtil";
 import {logger} from "../common/util/logger";
 import {FileUtil} from "../common/util/FileUtil";
-import * as url from "url";
-import {IncomingMessage} from "http";
-import * as stream from "stream";
-import * as zlib from "zlib";
 import * as http from "http";
-import * as https from "https";
-import * as HttpProxyAgent from 'http-proxy-agent';
-import * as HttpsProxyAgent from 'https-proxy-agent';
 import {RequestUtil} from "..";
-
 
 
 export type ResponseListener = (response: Response) => any;
@@ -154,8 +146,7 @@ export class PuppeteerUtil {
             await page.setRequestInterception(true);
             if (!page[kRequestInterception_ImgLoad]) {
                 page[kRequestInterception_ImgLoad] = (request: Request) => {
-                    const interceptionHandled = request["_interceptionHandled"];
-                    if (!interceptionHandled) {
+                    if (!request["_interceptionHandled"] && request["_allowInterception"]) {
                         const requestUrl = request.url();
                         const resourceType = request.resourceType();
                         if (resourceType === "image") {
@@ -658,7 +649,7 @@ export class PuppeteerUtil {
                 const proxy = page["_proxy"];
                 const enableCache = page["_enableCacheInProxy"];
 
-                if (req["_interceptionHandled"]) {
+                if (req["_interceptionHandled"] || !req["_allowInterception"]) {
                     return;
                 }
                 else if (proxy && req.url().startsWith("http")) {
