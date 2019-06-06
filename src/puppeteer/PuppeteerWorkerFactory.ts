@@ -97,7 +97,7 @@ export class PuppeteerWorkerFactory implements WorkerFactory<Page> {
                     continueNum++;
                     if (req["_allowInterception"]
                         && !req["_interceptionHandled"]
-                        &&continueNum == page.listeners("request").length) {
+                        && continueNum == page.listeners("request").length) {
                         return oldContinue.call(req);
                     }
                 }
