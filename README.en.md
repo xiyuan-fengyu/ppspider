@@ -528,6 +528,15 @@ Job panel: search jobs and view details
 7. QQ music info and comments [QQ Music](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/examples/QqMusicApp.ts)  
 
 # Update Note
+2019-06-06 v2.1.10
+1. Override Add/Remove/Query request listener of Page to ensure that a page has only one request listener(theOnlyRequestListener).  
+    The user-added request listener will be called via theOnlyRequestListener.  
+    Whether to call request.continue is no longer confusing.  
+2. Override the process of AddToQueue to add the method result to queues, so that Filter supports asynchronous check.    
+3. Rewrite the proxy process of PuppeteerUtil.useProxy by request.    
+4. The description of fail / failed is added to the UI interface. The number of failed in the queue shows two numbers: 
+    the number of failed tries, and the number of tasks that still fail after the maximum number of tries.    
+
 2019-06-03 v2.1.9
 1. Fix bug: app stoped if exception occurred during request proxy in PuppeteerUtil.useProxy     
 

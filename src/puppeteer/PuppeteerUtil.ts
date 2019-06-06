@@ -145,7 +145,7 @@ export class PuppeteerUtil {
         else {
             await page.setRequestInterception(true);
             if (!page[kRequestInterception_ImgLoad]) {
-                page[kRequestInterception_ImgLoad] = (request: Request) => {
+                page[kRequestInterception_ImgLoad] = async (request: Request) => {
                     if (!request["_interceptionHandled"] && request["_allowInterception"]) {
                         const requestUrl = request.url();
                         const resourceType = request.resourceType();
@@ -157,11 +157,10 @@ export class PuppeteerUtil {
                                 return requestUrl.match(checkUrl) != null || checkUrl === requestUrl;
                             })) {
                                 // 下载图片，不阻止
-                                request.continue();
                             }
                             else {
                                 // 拦截请求，直接返回 1px 的webp图片
-                                request.respond({
+                                await request.respond({
                                     status: 200,
                                     contentType: "image/webp",
                                     body: Buffer.from(onePxBuffer)
@@ -171,13 +170,15 @@ export class PuppeteerUtil {
                         else if (requestUrl.indexOf("://hm.baidu.com/h.js") > -1) {
                             // 禁用百度统计代码
                             // 当禁止图片加载的时候，百度统计可能导致资源一直加载，page.goto操作一直无法完成
-                            request.respond({
+                            await request.respond({
                                 status: 200,
                                 contentType: "application/javascript",
                                 body: Buffer.from([])
                             });
                         }
-                        else request.continue(); // 其他请求，直接放行
+                        else {
+                            // 其他请求，直接放行
+                        }
                     }
                 };
             }
@@ -671,13 +672,14 @@ export class PuppeteerUtil {
                             let [expires, statusCodeStr, bodyBase64] = responseCache.split("\n");
                             const statusCode = +statusCodeStr;
                             const body = Buffer.from(bodyBase64, "base64");
-                            return req.respond({
+                            await req.respond({
                                 status: statusCode,
                                 headers: {
                                     cache: "from-local-storage"
                                 },
                                 body: body
                             });
+                            return;
                         }
                     }
 
@@ -689,7 +691,8 @@ export class PuppeteerUtil {
                         proxy: proxy
                     };
 
-                    RequestUtil.simple(options).then(proxyRes => {
+                    try {
+                        const proxyRes = await RequestUtil.simple(options);
                         const headers = proxyRes.headers;
                         // 处理返回结果的 header；主要是处理 set-cookie
                         for (let name in headers) {
@@ -753,7 +756,7 @@ export class PuppeteerUtil {
                                         });
                                         setCookies.push(setCookie);
                                     }
-                                    page.setCookie(...setCookies).catch(err => {});
+                                    await page.setCookie(...setCookies).catch(err => {});
                                     delete headers[name];
                                 }
                             }
@@ -766,23 +769,25 @@ export class PuppeteerUtil {
                                 }
                             }
                         }
-                        req.respond(proxyRes as any).catch(err => {});
 
-                        //  如果有 Expires ，则保存缓存
-                        const expires = new Date(headers.expires).getTime();
-                        if (enableCache && expires > new Date().getTime()) {
-                            const bodyBase64 = proxyRes.body.toString("base64");
-                            const responseCache = `${expires}\n${proxyRes.status}\n${bodyBase64}`;
-                            page.evaluate((url, responseCache) => {
-                                localStorage.setItem(url, responseCache);
-                            }, req.url(), responseCache).catch(err => {});
+                        if (!req.isNavigationRequest()) {
+                            // nav请求始终不缓存
+                            //  如果有 Expires ，则保存缓存
+                            const expires = new Date(headers.expires).getTime();
+                            if (enableCache && expires > new Date().getTime()) {
+                                const bodyBase64 = proxyRes.body.toString("base64");
+                                const responseCache = `${expires}\n${proxyRes.status}\n${bodyBase64}`;
+                                await page.evaluate((url, responseCache) => {
+                                    localStorage.setItem(url, responseCache);
+                                }, req.url(), responseCache).catch(err => {});
+                            }
                         }
-                    }).catch(err => {
-                        req.abort("failed").catch(err => {});
-                    });
-                }
-                else {
-                    req.continue().catch(err => {});
+
+                        await req.respond(proxyRes as any).catch(err => {});
+                    }
+                    catch(err) {
+                        await req.abort("failed").catch(err => {});
+                    }
                 }
             };
             page.on("request", _proxyHandler);

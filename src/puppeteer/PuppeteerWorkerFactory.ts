@@ -84,28 +84,119 @@ export class PuppeteerWorkerFactory implements WorkerFactory<Page> {
             };
         });
 
-        // 解决多个 request handler 时，修正 continue 逻辑， 使得可以多次 continue，当多个 handler 都 continue 时，才调用真正的continue
-        page.on("request", (req: Request) => {
-            const oldContinue = req.continue;
-            let continueNum = 0;
-            // override request.continue
-            req.continue = (override?: any) => {
-                if (override) {
-                    return oldContinue.call(req, override);
-                }
-                else {
-                    continueNum++;
-                    if (req["_allowInterception"]
-                        && !req["_interceptionHandled"]
-                        && continueNum == page.listeners("request").length) {
-                        return oldContinue.call(req);
-                    }
-                }
-            };
-            return req.continue();
-        });
+        // 解决多个 request handler 时，无法决定是否要 continue 的问题
+        PuppeteerWorkerFactory.overrideMultiRequestListenersLogic(page);
 
         return page;
+    }
+
+    static overrideMultiRequestListenersLogic(page: Page) {
+        const _requestHandlers = page["_requestHandlers"] = [] as [Function, Function][];
+        const theOnlyRequestListener = async request => {
+            const ps = [];
+            for (let i = 0; i < _requestHandlers.length; ) {
+                let requestHandler = _requestHandlers[i];
+                const handler = requestHandler[1] || requestHandler[0];
+                ps.push(handler(request));
+                // 如果是 requestHandler[1] 不为空，这说明是 once 类型的handler，在调用前，会将这一项移除，这个时候 i 不应该递增
+                requestHandler[1] == null && (i++);
+            }
+            await Promise.all(ps);
+            if (request["_allowInterception"] && !request["_interceptionHandled"]) {
+                await request.continue();
+            }
+        };
+        const pageOn = page.on;
+        const addTheOnlyRequestListener = () => {
+            pageOn.call(page, "request", theOnlyRequestListener);
+        };
+        addTheOnlyRequestListener();
+
+        ["addListener", "on", "once", "prependListener", "prependOnceListener"].forEach(funName => {
+            const oldFun = page[funName];
+            (page as any)[funName] = (eventName, handler) => {
+                if (eventName == "request") {
+                    const onceWrapper = funName == "once" || funName == "prependOnceListener" ? (...args) => {
+                        const index = _requestHandlers.findIndex(item => item[0] == handler);
+                        _requestHandlers.splice(index, 1);
+                        handler(...args);
+                    } : null;
+                    if (funName.startsWith("prepend")) {
+                        _requestHandlers.splice(0, 0, [handler, onceWrapper]);
+                    }
+                    else {
+                        _requestHandlers.push([handler, onceWrapper]);
+                    }
+                }
+                else {
+                    oldFun.call(page, eventName, handler);
+                }
+                return page;
+            };
+        });
+
+        ["removeListener", "off"].forEach(funName => {
+            const oldFun = page[funName];
+            (page as any)[funName] = (eventName, handler) => {
+                if (eventName == "request") {
+                    const handlerI = _requestHandlers.findIndex(item => item[0] == handler);
+                    if (handlerI > -1) {
+                        _requestHandlers.splice(handlerI, 1);
+                    }
+                }
+                else {
+                    oldFun.call(page, eventName, handler);
+                }
+                return page;
+            };
+        });
+
+        ["removeAllListeners"].forEach(funName => {
+            const oldFun = page[funName];
+            (page as any)[funName] = (eventName) => {
+                if (eventName == "request") {
+                    _requestHandlers.splice(0, _requestHandlers.length);
+                }
+                else if (eventName == null) {
+                    oldFun.call(page);
+                    addTheOnlyRequestListener();
+                }
+                else {
+                    oldFun.call(page, eventName);
+                }
+                return page;
+            };
+        });
+
+        ["listeners", "rawListeners"].forEach(funName => {
+            const oldFun = page[funName];
+            (page as any)[funName] = (eventName) => {
+                if (eventName == "request") {
+                    const res = [];
+                    const isRaw = funName == "rawListeners";
+                    _requestHandlers.forEach(item => {
+                        res.push(item[0]);
+                        isRaw && res.push(item[1]);
+                    });
+                    return res;
+                }
+                else {
+                    return oldFun.call(page, eventName);
+                }
+            };
+        });
+
+        ["listenerCount"].forEach(funName => {
+            const oldFun = page[funName];
+            (page as any)[funName] = (eventName) => {
+                if (eventName == "request") {
+                    return _requestHandlers.length;
+                }
+                else {
+                    return oldFun.call(page, eventName);
+                }
+            };
+        });
     }
 
     release(worker: Page): Promise<void> {

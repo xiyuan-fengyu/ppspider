@@ -492,6 +492,14 @@ Job 面板可以对所有子任务实例进行搜索，查看任务详情
 7. QQ音乐信息和评论 [QQ Music](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/examples/QqMusicApp.ts)  
 
 # 更新日志
+2019-06-06 v2.1.10
+1. 重写 Page 添加/移除/查询 request listener 的过程，保证一个page只有一个request listener(theOnlyRequestListener)，
+    用户添加的request listener将通过 theOnlyRequestListener 调用，在用户定义的 request listener 中可以不再纠结是否需要调用
+    request.continue()  
+2. 重写 AddToQueue 将方法返回结果添加到队列的实现，使得 Filter 支持异步校验  
+3. 采用 request 重写 PuppeteerUtil.useProxy 的代理过程，将代理过程封装到 RequestUtil.simple 方法中  
+4. UI界面上增加 fail / failed 的说明，队列的failed显示两个数目：尝试失败的次数，最大尝试次数后仍失败的任务数  
+
 2019-06-03 v2.1.9
 1. 修复 PuppeteerUtil.useProxy 代理请求出现异常后，应用崩溃的bug  
 

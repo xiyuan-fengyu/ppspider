@@ -41,7 +41,7 @@ export class NetworkTracing {
 
     constructor(page: Page) {
         let requestIndex = 0;
-        page.on("request", this.onRequest = (req: Request) => {
+        page.prependListener("request", this.onRequest = (req: Request) => {
             const _requestId = req["_requestId"];
             this.requestMap[_requestId] = {
                 id: _requestId,
@@ -50,9 +50,6 @@ export class NetworkTracing {
                 method: req.method,
                 time: new Date().getTime()
             };
-            if (req["_allowInterception"] && !req["_interceptionHandled"]) {
-                req.continue();
-            }
         });
 
         page.on("response", this.onResponse = async res => {
