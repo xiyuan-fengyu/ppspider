@@ -119,7 +119,7 @@ export class PuppeteerWorkerFactory implements WorkerFactory<Page> {
                     const onceWrapper = funName == "once" || funName == "prependOnceListener" ? (...args) => {
                         const index = _requestHandlers.findIndex(item => item[0] == handler);
                         _requestHandlers.splice(index, 1);
-                        handler(...args);
+                        return handler(...args);
                     } : null;
                     if (funName.startsWith("prepend")) {
                         _requestHandlers.splice(0, 0, [handler, onceWrapper]);
@@ -158,6 +158,7 @@ export class PuppeteerWorkerFactory implements WorkerFactory<Page> {
                     _requestHandlers.splice(0, _requestHandlers.length);
                 }
                 else if (eventName == null) {
+                    _requestHandlers.splice(0, _requestHandlers.length);
                     oldFun.call(page);
                     addTheOnlyRequestListener();
                 }
