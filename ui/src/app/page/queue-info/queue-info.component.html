@@ -58,7 +58,7 @@
   </mat-grid-tile>
 
   <mat-grid-tile [colspan]="1" [rowspan]="1">
-    <div class="taskNumItem fail">
+    <div class="taskNumItem fail" title="count of jobs failed after max tries">
       <mat-icon>error</mat-icon>
       <h4>{{commonService.queues.fail}}</h4>
       <span>fail</span>
@@ -163,9 +163,9 @@
             <label class="key">running</label>
             <div class="value">{{queue.curParallel}}</div>
           </div>
-          <div class="grid">
-            <label class="key">fail</label>
-            <div class="value">{{queue.fail}}</div>
+          <div class="grid" title="count of failed tries | count of jobs failed after max try">
+            <label class="key">failed</label>
+            <div class="value">{{queue.tryFail}} | {{queue.fail}}</div>
           </div>
         </div>
 

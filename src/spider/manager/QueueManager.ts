@@ -35,13 +35,15 @@ type QueueInfo = {
 
     config?: JobConfig;
 
-    curParallel?: number; // 当前并行数
+    curParallel?: number; // 当前并行数（当前运行任务数量）
 
     curMaxParallel?: number; // 当前最大并行数
 
-    success?: number; // 成功的数量
+    success?: number; // 成功任务的数量
 
-    fail?: number; // 失败的数量
+    fail?: number; // 失败任务的数量（任务经过最大次数尝试后，任然失败，则认为该任务失败）
+
+    tryFail?: number; // 任务尝试失败的次数
 
     lastExeTime?: number; // 上一次从该队列pop job的时间戳
 
@@ -249,6 +251,7 @@ export class QueueManager {
                 curParallel: queueInfo.curParallel || 0,
                 success: queueInfo.success || 0,
                 fail: queueInfo.fail || 0,
+                tryFail: queueInfo.tryFail || 0,
                 lastExeTime: queueInfo.lastExeTime
             };
             if (taskType == "OnStart") {
@@ -316,6 +319,7 @@ export class QueueManager {
                     if (thisQueueInfo) {
                         thisQueueInfo.success = queueInfo.success;
                         thisQueueInfo.fail = queueInfo.fail;
+                        thisQueueInfo.tryFail = queueInfo.tryFail;
                         thisQueueInfo.curMaxParallel = queueInfo.curMaxParallel;
 
                         thisQueueInfo.config.exeInterval = queueInfo.config.exeInterval;
@@ -936,6 +940,7 @@ export class QueueManager {
                     // 重试次数达到最大，任务失败
                     job.status = JobStatus.Fail;
                     this.failNum++;
+                    queueInfo.fail = (queueInfo.fail || 0) + 1;
                 }
                 else {
                     // 还有重试机会，置为重试等待状态
@@ -952,8 +957,8 @@ export class QueueManager {
                 queueInfo.success = (queueInfo.success || 0) + 1;
             }
             else {
-                // 队列中每尝试失败一次，该队列运行失败的次数就加1
-                queueInfo.fail = (queueInfo.fail || 0) + 1;
+                // 队列中每尝试失败一次，该队列尝试失败的次数就加1
+                queueInfo.tryFail = (queueInfo.tryFail || 0) + 1;
             }
 
             if (job.status == JobStatus.RetryWaiting) {
