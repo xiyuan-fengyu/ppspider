@@ -12,22 +12,7 @@ import * as http from "http";
 import * as https from "https";
 import * as HttpProxyAgent from 'http-proxy-agent';
 import * as HttpsProxyAgent from 'https-proxy-agent';
-import * as util from "util";
-
-
-
-function BufferStream() {
-    this.chunks = [];
-    stream.Writable.call(this);
-}
-util.inherits(BufferStream, stream.Writable);
-BufferStream.prototype._write = function (chunk, encoding, done) {
-    this.chunks.push(chunk);
-    done();
-};
-BufferStream.prototype.toBuffer = function (): Buffer {
-    return Buffer.concat(this.chunks);
-};
+import {RequestUtil} from "..";
 
 
 
@@ -705,173 +690,104 @@ export class PuppeteerUtil {
                         }
                     }
 
-                    const options = url.parse(req.url());
-                    options["method"] = req.method();
-                    options["headers"] = req.headers() || {};
-                    // 解决一些请求（例如 https://www.google.com/）响应头既不包含 content-length，又不包含 transfer-encoding:chunked 的情况
-                    // 支持 br 的node版本较高，所以这里不启用br
-                    options["headers"]["accept-encoding"] = "identity, gzip, deflate";
+                    const options = {
+                        url: req.url(),
+                        method: req.method(),
+                        headers: req.headers(),
+                        proxy: proxy
+                    };
 
-                    const resHandler = (proxyRes: IncomingMessage) => {
-                        let pipes: stream = proxyRes;
-                        const contentEncodings = (proxyRes.headers["content-encoding"] || "").split(/, ?/).filter(item => item != "").reverse();
-                        for (let contentEncoding of contentEncodings) {
-                            switch (contentEncoding) {
-                                case "gzip":
-                                    pipes = pipes.pipe(zlib.createGunzip());
-                                    break;
-                                // case "br":
-                                //     pipes = pipes.pipe(zlib.createBrotliDecompress());
-                                //     break;
-                                case "deflate":
-                                    pipes = pipes.pipe(zlib.createInflate());
-                                    break;
-                            }
-                        }
+                    RequestUtil.simple(options, req.postData()).then(proxyRes => {
+                        const headers = proxyRes.headers;
+                        // 处理返回结果的 header；主要是处理 set-cookie
+                        for (let name in headers) {
+                            const value = headers[name];
 
-                        const bodyStream = new BufferStream();
-                        const onBodyEnd = () => {
-                            const statusCode = proxyRes.statusCode;
-                            const headers = proxyRes.headers;
-                            for (let name in headers) {
-                                const value = headers[name];
+                            if (name == "set-cookie") {
+                                if (value.length == 0) {
+                                    headers[name] = ("" + value[0]) as any;
+                                }
+                                else {
+                                    const setCookies: SetCookie[] = [];
+                                    for (let item of value) {
+                                        const setCookie: SetCookie = {
+                                            name: null,
+                                            value: null
+                                        };
+                                        item.split("; ").forEach((keyVal, keyValI) => {
+                                            const eqI = keyVal.indexOf("=");
+                                            let key;
+                                            let value;
+                                            if (eqI > -1) {
+                                                key = keyVal.substring(0, eqI);
+                                                value = keyVal.substring(eqI + 1);
+                                            }
+                                            else {
+                                                key = keyVal;
+                                                value = "";
+                                            }
+                                            const lowerKey = key.toLowerCase();
 
-                                if (name == "set-cookie") {
-                                    if (value.length == 0) {
-                                        headers[name] = ("" + value[0]) as any;
-                                    }
-                                    else {
-                                        const setCookies: SetCookie[] = [];
-                                        for (let item of value) {
-                                            const setCookie: SetCookie = {
-                                                name: null,
-                                                value: null
-                                            };
-                                            item.split("; ").forEach((keyVal, keyValI) => {
-                                                const eqI = keyVal.indexOf("=");
-                                                let key;
-                                                let value;
-                                                if (eqI > -1) {
-                                                    key = keyVal.substring(0, eqI);
-                                                    value = keyVal.substring(eqI + 1);
+                                            if (keyValI == 0) {
+                                                setCookie.name = key;
+                                                setCookie.value = value;
+                                            }
+                                            else if (lowerKey == "expires") {
+                                                const expires = new Date(value).getTime();
+                                                if (!isNaN(expires)) {
+                                                    setCookie.expires = +(expires / 1000).toFixed(0);
                                                 }
-                                                else {
-                                                    key = keyVal;
-                                                    value = "";
-                                                }
-                                                const lowerKey = key.toLowerCase();
-
-                                                if (keyValI == 0) {
-                                                    setCookie.name = key;
-                                                    setCookie.value = value;
-                                                }
-                                                else if (lowerKey == "expires") {
-                                                    const expires = new Date(value).getTime();
-                                                    if (!isNaN(expires)) {
-                                                        setCookie.expires = +(expires / 1000).toFixed(0);
-                                                    }
-                                                }
-                                                else if (lowerKey == "max-age") {
+                                            }
+                                            else if (lowerKey == "max-age") {
+                                                if (!setCookie.expires) {
                                                     const expires = +value;
                                                     if (!isNaN(expires)) {
                                                         setCookie.expires = expires;
                                                     }
                                                 }
-                                                else if (lowerKey == "path" || key == "domain") {
-                                                    setCookie[lowerKey] = value;
-                                                }
-                                                else if (lowerKey == "samesite") {
-                                                    setCookie.httpOnly = true;
-                                                }
-                                                else if (lowerKey == "httponly") {
-                                                    setCookie.httpOnly = true;
-                                                }
-                                                else if (lowerKey == "secure") {
-                                                    setCookie.secure = true;
-                                                }
-                                            });
-                                            setCookies.push(setCookie);
-                                        }
-                                        page.setCookie(...setCookies).catch(err => {});
-                                        delete headers[name];
+                                            }
+                                            else if (lowerKey == "path" || key == "domain") {
+                                                setCookie[lowerKey] = value;
+                                            }
+                                            else if (lowerKey == "samesite") {
+                                                setCookie.httpOnly = true;
+                                            }
+                                            else if (lowerKey == "httponly") {
+                                                setCookie.httpOnly = true;
+                                            }
+                                            else if (lowerKey == "secure") {
+                                                setCookie.secure = true;
+                                            }
+                                        });
+                                        setCookies.push(setCookie);
                                     }
-                                }
-                                else if (typeof value != "string") {
-                                    if (value instanceof Array) {
-                                        headers[name] = JSON.stringify(value);
-                                    }
-                                    else {
-                                        headers[name] = "" + value;
-                                    }
+                                    page.setCookie(...setCookies).catch(err => {});
+                                    delete headers[name];
                                 }
                             }
-                            const body = bodyStream.toBuffer();
-
-                            req.respond({
-                                status: statusCode,
-                                headers: headers as any,
-                                body: body
-                            }).catch(err => {});
-
-                            //  如果有 Expires ，则保存缓存
-                            const expires = new Date(headers.expires).getTime();
-                            if (enableCache && expires > new Date().getTime()) {
-                                const bodyBase64 = body.toString("base64");
-                                const responseCache = `${expires}\n${statusCode}\n${bodyBase64}`;
-                                page.evaluate((url, responseCache) => {
-                                    localStorage.setItem(url, responseCache);
-                                }, req.url(), responseCache).catch(err => {});
+                            else if (typeof value != "string") {
+                                if (value instanceof Array) {
+                                    headers[name] = JSON.stringify(value);
+                                }
+                                else {
+                                    headers[name] = "" + value;
+                                }
                             }
-
-                            proxyRes.destroy();
-                        };
-
-                        let contentLength = +proxyRes.headers["content-length"];
-                        isNaN(contentLength) && (contentLength = -1);
-                        if (contentLength == 0) {
-                            onBodyEnd();
                         }
-                        else {
-                            if (contentLength > 0) {
-                                let receiveLen = 0;
-                                proxyRes.on("data", chunk => {
-                                    receiveLen += chunk.length;
-                                    if (receiveLen >= contentLength) {
-                                        setTimeout(() => {
-                                            proxyRes.emit("close");
-                                        }, 0);
-                                    }
-                                });
-                            }
-                            else {
-                                // transfer-encoding:chunked
-                                // const transferEncoding = proxyRes.headers["transfer-encoding"];
-                                // transferEncoding == null;
-                            }
+                        req.respond(proxyRes as any).catch(err => {});
 
-                            pipes.pipe(bodyStream);
-                            pipes.once("close", onBodyEnd);
+                        //  如果有 Expires ，则保存缓存
+                        const expires = new Date(headers.expires).getTime();
+                        if (enableCache && expires > new Date().getTime()) {
+                            const bodyBase64 = proxyRes.body.toString("base64");
+                            const responseCache = `${expires}\n${proxyRes.status}\n${bodyBase64}`;
+                            page.evaluate((url, responseCache) => {
+                                localStorage.setItem(url, responseCache);
+                            }, req.url(), responseCache).catch(err => {});
                         }
-                    };
-
-                    let proxyReq;
-                    if (options.protocol == "http:") {
-                        options["agent"] = new HttpProxyAgent(proxy);
-                        proxyReq = http.request(options, resHandler);
-                    }
-                    else {
-                        options["agent"] = new HttpsProxyAgent(proxy);
-                        proxyReq = https.request(options, resHandler);
-                    }
-                    proxyReq.on("error", err => {
+                    }).catch(err => {
                         req.abort("failed").catch(err => {});
                     });
-
-                    const postData = req.postData();
-                    if (postData) {
-                        proxyReq.write(postData);
-                    }
-                    proxyReq.end();
                 }
                 else {
                     req.continue().catch(err => {});
