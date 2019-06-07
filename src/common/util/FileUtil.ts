@@ -55,7 +55,7 @@ export class FileUtil {
      * @param {string} charset
      * @returns {boolean}
      */
-    static write(pathStr: string, content: string | string[], charset?: string): boolean {
+    static write(pathStr: string, content: string | string[] | Buffer, charset?: string): boolean {
         try {
             if (this.mkdirs(this.parent(pathStr))) {
                 const options = charset ? {
