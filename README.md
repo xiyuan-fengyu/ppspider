@@ -167,7 +167,7 @@ export type OnStartConfig = {
     description?: string; // 任务描述
 }
 ```
-使用例子 [@OnStart example](https://github.com/xiyuan-fengyu/ppspider_example/tree/master/src/quickstart)
+使用例子 [@OnStart example](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/quickstart/App.ts)  
 
 ### @OnTime
 ```
@@ -188,7 +188,7 @@ export type OnTimeConfig = {
     description?: string;
 }
 ```
-使用例子 [@OnTime example](https://github.com/xiyuan-fengyu/ppspider_example/tree/master/src/ontime)
+使用例子 [@OnTime example](https://github.com/xiyuan-fengyu/ppspider_example/tree/master/src/ontime/App.ts)  
 
 
 ### @AddToQueue @FromQueue
@@ -241,7 +241,7 @@ export type FromQueueConfig = {
     description?: string;
 }
 ```
-使用例子 [@AddToQueue @FromQueue example](https://github.com/xiyuan-fengyu/ppspider_example/tree/master/src/queue)
+使用例子 [@AddToQueue @FromQueue example](https://github.com/xiyuan-fengyu/ppspider_example/tree/master/src/queue)  
 
 ### @JobOverride
 ```
@@ -254,7 +254,7 @@ export function JobOverride(queueName: string) { ... }
 并将其作为 job 的 key，用于重复性校验，避免重复抓取  
 实际上 OnStart, OnTime 两种类型的任务也是通过队列管理的，采用 DefaultQueue(NoFilter) 队列，队列的命名方式为
 OnStart_ClassName_MethodName，所以也可以通过 JobOverride 对 job 进行修改  
-[JobOverride example](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/jobOverride)  
+[JobOverride example](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/jobOverride/App.ts)  
 
 
 ### @Serializable @Transient
@@ -276,12 +276,12 @@ export function Transient() { ... }
 export function RequestMapping(url: string, method: "" | "GET" | "POST" = "") {}
 ```
 @RequestMapping 用于声明 HTTP rest 接口，提供远程动态添加任务的能力，返回抓取结果需要自行实现（例如异步url回调）  
-[RequestMapping example](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/requestMapping)  
+[RequestMapping example](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/requestMapping/App.ts)    
 
 
 ### @Bean @Autowired
 仿造 java spring @Bean @Autowired 的实现，提供实例依赖注入的功能  
-[example](https://github.com/xiyuan-fengyu/ppspider/blob/master/src/test/component/BeanTest.ts)
+[example](https://github.com/xiyuan-fengyu/ppspider/blob/master/src/test/component/BeanTest.ts)  
 
 ### @DataUi @DataUiRequest
 在控制界面定制动态界面的功能，为数据可视化、用户交互提供了扩展支持，通过 Angular 动态编译组件实现，简化了数据通信（主动请求数据和被动接受推送数据）      

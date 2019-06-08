@@ -183,7 +183,7 @@ export type OnStartConfig = {
     description?: string;
 }
 ```
-[@OnStart example](https://github.com/xiyuan-fengyu/ppspider_example/tree/master/src/quickstart)
+[@OnStart example](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/quickstart/App.ts)    
 
 ### @OnTime
 ```
@@ -204,7 +204,7 @@ export type OnTimeConfig = {
     description?: string;
 }
 ```
-[@OnTime example](https://github.com/xiyuan-fengyu/ppspider_example/tree/master/src/ontime)
+[@OnTime example](https://github.com/xiyuan-fengyu/ppspider_example/tree/master/src/ontime/App.ts)  
 
 
 ### @AddToQueue @FromQueue
@@ -271,7 +271,7 @@ export type FromQueueConfig = {
     description?: string;
 }
 ```
-[@AddToQueue @FromQueue example](https://github.com/xiyuan-fengyu/ppspider_example/tree/master/src/queue)
+[@AddToQueue @FromQueue example](https://github.com/xiyuan-fengyu/ppspider_example/tree/master/src/queue)  
 
 ### @JobOverride
 ```
@@ -286,7 +286,7 @@ that, jobs with duplicate keys will be filtered out.
 
 Actually, sub task type OnStart/OnTime is also managed by queue whose name just likes OnStart_ClassName_MethodName 
 or OnTime_ClassName_MethodName, so you can set a JobOverride to it.   
-[JobOverride example](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/bilibili/tasks/BilibiliTask.ts)
+[JobOverride example](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/jobOverride/App.ts)    
 
 ### @Serializable @Transient
 ```
@@ -300,7 +300,7 @@ Otherwise, the class info will lose when serializing.
 Warn: static field will not be serialized.   
 These two are mainly used to save running status. You can use @Transient to ignore fields which are not 
 related with running status, then the output file will be smaller in size.  
-[example](https://github.com/xiyuan-fengyu/ppspider/blob/master/src/test/SerializeTest.ts)  
+[example](https://github.com/xiyuan-fengyu/ppspider/blob/master/src/test/component/SerializeTest.ts)    
 
 
 ### @RequestMapping
@@ -310,12 +310,12 @@ export function RequestMapping(url: string, method: "" | "GET" | "POST" = "") {}
 
 @RequestMapping is used to declare the HTTP rest interface, providing the ability to dynamically add tasks remotely. 
 Returning the crawl results requires self-implementation (such as asynchronous url callbacks).
-[RequestMapping example](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/requestMapping/tasks/TestTask.ts)  
+[RequestMapping example](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/requestMapping/App.ts)    
 
 
 ### @Bean @Autowired
 仿造 java spring @Bean @Autowired 的实现，提供实例依赖注入的功能  
-[example](https://github.com/xiyuan-fengyu/ppspider/blob/master/src/test/component/BeanTest.ts)
+[example](https://github.com/xiyuan-fengyu/ppspider/blob/master/src/test/component/BeanTest.ts)  
 
 ### @DataUi @DataUiRequest
 You can define you own tab page in UI(http://localhost:webPort) by this which can extend support for data visualization and user interaction  
