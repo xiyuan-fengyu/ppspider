@@ -321,6 +321,7 @@ export class QueueManager {
                         thisQueueInfo.fail = queueInfo.fail;
                         thisQueueInfo.tryFail = queueInfo.tryFail;
                         thisQueueInfo.curMaxParallel = queueInfo.curMaxParallel;
+                        thisQueueInfo.lastExeTime = queueInfo.lastExeTime;
 
                         thisQueueInfo.config.exeInterval = queueInfo.config.exeInterval;
                         thisQueueInfo.config.exeIntervalJitter = queueInfo.config.exeIntervalJitter;
