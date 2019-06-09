@@ -36,7 +36,7 @@
               "node_modules/jquery.json-viewer/json-viewer/jquery.json-viewer.js",
               "node_modules/bootstrap/dist/js/bootstrap.js",
               "node_modules/@antv/g2/dist/g2.min.js",
-              "node_modules/dataset-for-g2/index.js"
+              "node_modules/@antv/data-set/dist/data-set.min.js"
             ]
           },
           "configurations": {

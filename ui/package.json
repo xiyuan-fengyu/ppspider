@@ -34,7 +34,7 @@
     "socket.io-client": "^2.1.1",
     "bootstrap": "^4.3.1",
     "@antv/g2": "^3.5.7",
-    "dataset-for-g2": "^1.0.0"
+    "@antv/data-set": "^0.10.2"
   },
   "devDependencies": {
     "@angular-devkit/build-angular": "~0.12.0",
