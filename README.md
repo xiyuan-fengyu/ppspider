@@ -493,6 +493,14 @@ Job 面板可以对所有子任务实例进行搜索，查看任务详情
 8. request + cheerio 抓取静态网站的例子 [CheerioApp](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/examples/CheerioApp.ts)    
 
 # 更新日志
+2019-06-11 v2.1.11-preview
+1. 修复 PuppeteerWorkerFactory.overrideMultiRequestListenersLogic 中 once listener 的实现  
+2. FileUtil.write 的content参数类型 增加 Buffer 类型  
+3. QueueManager.loadFromCache 加载缓存过程中，设置队列的 lastExeTime  
+4. 更改 ui 中的部分依赖：bootstrap(3.4.1), g2(@antv/g2, @antv/data-set)  
+5. ui 中 window 增加 __awaiter 定义，使得在 DataUi 中可以使用 async, await 关键字  
+6. ui 中 window 增加 loadScript 定义，使得在 DataUi 中可以方便地加载第三方js  
+
 2019-06-06 v2.1.10
 1. 重写 Page 添加/移除/查询 request listener 的过程，保证一个page只有一个request listener(theOnlyRequestListener)，
     用户添加的request listener将通过 theOnlyRequestListener 调用，在用户定义的 request listener 中可以不再纠结是否需要调用

@@ -529,6 +529,14 @@ Job panel: search jobs and view details
 8. request + cheerio, crawling static web pages [CheerioApp](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/examples/CheerioApp.ts)    
 
 # Update Note
+2019-06-11 v2.1.11-preview
+1. fix the once listener bug in PuppeteerWorkerFactory.overrideMultiRequestListenersLogic  
+2. add Buffer type to the parameter content in FileUtil.write  
+3. in process of QueueManager.loadFromCache, fix the lastExeTime of queue  
+4. change the dependencies of ui: bootstrap(3.4.1), g2(@antv/g2, @antv/data-set)  
+5. define window.__awaiter in ui, to support async and await in DataUi    
+6. define window.loadScript in ui, make it easy to load third-party script in DataUi    
+
 2019-06-06 v2.1.10
 1. Override Add/Remove/Query request listener of Page to ensure that a page has only one request listener(theOnlyRequestListener).  
     The user-added request listener will be called via theOnlyRequestListener.  
