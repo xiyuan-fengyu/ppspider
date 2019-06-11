@@ -93,3 +93,14 @@ import 'hammerjs';
     step((generator = generator.apply(thisArg, _arguments || [])).next());
   });
 };
+
+(window as any).loadScript = url => new Promise((resolve, reject) => {
+  if (document.querySelector(`script[src='${url}']`) == null) {
+    const script = document.createElement('script');
+    script.onload = resolve;
+    script.onerror = reject;
+    script.src = url;
+    document.head.appendChild(script);
+  }
+  else resolve();
+});
