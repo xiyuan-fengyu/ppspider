@@ -744,11 +744,6 @@ export class QueueManager {
         job.tryNum || (job.tryNum = 0);
         job.status || (job.status = JobStatus.Waiting);
 
-        // 重写 job 的一些信息
-        if (jobOverrideConfig) {
-            await jobOverrideConfig.method.call(jobOverrideConfig.target, job);
-        }
-
         // 添加额外信息
         if (_) {
             let _sysData = job.datas._;
@@ -763,6 +758,11 @@ export class QueueManager {
         if (parent) {
             if (!job.parentId) job.parentId = parent._id;
             if (job.depth == 0) job.depth = parent.depth + 1;
+        }
+
+        // 重写 job 的一些信息
+        if (jobOverrideConfig) {
+            await jobOverrideConfig.method.call(jobOverrideConfig.target, job);
         }
 
         // 通过filter做job存在性检测；增加异步检测的支持
