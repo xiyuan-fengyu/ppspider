@@ -746,7 +746,7 @@ export class QueueManager {
 
         // 重写 job 的一些信息
         if (jobOverrideConfig) {
-            jobOverrideConfig.method.call(jobOverrideConfig.target, job);
+            await jobOverrideConfig.method.call(jobOverrideConfig.target, job);
         }
 
         // 添加额外信息
