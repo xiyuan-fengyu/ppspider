@@ -501,6 +501,7 @@ Job 面板可以对所有子任务实例进行搜索，查看任务详情
 4. 更改 ui 中的部分依赖：bootstrap(3.4.1), g2(@antv/g2, @antv/data-set)  
 5. ui 中 window 增加 __awaiter 定义，使得在 DataUi 中可以使用 async, await 关键字  
 6. ui 中 window 增加 loadScript 定义，使得在 DataUi 中可以方便地加载第三方js  
+7. JobOverride 支持异步回调方法；JobOverride 调用回调方法的时机调整    
 
 2019-06-06 v2.1.10
 1. 重写 Page 添加/移除/查询 request listener 的过程，保证一个page只有一个request listener(theOnlyRequestListener)，

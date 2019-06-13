@@ -537,6 +537,7 @@ Job panel: search jobs and view details
 4. change the dependencies of ui: bootstrap(3.4.1), g2(@antv/g2, @antv/data-set)  
 5. define window.__awaiter in ui, to support async and await in DataUi    
 6. define window.loadScript in ui, make it easy to load third-party script in DataUi    
+7. JobOverride supports async callback methods; change the timing that JobOverride calls callback method.  
 
 2019-06-06 v2.1.10
 1. Override Add/Remove/Query request listener of Page to ensure that a page has only one request listener(theOnlyRequestListener).  
