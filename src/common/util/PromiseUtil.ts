@@ -48,13 +48,12 @@ export class PromiseUtil {
     }
 
     static createPromiseResolve() {
-        let aResolve;
-        let aReject;
-        const aPromise = new Promise((resolve, reject) => {
-            aResolve = resolve;
-            aReject =  reject;
+        const res = [];
+        res[0] = new Promise((resolve, reject) => {
+            res[1] = resolve;
+            res[2] = reject;
         });
-        return [aPromise, aResolve, aReject];
+        return res;
     }
 
 }

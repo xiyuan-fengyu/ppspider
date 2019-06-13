@@ -1,6 +1,9 @@
+import {Serializable} from "../..";
+
 /**
  * 优先级队列 | 堆
  */
+@Serializable()
 export class PriorityQueue<T> {
 
     private datas: T[] = [];
