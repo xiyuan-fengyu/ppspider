@@ -493,9 +493,10 @@ Job 面板可以对所有子任务实例进行搜索，查看任务详情
 8. request + cheerio 抓取静态网站的例子 [CheerioApp](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/examples/CheerioApp.ts)    
 9. Twitter 主题评论和用户信息抓取 [TwitterApp](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/examples/TwitterApp.ts)  
 10. Depth-First-Search，DFS 深度优先搜索例子（通常情况下用 DefaultQueue 是广度优先搜索） [DepthFirstSearchApp](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/examples/DepthFirstSearchApp.ts)  
+11. request + cheerio 抓取静态网站的例子 [QuotesToScrapeApp](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/examples/QuotesToScrapeApp.ts)  
 
 # 更新日志
-2019-06-11 v2.1.11-preview
+2019-06-13 v2.1.11
 1. 修复 PuppeteerWorkerFactory.overrideMultiRequestListenersLogic 中 once listener 的实现  
 2. FileUtil.write 的content参数类型 增加 Buffer 类型  
 3. QueueManager.loadFromCache 加载缓存过程中，设置队列的 lastExeTime  

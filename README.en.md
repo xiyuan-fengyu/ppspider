@@ -529,9 +529,10 @@ Job panel: search jobs and view details
 8. request + cheerio, crawling static web pages [CheerioApp](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/examples/CheerioApp.ts)    
 9. Twitter get topic comments and user info [TwitterApp](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/examples/TwitterApp.ts)  
 10. Depth-First-Search，DFS (By default, DefaultQueue is breadth-first search) [DepthFirstSearchApp](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/examples/DepthFirstSearchApp.ts)  
+11. request + cheerio, crawling static web pages [QuotesToScrapeApp](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/examples/QuotesToScrapeApp.ts)  
 
 # Update Note
-2019-06-11 v2.1.11-preview
+2019-06-13 v2.1.11
 1. fix the once listener bug in PuppeteerWorkerFactory.overrideMultiRequestListenersLogic  
 2. add Buffer type to the parameter content in FileUtil.write  
 3. in process of QueueManager.loadFromCache, fix the lastExeTime of queue  
