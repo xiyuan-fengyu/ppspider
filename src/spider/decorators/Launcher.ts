@@ -165,6 +165,7 @@ export function Launcher(appConfig: AppConfig) {
         for (let jobConfig of jobConfigs) {
             const target = jobConfig["target"];
             const method = jobConfig["method"];
+            const paramnames = jobConfig["paramnames"];
             const paramtypes = jobConfig["paramtypes"];
             if (paramtypes == null) {
                 logger.error(new Error(`emitDecoratorMetadata is required, enable it in tsconfig.json: 
@@ -198,9 +199,6 @@ export function Launcher(appConfig: AppConfig) {
                             workerParameterN++;
                         }
                         else {
-                            const methodBody = target.prototype[method].toString();
-                            const paramnames = methodBody.substring(methodBody.indexOf("(") + 1, methodBody.indexOf(")"))
-                                .split(",").map(item => item.trim()).filter(item => item);
                             logger.error(new Error("parameters of " + target.name + "." + method + " is invalid, WorkerFactory of parameter " + paramnames[i] + " is not found."));
                             process.exit(-1);
                         }
