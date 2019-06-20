@@ -187,7 +187,7 @@ export function Launcher(appConfig: AppConfig) {
                 let workerParameterN = 0;
                 for (let i = 0, len = paramtypes.length; i < len; i++) {
                     let paramtype = paramtypes[i];
-                    if (paramtype == Job) {
+                    if (paramtype == Job || Job.isPrototypeOf(paramtype)) {
                         jobConfig["jobParamIndex"] = i;
                         jobParameterN++;
                     }

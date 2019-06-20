@@ -160,10 +160,6 @@ export type OnStartConfig = {
     // urls to crawl
     urls: string | string[];  
     
-    // a workerFactory class whose instance must be declared in @Launcher parameter's property: workerFactorys except NoneWorkerFactory. 
-    // PuppeteerWorkerFactory and NoneWorkerFactory are supported at present.
-    workerFactory: WorkerFactoryClass;
-    
      // if set true, this queue will not run after startup
     running?: boolean;
     
@@ -195,7 +191,6 @@ Params type
 export type OnTimeConfig = {
     urls: string | string[];
     cron: string; // cron expression
-    workerFactory: Class_WorkerFactory;
     running?: boolean;
     parallel?: ParallelConfig;
     exeInterval?: number;
@@ -254,8 +249,6 @@ export function FromQueue(config: FromQueueConfig) { ... }
 export type FromQueueConfig = {
     // queue name
     name: string;
-    
-    workerFactory: WorkerFactoryClass;
 
     running?: boolean;
 
@@ -518,6 +511,16 @@ Job panel: search jobs and view details
     This situation has often appeared in previous versions, mainly due to nedb write/read process or serialization/deserialization process of QueueManager.  
   In the new version (v2.1.2), it has been optimized.  
 
+2. When using the v2.2.0+ version, the workerFactory property is removed from @OnStart, @OnTime, @FromQueue. If you want to use the puppeteer page to crawl the website,
+  You can import the Page class via 
+    ```
+    import {Page} from "ppspider";
+    ```
+    and then declare a page: Page parameter in the parameter list of the callback function. If use
+  Import {Page} from "puppeteer" to import Page, the imported Page is just an interface, which cannot be determined at runtime by reflect-metadata,
+  and the page instance will not be injected successfully. This error is checked during startup.  
+
+
 # Examples
 1. Monitor website access speed, visualize real-time statistics, and view the details of all requests in the process of opening a web page [ppspider-webMonitor](https://github.com/xiyuan-fengyu/ppspider-webMonitor)   
 2. Dynamically set task parallel via cron expressions [DynamicParallelApp](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/examples/DynamicParallelApp.ts)
@@ -532,6 +535,23 @@ Job panel: search jobs and view details
 11. request + cheerio, crawling static web pages [QuotesToScrapeApp](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/examples/QuotesToScrapeApp.ts)  
 
 # Update Note
+2019-06-20 v2.2.0-preview.1561029307267
+1. Rewrite the way to inject the worker instance through the reflection mechanism provided by typescript and reflect-metadata 
+   during calling method decorated by @OnStart, @OnTime, @FromQueue.  
+   The workerFactory property of @OnStart, @OnTime, @FromQueue is removed. The freamwork check the parameter types of the
+   decorated method to determine whether the job parameter needs to be passed, whether the worker instance needs to be 
+   passed (if true, which worker type is the correct one). The order and number of parameters are no longer fixed.  
+       
+   But there are also restrictions, in the parameters, at most one with the Job type, and at most one with the worker type which has the corresponding WorkerFactory definition (only Page is currently provided).
+   Be careful that the class Page is provided in the ppspider package, not the interface Page defined in @types/puppeteer.
+    
+   Because of this change, some code needs to be upgraded. You need to remove the workerFactory property in @OnStart, @OnTime, @FromQueue. 
+   If you want to use page: Page in the method decorated by @OnStart, @OnTime, @FromQueue, you need to import {Page} from "ppspider" instead of "puppeteer", 
+   other parameters except job: Job should be removed. The order and name of the parameters can be defined freely.
+   If the job: Job is not used in the method, you can also remove this parameter.
+   
+2. Fixed a bug: @AddToQueue does not work without @OnStart / @OnTime / @FromQueue.  
+
 2019-06-13 v2.1.11
 1. fix the once listener bug in PuppeteerWorkerFactory.overrideMultiRequestListenersLogic  
 2. add Buffer type to the parameter content in FileUtil.write  

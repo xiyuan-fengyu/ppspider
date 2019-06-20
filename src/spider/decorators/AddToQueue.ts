@@ -92,7 +92,7 @@ export function AddToQueue(queueConfigs: AddToQueueConfig | AddToQueueConfig[]) 
         const newFun = descriptor.value = async (...args) => {
             const targetIns = getBean(target.constructor);
             const res = await oriFun.apply(targetIns, args);
-            let job = (args || []).find(item => item && item.constructor == Job);
+            let job = (args || []).find(item => item && item instanceof Job);
             if (res != null) {
                 const addToQueueDatas = transformResToAddToQueueInfos(newFun, res);
                 addToQueueDatas.length && await appInfo.queueManager.addToQueue(job, addToQueueDatas);

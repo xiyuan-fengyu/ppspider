@@ -158,7 +158,6 @@ export function OnStart(config: OnStartConfig)
 ```
 export type OnStartConfig = {
     urls: string | string[]; // 要抓取链接
-    workerFactory: Class_WorkerFactory; // worker工厂类型；目前提供的 WorkerFactory 有 ，PuppeteerWorkerFactory, NoneWorkerFactory；其类型的实例必须在 @Launcher 参数的workerFactorys属性中申明(NoneWorkerFactory 除外，系统自动检测添加)
     running?: boolean; // 系统启动后该队列是否处于工作状态
     parallel?: ParallelConfig; // 任务并行数配置
     exeInterval?: number; // 两个任务的执行间隔时间
@@ -179,7 +178,6 @@ export function OnTime(config: OnTimeConfig) { ... }
 export type OnTimeConfig = {
     urls: string | string[];
     cron: string; // cron表达式，描述了周期性执行的时刻；不清楚cron表达式的可以参考这里：http://cron.qqe2.com/
-    workerFactory: Class_WorkerFactory;
     running?: boolean;
     parallel?: ParallelConfig;
     exeInterval?: number;
@@ -232,7 +230,6 @@ export function FromQueue(config: FromQueueConfig) { ... }
 
 export type FromQueueConfig = {
     name: string; // 队列名
-    workerFactory: WorkerFactoryClass;
     running?: boolean;
     parallel?: ParallelConfig;
     exeInterval?: number;
@@ -481,6 +478,14 @@ Job 面板可以对所有子任务实例进行搜索，查看任务详情
     这是因为内存不足导致的，可以在添加node参数 --max-old-space-size=8192  
     这个情况在之前的版本中常有出现，主要是nedb存储读取过程，序列化和反序列化过程实现不当导致的,
     新版本（v2.1.2）已经进行了优化  
+2. 使用 v2.2.0+ 版本时，@OnStart, @OnTime, @FromQueue 移除了 workerFactory 属性，如果要使用 puppeteer page 抓取网页，
+    可以通过 
+     ```
+     import {Page} from "ppspider";
+     ```
+     引入 Page class，然后在回调函数的参数列表中声明一个 page: Page 参数即可。如果通过 
+    import {Page} from "puppeteer" 引入，引入的 Page 只是一个 interface，通过 reflect-metadata 无法在运行时判定
+    参数类型，导致 page 参数无法正常注入，这个错误在启动过程中就会检查出来。  
           
 # 例子
 1. 监控网站访问速度，实时统计结果可视化，可以查看打开一个网页过程中的所有请求的具体情况 [ppspider-webMonitor](https://github.com/xiyuan-fengyu/ppspider-webMonitor)   
@@ -496,6 +501,19 @@ Job 面板可以对所有子任务实例进行搜索，查看任务详情
 11. request + cheerio 抓取静态网站的例子 [QuotesToScrapeApp](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/examples/QuotesToScrapeApp.ts)  
 
 # 更新日志
+2019-06-20 v2.2.0-preview.1561029307267
+1. 通过 typescript 和 reflect-metadata 提供的反射机制，重写 @OnStart, @OnTime, @FromQueue 回调函数注入worker实例的方式；
+     移除了 @OnStart, @OnTime, @FromQueue 参数中的workerFactory属性，框架通过回调方法的参数类型判定 是否需要
+     传递 job 参数，是否需要传递 worker 实例（如果需要，传递哪一种 worker 实例），参数列表的顺序和个数也不再固定。
+     但也有限制，参数列表中，最多一个Job类型的参数，以及最多一个有对应 WorkerFactory 定义的 Worker 类型（目前仅提供了 Page，
+     注意是 ppspider 包中提供的 class Page，而不是 @types/puppeteer 中定义的 interface Page）。  
+     
+     因为这个更改，需要对一些代码进行升级，需要移除 @OnStart, @OnTime, @FromQueue 参数中的 workerFactory 属性，回调函数
+     参数列表中如果要用到 page: Page，需要将 import {Page} from "puppeteer" 改为 import {Page} from "ppspider"，其他除了
+     job: Job 的参数都删除掉。参数列表的顺序和名字都可以随意定义，如果回调方法中没有用到 job: Job，也可以把这个参数删掉。  
+        
+2. 修复 @AddToQueue 不和 @OnStart / @OnTime / @FromQueue 一起使用时失效的bug       
+
 2019-06-13 v2.1.11
 1. 修复 PuppeteerWorkerFactory.overrideMultiRequestListenersLogic 中 once listener 的实现  
 2. FileUtil.write 的content参数类型 增加 Buffer 类型  

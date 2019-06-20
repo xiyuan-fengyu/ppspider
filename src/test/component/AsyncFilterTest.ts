@@ -1,4 +1,4 @@
-import {AddToQueue, appInfo, Filter, FromQueue, Job, Launcher, logger, NoneWorkerFactory, OnStart} from "../..";
+import {AddToQueue, appInfo, Filter, FromQueue, Job, Launcher, logger, OnStart} from "../..";
 
 class AsyncFilter implements Filter {
 

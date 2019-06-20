@@ -1,4 +1,4 @@
-import {AddToQueue, FromQueue, Job, Launcher, logger, DbHelperUi, NoneWorkerFactory, OnTime} from "../..";
+import {AddToQueue, FromQueue, Job, Launcher, logger, DbHelperUi, OnTime} from "../..";
 
 class TestTask {
 

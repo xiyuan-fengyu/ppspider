@@ -9,7 +9,6 @@ import {
     Job,
     Launcher,
     logger,
-    NoneWorkerFactory,
     OnStart,
     OnTime,
     PromiseUtil
