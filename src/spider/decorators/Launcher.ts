@@ -198,6 +198,10 @@ export function Launcher(appConfig: AppConfig) {
                             jobConfig["workerParamIndex"] = i;
                             workerParameterN++;
                         }
+                        else if (paramtype == Object) {
+                            logger.error(new Error("parameters of " + target.name + "." + method + " is invalid, type of parameter " + paramnames[i] + " should be a class, not an interface."));
+                            process.exit(-1);
+                        }
                         else {
                             logger.error(new Error("parameters of " + target.name + "." + method + " is invalid, WorkerFactory of parameter " + paramnames[i] + " is not found."));
                             process.exit(-1);
