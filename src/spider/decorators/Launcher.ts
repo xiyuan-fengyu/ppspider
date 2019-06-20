@@ -17,9 +17,9 @@ import {
 } from "../Types";
 import {EventEmitter} from "events";
 import {QueueManager} from "../manager/QueueManager";
-import {existBean, getBean, Job, MongodbDao, NedbDao, NoneWorkerFactory, registeBean} from "../..";
+import {getBean, Job, MongodbDao, NedbDao} from "../..";
 import {ArrayUtil} from "../../common/util/ArrayUtil";
-import has = Reflect.has;
+import {NoneWorkerFactory} from "../worker/NoneWorkerFactory";
 
 const jobConfigs: JobConfig[] = [];
 export function addJobConfig(config: JobConfig) {
