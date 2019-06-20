@@ -9,6 +9,7 @@
     "rootDir":"./src",
     "outDir":"./lib",
     "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
     "watch":true
   },
   "lib": [

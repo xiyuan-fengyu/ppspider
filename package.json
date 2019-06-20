@@ -34,6 +34,7 @@
     "socket.io": "^2.2.0",
     "source-map-support": "^0.5.11",
     "typescript": "^3.3.3",
+    "reflect-metadata": "^0.1.13",
     "moment": "^2.24.0",
     "ansi-colors": "^3.2.4"
   },
