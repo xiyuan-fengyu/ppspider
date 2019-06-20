@@ -123,13 +123,12 @@ class TestTask {
     }
 
     @OnStart({
-        urls: "",
-        workerFactory: NoneWorkerFactory
+        urls: ""
     })
     @AddToQueue({
         name: "test"
     })
-    async onStart(useless: any, job: Job) {
+    async onStart() {
         const arr = [];
         for (let i = 0; i < 10; i++) {
             arr.push("job_" + i);
@@ -139,10 +138,9 @@ class TestTask {
 
     @OnTime({
         urls: "",
-        cron: "* * * * * *",
-        workerFactory: NoneWorkerFactory
+        cron: "* * * * * *"
     })
-    async onTime(useless: any, job: Job) {
+    async onTime() {
         logger.debug(DateUtil.toStr(new Date()));
         getBean(TestDataUi).onData(DateUtil.toStr());
 
@@ -165,13 +163,12 @@ class TestTask {
 
     @FromQueue({
         name: "test",
-        workerFactory: NoneWorkerFactory,
         parallel: {
             "0-59/10 * * * * *": 0,
             "5-59/10 * * * * *": 5
         }
     })
-    async test(useless: any, job: Job) {
+    async test(job: Job) {
         await PromiseUtil.sleep(10000);
         logger.debug(job.url);
     }

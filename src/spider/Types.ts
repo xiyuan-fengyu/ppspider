@@ -21,7 +21,6 @@ export type ParallelConfig =  number | {
 
 export type OnStartConfig = {
     urls: string | string[]; // 要抓取链接
-    workerFactory: Class_WorkerFactory; // worker工厂类型
     running?: boolean; // 系统启动后该队列是否处于工作状态
     parallel?: ParallelConfig; // 任务并行数配置；可以是一个定值，也可以通过cron表达式在特定时间动态更改数值
     exeInterval?: number; // 两个任务的执行间隔时间
@@ -33,7 +32,6 @@ export type OnStartConfig = {
 export type OnTimeConfig = {
     urls: string | string[];
     cron: string; // cron表达式，描述了周期性执行的时刻
-    workerFactory: Class_WorkerFactory;
     running?: boolean;
     parallel?: ParallelConfig;
     exeInterval?: number;
@@ -44,7 +42,6 @@ export type OnTimeConfig = {
 
 export type FromQueueConfig = {
     name: string; // 从该队列获取任务执行
-    workerFactory: Class_WorkerFactory;
     running?: boolean;
     parallel?: ParallelConfig;
     exeInterval?: number;

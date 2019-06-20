@@ -24,8 +24,6 @@ import {NoFilter} from "../filter/NoFilter";
 import {Filter} from "../filter/Filter";
 import {BloonFilter} from "../filter/BloonFilter";
 import {PromiseUtil} from "../../common/util/PromiseUtil";
-import {getBean} from "../..";
-import {transformResToAddToQueueInfos} from "../decorators/AddToQueue";
 
 type QueueInfo = {
 
@@ -241,7 +239,7 @@ export class QueueManager {
                 target: queueInfo.config['target'].constructor.name,
                 method: queueInfo.config['method'],
                 type: taskType,
-                workerFactory: queueInfo.config.workerFactory.name,
+                workerFactory: queueInfo.config["workerFactory"].constructor.name,
                 running: queueInfo.config.running,
                 parallel: queueInfo.config.parallel == null ? Defaults.maxParallel : queueInfo.config.parallel,
                 exeInterval: queueInfo.config.exeInterval,
@@ -886,8 +884,7 @@ export class QueueManager {
 
         const target = queueInfo.config["target"];
         const method = target[queueInfo.config["method"]];
-
-        const workerFactory = getBean<WorkerFactory<any>>(queueInfo.config.workerFactory);
+        const workerFactory = queueInfo.config["workerFactory"] as WorkerFactory<any>;
         return workerFactory.get().then(async worker => {
             this.runningNum++;
             this.delayPushInfo();
@@ -923,7 +920,20 @@ export class QueueManager {
 
                     appInfo.eventBus.once(Events.QueueManager_InterruptJob, listenInterrupt);
                     try {
-                        const res = await method.call(target, worker, job);
+                        const paramArr = [];
+
+                        const workerParamIndex = queueInfo.config["workerParamIndex"];
+                        (workerParamIndex == 0 || workerParamIndex == 1) && (paramArr[workerParamIndex] = worker);
+
+                        const jobParamIndex = queueInfo.config["jobParamIndex"];
+                        if (jobParamIndex == 0 || jobParamIndex == 1) {
+                            paramArr[jobParamIndex] = job
+                        }
+                        else {
+                            paramArr.push(job);
+                        }
+
+                        const res = await method.call(target, ...paramArr);
                         resolve(res);
                     }
                     catch (e) {
@@ -973,12 +983,6 @@ export class QueueManager {
 
             // 释放worker
             await workerFactory.release(worker);
-
-            if (res) {
-                // 将返回结果添加到队列
-                const addToQueueDatas = transformResToAddToQueueInfos(method, res);
-                addToQueueDatas.length && await this.addToQueue(job, addToQueueDatas);
-            }
         });
     }
 

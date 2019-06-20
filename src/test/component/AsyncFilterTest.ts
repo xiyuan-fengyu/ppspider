@@ -19,17 +19,15 @@ class AsyncFilter implements Filter {
 class TestTask {
 
     @OnStart({
-        urls: "",
-        workerFactory: NoneWorkerFactory
+        urls: ""
     })
     @AddToQueue({name: "test", filterType: AsyncFilter})
-    async onStart(useless: any, job: Job) {
+    async onStart(job: Job) {
         return ["job_1", "job_2", "job_2", "job_1"];
     }
 
     @FromQueue({
-        name: "test",
-        workerFactory: NoneWorkerFactory
+        name: "test"
     })
     async test(useless: any, job: Job) {
         if (job.tryNum == 1) {

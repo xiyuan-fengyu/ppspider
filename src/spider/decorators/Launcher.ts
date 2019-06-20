@@ -1,6 +1,6 @@
+import "reflect-metadata";
 import {FileUtil} from "../../common/util/FileUtil";
 import {logger} from "../../common/util/logger";
-import {NoneWorkerFactory} from "../worker/NoneWorkerFactory";
 import {JobManager} from "../manager/JobManager";
 import {Defaults} from "../Default";
 import {WebServer} from "../ui/WebServer";
@@ -17,8 +17,9 @@ import {
 } from "../Types";
 import {EventEmitter} from "events";
 import {QueueManager} from "../manager/QueueManager";
-import {existBean, getBean, MongodbDao, NedbDao, registeBean} from "../..";
+import {existBean, getBean, Job, MongodbDao, NedbDao, NoneWorkerFactory, registeBean} from "../..";
 import {ArrayUtil} from "../../common/util/ArrayUtil";
+import has = Reflect.has;
 
 const jobConfigs: JobConfig[] = [];
 export function addJobConfig(config: JobConfig) {
@@ -86,14 +87,13 @@ export function Launcher(appConfig: AppConfig) {
     (async () => {
         let shutdownResolve;
 
-        for (let workerFactory of appInfo.workerFactorys) {
-            registeBean(workerFactory.constructor as any, workerFactory);
+
+        let noneWorkerFactory;
+        if (!(noneWorkerFactory = appInfo.workerFactorys.find(item => item.constructor == NoneWorkerFactory))) {
+            noneWorkerFactory = new NoneWorkerFactory();
+            appInfo.workerFactorys.push(noneWorkerFactory);
         }
 
-        // 如果用户没有添加 NoneWorkerFactory, 则自动添加这个 factory
-        if (!existBean(NoneWorkerFactory)) {
-            registeBean(NoneWorkerFactory, new NoneWorkerFactory());
-        }
 
         // DataUi 实例方法增强
         // 1.后台系统对实例方法的调用会转换为前台页面实例对该方法的调用，用于数据主动推送
@@ -158,6 +158,72 @@ export function Launcher(appConfig: AppConfig) {
             }
         }
 
+
+        // 移除 target 没有在 appInfo.tasks 中声明的 jobConfig
+        ArrayUtil.removeIf(jobConfigs, item => appInfo.tasks.indexOf(item["target"]) == -1);
+        // 检查回调函数的参数列表是否正常：最多只有一个Job类型的参数，最多只有一个worker参数
+        for (let jobConfig of jobConfigs) {
+            const target = jobConfig["target"];
+            const method = jobConfig["method"];
+            const paramtypes = jobConfig["paramtypes"];
+            if (paramtypes == null) {
+                logger.error(new Error(`emitDecoratorMetadata is required, enable it in tsconfig.json: 
+                {
+                    "compilerOptions": {
+                        "emitDecoratorMetadata": true
+                    }
+                }
+                then, recompile the ts file`));
+                process.exit(-1);
+            }
+
+            let hasError = false;
+            if (paramtypes.length > 2) {
+                hasError = true;
+            }
+            else {
+                let jobParameterN = 0;
+                let workerParameterN = 0;
+                for (let i = 0, len = paramtypes.length; i < len; i++) {
+                    let paramtype = paramtypes[i];
+                    if (paramtype == Job) {
+                        jobConfig["jobParamIndex"] = i;
+                        jobParameterN++;
+                    }
+                    else {
+                        const workerFactory = appInfo.workerFactorys.find(item => item.workerType() == paramtype);
+                        if (workerFactory) {
+                            jobConfig["workerFactory"] = workerFactory;
+                            jobConfig["workerParamIndex"] = i;
+                            workerParameterN++;
+                        }
+                        else {
+                            const methodBody = target.prototype[method].toString();
+                            const paramnames = methodBody.substring(methodBody.indexOf("(") + 1, methodBody.indexOf(")"))
+                                .split(",").map(item => item.trim()).filter(item => item);
+                            logger.error(new Error("parameters of " + target.name + "." + method + " is invalid, WorkerFactory of parameter " + paramnames[i] + " is not found."));
+                            process.exit(-1);
+                        }
+                    }
+                }
+                if (jobParameterN > 1 || workerParameterN > 1) {
+                    hasError = true;
+                }
+
+                if (!jobConfig["workerFactory"]) {
+                    jobConfig["workerFactory"] = noneWorkerFactory;
+                }
+            }
+
+            if (hasError) {
+                logger.error(new Error("parameters of " + target.name + "." + method + " is invalid, at most one (job: Job) parameter and at most one (worker: WorkerType) are required"));
+                process.exit(-1);
+            }
+        }
+        // 初始化 target
+        jobConfigs.forEach(item => item["target"] = getBean(item["target"], true));
+
+
         // 初始化数据库
         if (!appConfig.dbUrl) {
             appConfig.dbUrl = "nedb://" + appConfig.workplace + "/nedb";
@@ -176,12 +242,13 @@ export function Launcher(appConfig: AppConfig) {
         await appInfo.db.waitReady();
         logger.info("init db(" + appConfig.dbUrl + ") successfully");
 
+
+        // 初始化 jobManager
         appInfo.jobManager = new JobManager();
+
 
         // 启动 QueueManager
         logger.info("init QueueManager ...");
-        ArrayUtil.removeIf(jobConfigs, item => appInfo.tasks.indexOf(item["target"]) == -1);
-        jobConfigs.forEach(item => item["target"] = getBean(item["target"], true));
         appInfo.queueManager = new QueueManager({
             jobOverrideConfigs: jobOverrideConfigs,
             jobConfigs: jobConfigs

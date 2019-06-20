@@ -1,5 +1,4 @@
-import {Job, Launcher, NetworkTracing, OnStart, PuppeteerUtil, PuppeteerWorkerFactory} from "../..";
-import {Page} from "puppeteer";
+import {Job, Launcher, NetworkTracing, OnStart, Page, PuppeteerUtil, PuppeteerWorkerFactory} from "../..";
 
 class TestTask {
 
@@ -8,8 +7,7 @@ class TestTask {
             "https://www.google.com",
             "https://www.baidu.com",
             "https://www.bilibili.com",
-        ],
-        workerFactory: PuppeteerWorkerFactory
+        ]
     })
     async onStart(page: Page, job: Job) {
         await PuppeteerUtil.defaultViewPort(page);

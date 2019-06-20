@@ -1,5 +1,6 @@
 import {logger} from "../../common/util/logger";
 import {AddToQueueConfig, AddToQueueInfo} from "../Types";
+import {appInfo, getBean, Job} from "../..";
 
 const addToQueueConfigs = new Map<Function, AddToQueueConfig | AddToQueueConfig[]>();
 
@@ -87,7 +88,18 @@ export function transformResToAddToQueueInfos(method: Function, res: any) {
  */
 export function AddToQueue(queueConfigs: AddToQueueConfig | AddToQueueConfig[]) {
     return function (target, key, descriptor) {
-        addToQueueConfigs.set(descriptor.value, queueConfigs);
+        const oriFun = descriptor.value;
+        const newFun = descriptor.value = async (...args) => {
+            const targetIns = getBean(target.constructor);
+            const res = await oriFun.apply(targetIns, args);
+            let job = (args || []).find(item => item && item.constructor == Job);
+            if (res != null) {
+                const addToQueueDatas = transformResToAddToQueueInfos(newFun, res);
+                addToQueueDatas.length && await appInfo.queueManager.addToQueue(job, addToQueueDatas);
+            }
+            return res;
+        };
+        addToQueueConfigs.set(newFun, queueConfigs);
         return descriptor;
     }
 }

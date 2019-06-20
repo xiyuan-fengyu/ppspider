@@ -1,7 +1,10 @@
-import {Browser, launch, LaunchOptions, Page, Request} from "puppeteer";
+import {Browser, launch, LaunchOptions, Page as PuppeteerPage} from "puppeteer";
 import {WorkerFactory} from "../spider/worker/WorkerFactory";
 import {Serializable} from "../common/serialize/Serializable";
 import {logger} from "../common/util/logger";
+
+export interface Page extends PuppeteerPage {}
+export abstract class Page implements PuppeteerPage {}
 
 @Serializable()
 export class PuppeteerWorkerFactory implements WorkerFactory<Page> {
@@ -14,6 +17,10 @@ export class PuppeteerWorkerFactory implements WorkerFactory<Page> {
             logger.info("init " + PuppeteerWorkerFactory.name + " successfully");
             return browser;
         });
+    }
+
+    workerType(): any {
+        return Page;
     }
 
     get(): Promise<Page> {

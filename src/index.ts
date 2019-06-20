@@ -41,7 +41,6 @@ export {DefaultPriorityQueue} from "./spider/queue/DefaultPriorityQueue";
 export {DefaultQueue} from "./spider/queue/DefaultQueue";
 export {AbsQueue} from "./spider/queue/AbsQueue";
 export {Queue} from "./spider/queue/Queue";
-export {NoneWorkerFactory} from "./spider/worker/NoneWorkerFactory";
 export {WorkerFactory} from "./spider/worker/WorkerFactory";
 export {NetworkTracing, PageRequests, PageRequest} from "./puppeteer/NetworkTracing";
 export {
@@ -58,4 +57,4 @@ export {
     LinkPredictMap,
     PuppeteerUtil
 } from "./puppeteer/PuppeteerUtil";
-export {PuppeteerWorkerFactory} from "./puppeteer/PuppeteerWorkerFactory";
+export {PuppeteerWorkerFactory, Page} from "./puppeteer/PuppeteerWorkerFactory";

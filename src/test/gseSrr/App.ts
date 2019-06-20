@@ -1,13 +1,17 @@
 import {
-    AddToQueue, appInfo, DataUi, DataUiRequest,
-    Job, FileUtil, FromQueue,
-    Launcher,
+    AddToQueue,
+    appInfo,
+    DataUi,
+    DataUiRequest,
     DbHelperUi,
-    NoneWorkerFactory,
-    OnStart, PuppeteerUtil,
+    FileUtil,
+    FromQueue,
+    Job,
+    Launcher,
+    OnStart, Page,
+    PuppeteerUtil,
     PuppeteerWorkerFactory
 } from "../..";
-import {Page} from "puppeteer";
 
 type GSM = {
     id: string,
@@ -90,13 +94,12 @@ export class GeoTask {
 
     @OnStart({
         urls: "",
-        workerFactory: NoneWorkerFactory,
         description: "创建任务"
     })
     @AddToQueue({
         name: "GSM"
     })
-    async start(none: any, job: Job) {
+    async start() {
         if (this.gsmMap == null) {
             this.gsmMap = gsmMap;
             const res = [];
@@ -114,7 +117,6 @@ export class GeoTask {
 
     @FromQueue({
         name: "GSM",
-        workerFactory: PuppeteerWorkerFactory,
         description: "提取SRX编号"
     })
     @AddToQueue({
@@ -148,7 +150,6 @@ export class GeoTask {
 
     @FromQueue({
         name: "SRX",
-        workerFactory: PuppeteerWorkerFactory,
         description: "提取srr编号"
     })
     async srxPage(page: Page, job: Job) {
@@ -200,7 +201,7 @@ export class GeoTask {
 }
 
 @Launcher({
-    workplace: __dirname + "/workplace",
+    workplace: "workplace",
     tasks: [
         GeoTask
     ],
@@ -211,10 +212,7 @@ export class GeoTask {
     workerFactorys: [
         new PuppeteerWorkerFactory({
             headless: false,
-            devtools: true,
-            args: [
-                // "--proxy-server=127.0.0.1:2007"
-            ]
+            devtools: true
         })
     ],
     logger: {

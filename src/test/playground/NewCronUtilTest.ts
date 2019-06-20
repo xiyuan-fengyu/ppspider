@@ -4,25 +4,23 @@ class TestTask {
 
     @OnTime({
         urls: "",
-        cron: "* * * * * *",
-        workerFactory: NoneWorkerFactory
+        cron: "* * * * * *"
     })
     @AddToQueue({
         name: "test"
     })
-    async onTime(useless: any, job: Job) {
+    async onTime() {
         return "" + new Date().getTime();
     }
 
     @FromQueue({
         name: "test",
-        workerFactory: NoneWorkerFactory,
         parallel: {
             "0-59/10 * * * * *": 0,
             "5-59/10 * * * * *": 5
         }
     })
-    async test(useless: any, job: Job) {
+    async test(job: Job) {
         logger.debug(job.url);
     }
 

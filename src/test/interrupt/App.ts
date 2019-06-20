@@ -1,5 +1,4 @@
-import {Job, Launcher, OnStart, PuppeteerWorkerFactory, RequestMapping} from "../..";
-import {Page} from "puppeteer";
+import {Launcher, OnStart, Page, PuppeteerWorkerFactory, RequestMapping} from "../..";
 import {Request, Response} from "express";
 
 class TestTask {
@@ -13,10 +12,9 @@ class TestTask {
 
     @OnStart({
         urls: "",
-        workerFactory: PuppeteerWorkerFactory,
         timeout: -1
     })
-    async onStart(page: Page, job: Job) {
+    async onStart(page: Page) {
         await page.goto("http://localhost:9000/longTimeToLoad");
         await page.evaluate(() => new Promise(resolve => {
             setTimeout(resolve, 1000000);
@@ -26,7 +24,7 @@ class TestTask {
 }
 
 @Launcher({
-    workplace: __dirname + "/workplace",
+    workplace: "workplace",
     tasks: [
         TestTask
     ],

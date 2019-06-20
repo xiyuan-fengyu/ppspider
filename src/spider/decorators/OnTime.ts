@@ -12,6 +12,7 @@ export function OnTime(config: OnTimeConfig) {
         config["type"] = "OnTime";
         config["target"] = target.constructor;
         config["method"] = key;
+        config["paramtypes"] = Reflect.getMetadata('design:paramtypes', target, key);
         addJobConfig(config);
         return descriptor;
     }
