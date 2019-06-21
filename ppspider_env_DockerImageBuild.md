@@ -40,6 +40,7 @@ gpgkey=https://www.mongodb.org/static/pgp/server-4.0.asc
 ' > /etc/yum.repos.d/mongodb-org-4.0.repo
 yum -y install mongodb-org
 systemctl enable mongod
+echo "bind_ip=0.0.0.0" > /etc/mongodb.conf
 
 # ctrl+p, ctrl + q 返回 docker host，commit镜像，push镜像
 docker commit ppspider_env_temp xiyuanfengyu/ppspider_env
