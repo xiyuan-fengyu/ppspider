@@ -117,6 +117,19 @@ tsc 在运行期间会监听 ts 文件变化，自动编译有变动的 ts 文�
 右键运行 lib/quickstart/App.js  
 用浏览器打开 http://localhost:9000 可以实时查看爬虫系统的运行情况  
 
+# 例子
+1. 监控网站访问速度，实时统计结果可视化，可以查看打开一个网页过程中的所有请求的具体情况 [ppspider-webMonitor](https://github.com/xiyuan-fengyu/ppspider-webMonitor)   
+2. 通过cron表达式动态设置任务并行数 [DynamicParallelApp](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/examples/DynamicParallelApp.ts)    
+3. 如果用户希望一些队列在应用启动后不立即执行，需要等到特殊条件达成后开始执行，可以参考这里 [QueueWaitToRunApp](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/examples/QueueWaitToRunApp.ts)   
+4. 网页截图，支持超长网页截图 [ScreenshotApp](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/dataUi/ScreenshotApp.ts)   
+5. B站视屏信息和评论抓取 [BilibiliApp](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/examples/BilibiliApp.ts)  
+6. 为单个page设置代理 [Page Proxy](https://github.com/xiyuan-fengyu/ppspider/blob/master/src/test/component/ProxyTest.ts)    
+7. QQ音乐信息和评论 [QQ Music](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/examples/QqMusicApp.ts)
+8. request + cheerio 抓取静态网站的例子 [CheerioApp](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/examples/CheerioApp.ts)    
+9. Twitter 主题评论和用户信息抓取 [TwitterApp](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/examples/TwitterApp.ts)  
+10. Depth-First-Search，DFS 深度优先搜索例子（通常情况下用 DefaultQueue 是广度优先搜索） [DepthFirstSearchApp](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/examples/DepthFirstSearchApp.ts)  
+11. request + cheerio 抓取静态网站的例子 [QuotesToScrapeApp](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/examples/QuotesToScrapeApp.ts)  
+
 # 系统介绍
 ## 装饰器
 申明形式  
@@ -487,19 +500,6 @@ Job 面板可以对所有子任务实例进行搜索，查看任务详情
     import {Page} from "puppeteer" 引入，引入的 Page 只是一个 interface，通过 reflect-metadata 无法在运行时判定
     参数类型，导致 page 参数无法正常注入，这个错误在启动过程中就会检查出来。  
           
-# 例子
-1. 监控网站访问速度，实时统计结果可视化，可以查看打开一个网页过程中的所有请求的具体情况 [ppspider-webMonitor](https://github.com/xiyuan-fengyu/ppspider-webMonitor)   
-2. 通过cron表达式动态设置任务并行数 [DynamicParallelApp](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/examples/DynamicParallelApp.ts)    
-3. 如果用户希望一些队列在应用启动后不立即执行，需要等到特殊条件达成后开始执行，可以参考这里 [QueueWaitToRunApp](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/examples/QueueWaitToRunApp.ts)   
-4. 网页截图，支持超长网页截图 [ScreenshotApp](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/dataUi/ScreenshotApp.ts)   
-5. B站视屏信息和评论抓取 [BilibiliApp](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/examples/BilibiliApp.ts)  
-6. 为单个page设置代理 [Page Proxy](https://github.com/xiyuan-fengyu/ppspider/blob/master/src/test/component/ProxyTest.ts)    
-7. QQ音乐信息和评论 [QQ Music](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/examples/QqMusicApp.ts)
-8. request + cheerio 抓取静态网站的例子 [CheerioApp](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/examples/CheerioApp.ts)    
-9. Twitter 主题评论和用户信息抓取 [TwitterApp](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/examples/TwitterApp.ts)  
-10. Depth-First-Search，DFS 深度优先搜索例子（通常情况下用 DefaultQueue 是广度优先搜索） [DepthFirstSearchApp](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/examples/DepthFirstSearchApp.ts)  
-11. request + cheerio 抓取静态网站的例子 [QuotesToScrapeApp](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/examples/QuotesToScrapeApp.ts)  
-
 # 更新日志
 2019-06-20 v2.2.0-preview.1561029307267
 1. 通过 typescript 和 reflect-metadata 提供的反射机制，重写 @OnStart, @OnTime, @FromQueue 回调函数注入worker实例的方式；

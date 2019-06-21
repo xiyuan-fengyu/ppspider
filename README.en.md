@@ -101,6 +101,19 @@ tsc is a TypeScript compiler which can auto compile the ts file to js file after
 Run lib/quickstart/App.js    
 Open http://localhost:9000 in the browser to check the ppspider's status  
 
+# Examples
+1. Monitor website access speed, visualize real-time statistics, and view the details of all requests in the process of opening a web page [ppspider-webMonitor](https://github.com/xiyuan-fengyu/ppspider-webMonitor)   
+2. Dynamically set task parallel via cron expressions [DynamicParallelApp](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/examples/DynamicParallelApp.ts)
+3. If you wants some queues to not be executed immediately after the application is started, look this [QueueWaitToRunApp](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/examples/QueueWaitToRunApp.ts)
+4. Web page screenshot, super long page is supported [ScreenshotApp](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/dataUi/ScreenshotApp.ts)  
+5. Get video's infos and comments from https://www.bilibili.com [BilibiliApp](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/examples/BilibiliApp.ts)  
+6. Set proxy for a page [Page Proxy](https://github.com/xiyuan-fengyu/ppspider/blob/master/src/test/component/ProxyTest.ts)    
+7. QQ music info and comments [QQ Music](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/examples/QqMusicApp.ts)  
+8. request + cheerio, crawling static web pages [CheerioApp](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/examples/CheerioApp.ts)    
+9. Twitter get topic comments and user info [TwitterApp](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/examples/TwitterApp.ts)  
+10. Depth-First-Search，DFS (By default, DefaultQueue is breadth-first search) [DepthFirstSearchApp](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/examples/DepthFirstSearchApp.ts)  
+11. request + cheerio, crawling static web pages [QuotesToScrapeApp](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/examples/QuotesToScrapeApp.ts)  
+
 # ppspider System Introduction
 ## Decorator
 Declare like    
@@ -520,19 +533,6 @@ Job panel: search jobs and view details
   Import {Page} from "puppeteer" to import Page, the imported Page is just an interface, which cannot be determined at runtime by reflect-metadata,
   and the page instance will not be injected successfully. This error is checked during startup.  
 
-
-# Examples
-1. Monitor website access speed, visualize real-time statistics, and view the details of all requests in the process of opening a web page [ppspider-webMonitor](https://github.com/xiyuan-fengyu/ppspider-webMonitor)   
-2. Dynamically set task parallel via cron expressions [DynamicParallelApp](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/examples/DynamicParallelApp.ts)
-3. If you wants some queues to not be executed immediately after the application is started, look this [QueueWaitToRunApp](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/examples/QueueWaitToRunApp.ts)
-4. Web page screenshot, super long page is supported [ScreenshotApp](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/dataUi/ScreenshotApp.ts)  
-5. Get video's infos and comments from https://www.bilibili.com [BilibiliApp](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/examples/BilibiliApp.ts)  
-6. Set proxy for a page [Page Proxy](https://github.com/xiyuan-fengyu/ppspider/blob/master/src/test/component/ProxyTest.ts)    
-7. QQ music info and comments [QQ Music](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/examples/QqMusicApp.ts)  
-8. request + cheerio, crawling static web pages [CheerioApp](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/examples/CheerioApp.ts)    
-9. Twitter get topic comments and user info [TwitterApp](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/examples/TwitterApp.ts)  
-10. Depth-First-Search，DFS (By default, DefaultQueue is breadth-first search) [DepthFirstSearchApp](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/examples/DepthFirstSearchApp.ts)  
-11. request + cheerio, crawling static web pages [QuotesToScrapeApp](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/examples/QuotesToScrapeApp.ts)  
 
 # Update Note
 2019-06-20 v2.2.0-preview.1561029307267
