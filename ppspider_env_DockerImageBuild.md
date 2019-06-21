@@ -5,7 +5,7 @@ ppspider_env docker镜像构建过程，包括 chromium 相关依赖，nodejs(ty
 ```bash
 # 构建一个临时容器，在其上构建 ppspider 运行环境
 docker login -u xiyuanfengyu -p *****************
-docker run -it --name ppspider_env_temp centos
+docker run -it --network=host --name ppspider_env_temp centos
 
 # 进入 container 后，搭建环境
 yum -y install epel-release \
@@ -40,10 +40,11 @@ gpgkey=https://www.mongodb.org/static/pgp/server-4.0.asc
 ' > /etc/yum.repos.d/mongodb-org-4.0.repo
 yum -y install mongodb-org
 systemctl enable mongod
-echo "bind_ip=0.0.0.0" > /etc/mongodb.conf
+sed -i 's/  bindIp: 127.0.0.1/  bindIp: 0.0.0.0/g' /etc/mongod.conf
 
 # ctrl+p, ctrl + q 返回 docker host，commit镜像，push镜像
 docker commit ppspider_env_temp xiyuanfengyu/ppspider_env
+docker stop ppspider_env_temp && docker rm ppspider_env_temp
 docker push xiyuanfengyu/ppspider_env
 
 ```
