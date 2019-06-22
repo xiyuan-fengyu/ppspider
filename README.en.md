@@ -539,7 +539,7 @@ Job panel: search jobs and view details
 
 
 # Update Note
-2019-06-20 v2.2.0-preview.1561029307267
+2019-06-22 v2.2.0
 1. Rewrite the way to inject the worker instance through the reflection mechanism provided by typescript and reflect-metadata 
    during calling method decorated by @OnStart, @OnTime, @FromQueue.  
    The workerFactory property of @OnStart, @OnTime, @FromQueue is removed. The freamwork check the parameter types of the
@@ -555,6 +555,7 @@ Job panel: search jobs and view details
    If the job: Job is not used in the method, you can also remove this parameter.
    
 2. Fixed a bug: @AddToQueue does not work without @OnStart / @OnTime / @FromQueue.  
+3. Add deployment scheme based on docker  
 
 2019-06-13 v2.1.11
 1. fix the once listener bug in PuppeteerWorkerFactory.overrideMultiRequestListenersLogic  

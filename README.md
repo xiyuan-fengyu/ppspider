@@ -505,7 +505,7 @@ Job 面板可以对所有子任务实例进行搜索，查看任务详情
     参数类型，导致 page 参数无法正常注入，这个错误在启动过程中就会检查出来。  
           
 # 更新日志
-2019-06-20 v2.2.0-preview.1561029307267
+2019-06-22 v2.2.0
 1. 通过 typescript 和 reflect-metadata 提供的反射机制，重写 @OnStart, @OnTime, @FromQueue 回调函数注入worker实例的方式；
      移除了 @OnStart, @OnTime, @FromQueue 参数中的workerFactory属性，框架通过回调方法的参数类型判定 是否需要
      传递 job 参数，是否需要传递 worker 实例（如果需要，传递哪一种 worker 实例），参数列表的顺序和个数也不再固定。
@@ -516,7 +516,8 @@ Job 面板可以对所有子任务实例进行搜索，查看任务详情
      参数列表中如果要用到 page: Page，需要将 import {Page} from "puppeteer" 改为 import {Page} from "ppspider"，其他除了
      job: Job 的参数都删除掉。参数列表的顺序和名字都可以随意定义，如果回调方法中没有用到 job: Job，也可以把这个参数删掉。  
         
-2. 修复 @AddToQueue 不和 @OnStart / @OnTime / @FromQueue 一起使用时失效的bug       
+2. 修复 @AddToQueue 不和 @OnStart / @OnTime / @FromQueue 一起使用时失效的bug  
+3. 增加 docker 部署方案         
 
 2019-06-13 v2.1.11
 1. 修复 PuppeteerWorkerFactory.overrideMultiRequestListenersLogic 中 once listener 的实现  
