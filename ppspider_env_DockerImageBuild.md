@@ -1,6 +1,6 @@
 # ppspider_env docker镜像构建过程  
-镜像正在提交到docker官方仓库，之后用户可以直接使用，这里只是记录一下镜像的构建过程      
-ppspider_env docker镜像构建过程，包括 chromium 相关依赖，nodejs(typescript, yarn)，git，mongodb 的安装过程      
+ppspider_env 是一个基于 centos 的部署运行环境，包括 chromium 相关依赖，nodejs(typescript, yarn)，git，mongodb 
+镜像已提交到docker官方仓库，之后用户可以直接使用，这里只是记录一下镜像的构建过程      
 
 ```bash
 # 构建一个临时容器，在其上构建 ppspider 运行环境
