@@ -539,7 +539,7 @@ Job panel: search jobs and view details
 
 
 # Update Note
-2019-06-22 v2.2.0
+2019-06-22 v2.2.1
 1. Rewrite the way to inject the worker instance through the reflection mechanism provided by typescript and reflect-metadata 
    during calling method decorated by @OnStart, @OnTime, @FromQueue.  
    The workerFactory property of @OnStart, @OnTime, @FromQueue is removed. The freamwork check the parameter types of the
