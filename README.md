@@ -133,6 +133,9 @@ https://github.com/xiyuan-fengyu/ppspider_docker_deploy
 9. Twitter 主题评论和用户信息抓取 [TwitterApp](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/examples/TwitterApp.ts)  
 10. Depth-First-Search，DFS 深度优先搜索例子（通常情况下用 DefaultQueue 是广度优先搜索） [DepthFirstSearchApp](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/examples/DepthFirstSearchApp.ts)  
 11. request + cheerio 抓取静态网站的例子 [QuotesToScrapeApp](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/examples/QuotesToScrapeApp.ts)  
+12. [网易云音乐](https://music.163.com)下载 [Music163App](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/examples/Music163App.ts)  
+    ![网易云音乐爬取结果](https://i.loli.net/2019/06/26/5d132eb516fb762204.png)   
+
 
 # 系统介绍
 ## 装饰器

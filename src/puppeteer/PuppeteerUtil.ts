@@ -1,5 +1,5 @@
 import * as os from "os";
-import {Page, Request, Response, SetCookie} from "puppeteer";
+import {Frame, Page, Request, Response, SetCookie} from "puppeteer";
 import * as fs from "fs";
 import {DownloadUtil} from "../common/util/DownloadUtil";
 import {logger} from "../common/util/logger";
@@ -87,7 +87,7 @@ export class PuppeteerUtil {
      * @returns {Promise<void>}
      */
     static async addJquery(
-        page: Page,
+        page: Page | Frame,
         url: string = "https://cdn.bootcss.com/jquery/3.3.1/jquery.min.js",
         savePath = os.tmpdir() + "/jquery.min.js") {
         const jQueryExisted = await page.evaluate(() => {
@@ -321,7 +321,7 @@ export class PuppeteerUtil {
      * @param {number} timeout 超时时间
      * @returns {Promise<DownloadImgResult>}
      */
-    static downloadImg(page: Page, selectorOrSrc: string, saveDir: string, timeout: number = 30000): Promise<DownloadImgResult> {
+    static downloadImg(page: Page | Frame, selectorOrSrc: string, saveDir: string, timeout: number = 30000): Promise<DownloadImgResult> {
         const time = new Date().getTime();
         return new Promise<DownloadImgResult>(async resolve => {
             const imgId = "img_" + time + parseInt("" + Math.random() * 10000);
@@ -352,7 +352,11 @@ export class PuppeteerUtil {
 
             if (imgSrc) {
                 const newImgSrc = imgSrc + (imgSrc.indexOf("?") == -1 ? "?" : "&") + new Date().getTime() + "_" + (Math.random() * 10000).toFixed(0);
-                const waitRespnse = PuppeteerUtil.onceResponse(page, newImgSrc, async (response: Response) => {
+                let topFrame = page as any;
+                while (topFrame.parentFrame()) {
+                    topFrame = topFrame.parentFrame();
+                }
+                const waitRespnse = PuppeteerUtil.onceResponse(topFrame, newImgSrc, async (response: Response) => {
                     if (response.ok()) {
                         let saveName = null;
                         let suffix = "png";
@@ -437,7 +441,7 @@ export class PuppeteerUtil {
      * @param {boolean} onlyAddToFirstMatch 是否只添加到第一个匹配的列表中
      * @returns {Promise<any>}
      */
-    static async links(page: Page, predicts: LinkPredictMap, onlyAddToFirstMatch: boolean = true) {
+    static async links(page: Page | Frame, predicts: LinkPredictMap, onlyAddToFirstMatch: boolean = true) {
         if (predicts == null || Object.keys(predicts).length == 0) return {};
 
         const predictStrMap: any = {};
@@ -520,7 +524,7 @@ export class PuppeteerUtil {
      * @param {string} selector
      * @returns {Promise<number>}
      */
-    static count(page: Page, selector: string): Promise<number> {
+    static count(page: Page | Frame, selector: string): Promise<number> {
         return page.evaluate(selector => {
             const doms = document.querySelectorAll(selector);
             if (doms) return doms.length;
@@ -534,7 +538,7 @@ export class PuppeteerUtil {
      * @param {string} selector
      * @returns {Promise<string[]>}
      */
-    static async specifyIdByJquery(page: Page, selector: string): Promise<string[]> {
+    static async specifyIdByJquery(page: Page | Frame, selector: string): Promise<string[]> {
         await this.addJquery(page);
         return await page.evaluate(selector => {
            const $items = jQuery(selector);
@@ -566,7 +570,7 @@ export class PuppeteerUtil {
      * @param {number} scrollYDelta
      * @returns {Promise<boolean>}
      */
-    static scrollToBottom(page: Page, scrollTimeout: number = 30000, scrollInterval: number = 250, scrollYDelta: number = 500) {
+    static scrollToBottom(page: Page | Frame, scrollTimeout: number = 30000, scrollInterval: number = 250, scrollYDelta: number = 500) {
         return new Promise<boolean>( resolve => {
             if (scrollTimeout > 0) {
                 setTimeout(() => {
