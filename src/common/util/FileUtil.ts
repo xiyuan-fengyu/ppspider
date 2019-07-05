@@ -16,15 +16,8 @@ export class FileUtil {
         if (!pathStr) return false;
 
         try {
-            pathStr = pathStr.replace("\\", "/");
-            const split = pathStr.split("/");
-            let curPath = "";
-            for (let item of split) {
-                curPath += item + "/";
-
-                if (!fs.existsSync(curPath)){
-                    fs.mkdirSync(curPath);
-                }
+            if (!fs.existsSync(pathStr)){
+                fs.mkdirSync(pathStr, {recursive: true});
             }
         }
         catch (e) {
