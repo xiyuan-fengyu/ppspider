@@ -91,4 +91,30 @@ export class RequestUtil {
         });
     }
 
+    /**
+     * 从多行字符串中解析 headers
+     * 例如下面两行
+     * Pragma: no-cache
+     * User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36
+     * 解析结果
+     * {
+     *     "Pragma": "no-cache",
+     *     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36"
+     * }
+     * @param lines
+     */
+    static linesToHeaders(lines: string): {[headerName: string]: string} {
+        const headers = {};
+        lines.split(/\r?\n/g).forEach(line => {
+            line = line.trim();
+            if (line) {
+               const divideI = line.indexOf(": ");
+               if (divideI > -1) {
+                   headers[line.substring(0, divideI)] = line.substring(divideI + 2);
+               }
+            }
+        });
+        return headers;
+    }
+
 }
