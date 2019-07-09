@@ -10,11 +10,25 @@ export class RequestUtil {
 
     /**
      * 将代理和返回body的解压缩过程进行封装，返回只包含 status, headers, body 的简单结果
+     * 提供 headers 多行字符串的解析过程，方便从浏览器中copy Request Headers，然后直接使用
      * @param options
      */
-    static simple(options: (UriOptions | UrlOptions) & CoreOptions) {
+    static simple(options: (UriOptions | UrlOptions) & CoreOptions & {headerLines?: string}) {
         // body 采用 Buffer 格式返回
         options.encoding = null;
+
+        // 解析 headers
+        const headers = {};
+        for (let key in options) {
+            if (key == "headers") {
+                Object.assign(headers, options.headers);
+            }
+            else if (key == "headerLines") {
+                const parsedHeaders = this.linesToHeaders(options.headerLines);
+                Object.assign(headers, parsedHeaders);
+            }
+        }
+        options.headers = headers;
 
         if (options.proxy) {
             let proxy;
@@ -27,9 +41,6 @@ export class RequestUtil {
             }
 
             if (proxy) {
-                if (!options.headers) {
-                    options.headers = {};
-                }
                 options.headers["accept-encoding"] = "identity, gzip, deflate";
 
                 const reqUrl = options["url"] || options["uri"];
