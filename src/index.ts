@@ -1,4 +1,4 @@
-export {Autowired, Bean, AfterInit, getBean, registeBean, existBean} from "./common/bean/Bean";
+export {Autowired, Bean, AfterInit, getBean, findBean, registeBean, existBean} from "./common/bean/Bean";
 export {Serializable, SerializableUtil, Transient} from "./common/serialize/Serializable";
 export {Sort, Pager, DbDao} from "./common/db/DbDao";
 export {NedbDao} from "./common/db/NedbDao";

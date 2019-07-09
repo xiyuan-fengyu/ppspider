@@ -1,3 +1,4 @@
+import "reflect-metadata";
 
 type  Constructor<T> = new (...args) => T;
 
@@ -13,9 +14,14 @@ type BeanDefinition = {
 type AutowiredInfo = {
     id: BeanId<any>; // 注入
     target: Constructor<any>;
-    fieldOrMethod: string; // 字段名 或 方法名
-    paramIndex?: number; // 方法参数index
-    paramName?: string; // 方法参数名
+
+    field?: string; // 字段名（如果@Autowired修饰类成员）
+    fieldType?: any; // 字段类型（如果@Autowired修饰类成员）
+
+    method?: string; // 方法名（如果@Autowired修饰方法参数）
+    paramIndex?: number; // 方法参数index（如果@Autowired修饰方法参数）
+    paramName?: string; // 方法参数名（如果@Autowired修饰方法参数）
+    paramType?: any; // 方法参数类型（如果@Autowired修饰方法参数）
 }
 
 export interface AfterInit {
@@ -43,6 +49,7 @@ function addBeanDefinition(beanDefinition: BeanDefinition) {
             id = beanDefinition.target;
         }
     }
+    beanDefinition.id = id;
 
     const existedBeanDefinition = beanDefinitions.get(id);
     if (existedBeanDefinition) {
@@ -97,7 +104,7 @@ const autowiredInfos = new Map<Constructor<any>, AutowiredInfo[]>();
 function addAutowiredInfo(autowiredInfo: AutowiredInfo) {
     let id = autowiredInfo.id;
     if (id == null) {
-        id = autowiredInfo.fieldOrMethod;
+        autowiredInfo.id = autowiredInfo.field || autowiredInfo.paramName;
     }
     let targetDepends = autowiredInfos.get(autowiredInfo.target);
     if (!targetDepends) {
@@ -119,19 +126,23 @@ export function Autowired(id?: BeanId<any>) {
         if (typeof paramIndex === "number") {
             const methodDesc = target[fieldOrMethod].toString();
             const params = methodDesc.substring(fieldOrMethod.length + 1, methodDesc.indexOf(") {")).split(", ");
+            const paramTypes = Reflect.getMetadata('design:paramtypes', target, fieldOrMethod);
             addAutowiredInfo({
                 id: id,
                 target: target.constructor,
-                fieldOrMethod: fieldOrMethod,
+                method: fieldOrMethod,
                 paramIndex: paramIndex,
-                paramName: params[paramIndex]
+                paramName: params[paramIndex],
+                paramType:paramTypes[paramIndex]
             });
         }
         else {
+            const fieldType = Reflect.getMetadata('design:type', target, fieldOrMethod);
             addAutowiredInfo({
                 id: id,
                 target: target.constructor,
-                fieldOrMethod: fieldOrMethod
+                field: fieldOrMethod,
+                fieldType: fieldType
             });
         }
     };
@@ -159,6 +170,37 @@ export function getBean<T>(id: BeanId<T>, createBeanDefinitionIfNotExisted: bool
     }
     return bean;
 }
+
+export function findBean<T>(id: BeanId<T>, type: any) {
+    // 首先通过id去查找
+    try {
+        const beanIns = getBean(id, true);
+        if (beanIns) {
+            return beanIns;
+        }
+    }
+    catch (e) {
+    }
+
+    // 如果没有找到，通过 type 匹配 beanDefinitions，如果匹配到多个，抛出异常
+    const beanDefinitionsForType: BeanDefinition[] = [];
+    for (let entry of beanDefinitions.entries()) {
+        const beanDefinition = entry[1];
+        if (beanDefinition.target == type && !beanDefinition.field && !beanDefinition.method) {
+            beanDefinitionsForType.push(beanDefinition);
+        }
+    }
+    if (beanDefinitionsForType.length == 1) {
+        return getBean(beanDefinitionsForType[0].id);
+    }
+    else if (beanDefinitionsForType.length == 0) {
+        throw new Error(`bean definition is not found for type ${type.name}`);
+    }
+    else {
+        throw new Error(`${beanDefinitionsForType.length} bean definitions are found for type ${type.name}`);
+    }
+}
+
 
 function initBean<T>(id: BeanId<T>): T {
     let beanDefinition = beanDefinitions.get(id);
@@ -201,16 +243,15 @@ function initBean<T>(id: BeanId<T>): T {
             for (let autowiredInfo of autowiredArr) {
                 if (autowiredInfo.paramIndex == null) {
                     // 字段
-                    const autowiredId = autowiredInfo.id != null ? autowiredInfo.id : autowiredInfo.fieldOrMethod;
-                    Object.defineProperty(ins, autowiredInfo.fieldOrMethod, {
-                        get: () => getBean(autowiredId)
+                    Object.defineProperty(ins, autowiredInfo.field, {
+                        get: () => findBean(autowiredInfo.id, autowiredInfo.fieldType)
                     });
                 }
                 else {
                     // 方法
-                    let methodParamAutowired = methodParamAutowiredMap[autowiredInfo.fieldOrMethod];
+                    let methodParamAutowired = methodParamAutowiredMap[autowiredInfo.method];
                     if (!methodParamAutowired) {
-                        methodParamAutowiredMap[autowiredInfo.fieldOrMethod] = methodParamAutowired = [];
+                        methodParamAutowiredMap[autowiredInfo.method] = methodParamAutowired = [];
                     }
                     while (methodParamAutowired.length <= autowiredInfo.paramIndex) {
                         methodParamAutowired.push(null);
@@ -231,7 +272,7 @@ function initBean<T>(id: BeanId<T>): T {
                         if (oldArg === undefined) {
                             const paramAutowire = methodParamAutowire[i];
                             if (paramAutowire) {
-                                newArgs[i] = getBean(paramAutowire.id != null ? paramAutowire.id : paramAutowire.paramName);
+                                newArgs[i] = findBean(paramAutowire.id, paramAutowire.paramType);
                             }
                         }
                         else {
@@ -248,20 +289,19 @@ function initBean<T>(id: BeanId<T>): T {
             const tempDefinition = entry[1];
             if (tempDefinition.target === beanDefinition.target) {
                 if (tempDefinition.field) {
-                    const beanId = tempDefinition.id != null ? tempDefinition.id : tempDefinition.field;
-                    registeBean(beanId, ins[tempDefinition.field]);
+                    registeBean(tempDefinition.id, ins[tempDefinition.field], null, true);
                     Object.defineProperty(ins, tempDefinition.field, {
-                        get: () => getBean(beanId),
-                        set: value => beans.set(beanId, value)
+                        get: () => getBean(tempDefinition.id),
+                        set: value => beans.set(tempDefinition.id, value)
                     });
                 }
                 else if (tempDefinition.method) {
                     const oldM = ins[tempDefinition.method];
+                    let _cachedValue = undefined;
                     ins[tempDefinition.method] = (...args) => {
-                        let _cachedValue = oldM["_cachedValue"];
                         if (_cachedValue === undefined) {
-                            oldM["_cachedValue"] = _cachedValue = oldM.call(ins, ...args);
-                            registeBean(tempDefinition.id != null ? tempDefinition.id : tempDefinition.method, _cachedValue);
+                            _cachedValue = oldM.call(ins, ...args);
+                            registeBean(tempDefinition.id, _cachedValue, null, true);
                         }
                         return _cachedValue;
                     };
@@ -280,7 +320,7 @@ export function existBean(id: BeanId<any>) {
     return beans.has(id);
 }
 
-export function registeBean<T>(id: BeanId<T>, ins: T, beanDefinition?: BeanDefinition) {
+export function registeBean<T>(id: BeanId<T>, ins: T, beanDefinition?: BeanDefinition, ignoreIfExisted = false) {
     if (!beans.has(id)) {
         if (!beanDefinitions.has(id)) {
             addBeanDefinition(beanDefinition || {
@@ -290,7 +330,7 @@ export function registeBean<T>(id: BeanId<T>, ins: T, beanDefinition?: BeanDefin
         }
         beans.set(id, ins);
     }
-    else {
+    else if (!ignoreIfExisted) {
         throw new Error("Bean(" + idStr(id) + ") existed");
     }
 }

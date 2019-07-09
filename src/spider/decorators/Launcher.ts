@@ -1,4 +1,3 @@
-import "reflect-metadata";
 import {FileUtil} from "../../common/util/FileUtil";
 import {logger} from "../../common/util/logger";
 import {JobManager} from "../manager/JobManager";
@@ -17,9 +16,14 @@ import {
 } from "../Types";
 import {EventEmitter} from "events";
 import {QueueManager} from "../manager/QueueManager";
-import {getBean, Job, MongodbDao, NedbDao} from "../..";
 import {ArrayUtil} from "../../common/util/ArrayUtil";
 import {NoneWorkerFactory} from "../worker/NoneWorkerFactory";
+import {getBean} from "../../common/bean/Bean";
+import {Job} from "../job/Job";
+import {MongodbDao} from "../../common/db/MongodbDao";
+import {NedbDao} from "../../common/db/NedbDao";
+
+
 
 const jobConfigs: JobConfig[] = [];
 export function addJobConfig(config: JobConfig) {

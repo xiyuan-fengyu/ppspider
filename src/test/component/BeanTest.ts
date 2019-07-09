@@ -1,3 +1,4 @@
+import "source-map-support/register";
 import {Autowired, Bean, getBean} from "../../common/bean/Bean";
 
 @Bean()
@@ -10,7 +11,7 @@ class Test {
     name: string = "Tom";
 
     @Autowired("field")
-    private fieldRef: string;
+    fieldRef: string;
 
     @Bean()
     tom(@Autowired() field?: string, @Autowired() name?: string) {
@@ -30,14 +31,17 @@ class Test {
 @Bean()
 class BeanTest {
 
-    @Autowired(Test)
+    @Autowired()
     test: Test;
 
-    @Autowired("tom")
+    @Autowired()
     private tom: any;
 
     init() {
         console.log(this.test.field);
+        console.log(this.test.name);
+        console.log(this.test.fieldRef);
+
         console.log(this.tom);
         console.log(this.test.tom());
     }
