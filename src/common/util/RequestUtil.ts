@@ -6,14 +6,21 @@ import {IncomingHttpHeaders, IncomingMessage} from "http";
 import {PassThrough} from "stream";
 import * as zlib from "zlib";
 
+export type SimpleResponse = {
+    status: number,
+    headers: IncomingHttpHeaders,
+    body: Buffer
+}
+
 export class RequestUtil {
 
     /**
      * 将代理和返回body的解压缩过程进行封装，返回只包含 status, headers, body 的简单结果
      * 提供 headers 多行字符串的解析过程，方便从浏览器中copy Request Headers，然后直接使用
      * @param options
+     * @param handler
      */
-    static simple(options: (UriOptions | UrlOptions) & CoreOptions & {headerLines?: string}) {
+    static simple(options: (UriOptions | UrlOptions) & CoreOptions & {headerLines?: string}, handler?: ((error: Error, res: SimpleResponse) => void)) {
         // body 采用 Buffer 格式返回
         options.encoding = null;
 
@@ -54,12 +61,8 @@ export class RequestUtil {
             }
         }
 
-        return new Promise<{
-            status: number,
-            headers: IncomingHttpHeaders,
-            body: Buffer
-        }>((resolve, reject) => {
-            const req = request(options, (error, res: IncomingMessage) => {
+        return new Promise<SimpleResponse>((resolve, reject) => {
+            request(options, (error, res: IncomingMessage) => {
                 if (error) {
                     reject(error);
                     return;
@@ -99,6 +102,12 @@ export class RequestUtil {
                     resolve(simpleRes);
                 }
             });
+        }).then(async res => {
+            typeof handler == "function" && await handler(null, res);
+            return res;
+        }).catch(async err => {
+            typeof handler == "function" && await handler(err, null);
+            throw err;
         });
     }
 
