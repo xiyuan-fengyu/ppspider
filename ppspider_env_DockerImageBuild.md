@@ -25,6 +25,7 @@ yum -y install epel-release \
     && yum -y install pango \
     && yum -y install gtk3 \
     && yum -y groupinstall Fonts \
+    && curl -sL https://rpm.nodesource.com/setup_10.x | bash - \
     && yum -y install nodejs \
     && npm install -g typescript \
     && npm install -g yarn \
