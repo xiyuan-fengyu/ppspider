@@ -508,6 +508,12 @@ Job 面板可以对所有子任务实例进行搜索，查看任务详情
     参数类型，导致 page 参数无法正常注入，这个错误在启动过程中就会检查出来。  
           
 # 更新日志
+2019-07-11 v2.2.2-preview.1562823732385
+1. @Bean @Autowired bug修复，@Autowired支持类型识别  
+2. RequestUtil 增加多行headers字符串解析方法，simple方法增加 headerLines 属性，方便传入多行headers字符串，
+    simple方法增加可选handler参数，方便监听请求结果  
+3. PuppeteerUtil.useProxy 代理请求时，自动添加 cookies   
+
 2019-06-22 v2.2.1
 1. 通过 typescript 和 reflect-metadata 提供的反射机制，重写 @OnStart, @OnTime, @FromQueue 回调函数注入worker实例的方式；
      移除了 @OnStart, @OnTime, @FromQueue 参数中的workerFactory属性，框架通过回调方法的参数类型判定 是否需要
