@@ -3,15 +3,12 @@ import {launch} from "puppeteer";
 (async () => {
     const browser = await launch({
         headless: false,
-        devtools: true
+        devtools: true,
+        args: [ '--proxy-server=127.0.0.1:3000' ]
     });
     const page = await browser.newPage();
+    // await page.setUserAgent("curl");
     await page.setViewport({width: 1920, height: 1080});
-
-    await page.goto("https://music.163.com/");
-    let frame = page.frames()[1];
-    while (frame) {
-        frame = frame.parentFrame();
-    }
+    await page.goto("https://www.google.com/");
     console.log();
 })();
