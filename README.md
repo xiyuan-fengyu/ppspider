@@ -136,6 +136,7 @@ https://github.com/xiyuan-fengyu/ppspider_docker_deploy
 12. [网易云音乐](https://music.163.com)下载 [Music163App](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/examples/Music163App.ts)  
     ![网易云音乐爬取结果](https://i.loli.net/2019/06/26/5d132eb516fb762204.png)   
 13. 代理池 [ProxyPool](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/examples/ProxyPoolApp.ts)    
+14. [Bandcamp Music download](https://github.com/banbuchunqiu/ppspider_bandcamp)  
 
 # 系统介绍
 ## 装饰器

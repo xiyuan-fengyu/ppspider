@@ -120,7 +120,8 @@ https://github.com/xiyuan-fengyu/ppspider_docker_deploy/blob/master/README.en.md
 12. [Music 163](https://music.163.com) download [Music163App](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/examples/Music163App.ts)  
     ![Music 163 download result](https://i.loli.net/2019/06/26/5d132eb516fb762204.png)   
 13. [ProxyPool](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/examples/ProxyPoolApp.ts)  
-    
+14. [Bandcamp Music download](https://github.com/banbuchunqiu/ppspider_bandcamp)    
+  
 # ppspider System Introduction
 ## Decorator
 Declare like    
