@@ -696,6 +696,16 @@ export class PuppeteerUtil {
                     };
 
                     try {
+                        if (options.headers && (options.headers.cookie == null || options.headers.Cookie == null)) {
+                            // 设置cookie
+                            const cookies = await page.cookies(options.url);
+                            if (cookies.length) {
+                                // console.log(options.url + "\n"
+                                //     + cookies.map(item => item.name + "=" + item.value + "; domain=" + item.domain).join("\n") + "\n");
+                                options.headers.cookie = cookies.map(item =>
+                                    item.name + "=" + item.value).join("; ");
+                            }
+                        }
                         const proxyRes = await RequestUtil.simple(options);
                         const headers = proxyRes.headers;
                         // 处理返回结果的 header；主要是处理 set-cookie
@@ -758,6 +768,7 @@ export class PuppeteerUtil {
                                                 setCookie.secure = true;
                                             }
                                         });
+                                        headers["set-cookie-" + setCookies.length] = item;
                                         setCookies.push(setCookie);
                                     }
                                     await page.setCookie(...setCookies).catch(err => {});
@@ -777,7 +788,7 @@ export class PuppeteerUtil {
                         if (!req.isNavigationRequest()) {
                             // nav请求始终不缓存
                             //  如果有 Expires ，则保存缓存
-                            const expires = new Date(headers.expires).getTime();
+                            const expires = new Date(headers.expires || headers.Expires as string).getTime();
                             if (enableCache && expires > new Date().getTime()) {
                                 const bodyBase64 = proxyRes.body.toString("base64");
                                 const responseCache = `${expires}\n${proxyRes.status}\n${bodyBase64}`;
