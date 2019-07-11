@@ -78,6 +78,10 @@ IDEA一定要下载 Ultimate 版本，否则有很多功能无法使用
 [IDEA 下载地址](https://www.jetbrains.com/idea/download/)  
 [nodejs 插件下载地址](http://plugins.jetbrains.com/plugin/6098-nodejs)
 
+IDEA中 nodejs 和 javascript 配置  
+![nodejs-config.png](https://i.loli.net/2019/07/11/5d2747dff288e83940.png)  
+![javascript-config.png](https://i.loli.net/2019/07/11/5d2747e00f32352225.png)  
+
 ## 下载运行 ppspider_example
 ppspider_example github 地址  
 https://github.com/xiyuan-fengyu/ppspider_example  

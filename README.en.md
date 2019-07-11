@@ -76,6 +76,10 @@ The NodeJs plugin's version should match with the IDEA's version
 [IDEA download](https://www.jetbrains.com/idea/download/)  
 [NodeJs Plugin download](http://plugins.jetbrains.com/plugin/6098-nodejs)
 
+Nodejs And Javascript Configuration in IDEA   
+![nodejs-config.png](https://i.loli.net/2019/07/11/5d2747dff288e83940.png)  
+![javascript-config.png](https://i.loli.net/2019/07/11/5d2747e00f32352225.png)  
+
 ## Download And Run ppspider_example
 ppspider_example github address  
 https://github.com/xiyuan-fengyu/ppspider_example  
