@@ -25,8 +25,10 @@ export class PuppeteerWorkerFactory implements WorkerFactory<Page> {
 
     get(): Promise<Page> {
         return new Promise<Page>(resolve => {
-            this.browser.then(browser => {
-                browser.newPage().then(page => resolve(this.exPage(page)));
+            this.browser.then(async browser => {
+                const page = await browser.newPage();
+                await this.exPage(page);
+                resolve(page);
             });
         });
     }
@@ -34,10 +36,12 @@ export class PuppeteerWorkerFactory implements WorkerFactory<Page> {
     /**
      * 对 page 实例进行增强改进
      * 1. 对 $eval, $$eval, evaluate, evaluateOnNewDocument, evaluateHandle进行增强，当注入的js执行报错时，能打印出错误的具体位置
+     * 2. 修改多个 request 监听的管理逻辑
+     * 3. evaluate等方法支持 async await
      * @param {Page} page
      * @returns {Page}
      */
-    private exPage(page: Page): Page {
+    private async exPage(page: Page) {
         const prettyError = (oriError: Error, pageFunction: any) => {
             const oriStackArr = oriError.stack.split("\n");
             const errPosReg = new RegExp("__puppeteer_evaluation_script__:(\\d+):(\\d+)");
@@ -91,10 +95,20 @@ export class PuppeteerWorkerFactory implements WorkerFactory<Page> {
             };
         });
 
+        // evaluate等方法支持 async await 关键字
+        await page.evaluateOnNewDocument(() => {
+            !window["__awaiter"] && (window["__awaiter"] = function (thisArg, _arguments, P, generator) {
+                return new (P || (P = Promise))(function (resolve, reject) {
+                    function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+                    function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+                    function step(result) { result.done ? resolve(result.value) : new P(function (resolve) { resolve(result.value); }).then(fulfilled, rejected); }
+                    step((generator = generator.apply(thisArg, _arguments || [])).next());
+                });
+            });
+        });
+
         // 解决多个 request handler 时，无法决定是否要 continue 的问题
         PuppeteerWorkerFactory.overrideMultiRequestListenersLogic(page);
-
-        return page;
     }
 
     static overrideMultiRequestListenersLogic(page: Page) {
