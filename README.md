@@ -141,6 +141,7 @@ https://github.com/xiyuan-fengyu/ppspider_docker_deploy
     ![网易云音乐爬取结果](https://i.loli.net/2019/06/26/5d132eb516fb762204.png)   
 13. 代理池 [ProxyPool](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/examples/ProxyPoolApp.ts)    
 14. [Bandcamp Music download](https://github.com/banbuchunqiu/ppspider_bandcamp)  
+15. 设置job的最大尝试次数 [SetMaxTryApp](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/examples/SetMaxTryApp.ts)  
 
 # 系统介绍
 ## 装饰器

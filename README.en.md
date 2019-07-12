@@ -125,6 +125,7 @@ https://github.com/xiyuan-fengyu/ppspider_docker_deploy/blob/master/README.en.md
     ![Music 163 download result](https://i.loli.net/2019/06/26/5d132eb516fb762204.png)   
 13. [ProxyPool](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/examples/ProxyPoolApp.ts)  
 14. [Bandcamp Music download](https://github.com/banbuchunqiu/ppspider_bandcamp)    
+15. Set max try num of job [SetMaxTryApp](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/examples/SetMaxTryApp.ts)  
   
 # ppspider System Introduction
 ## Decorator
