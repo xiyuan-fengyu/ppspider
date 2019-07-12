@@ -33,8 +33,7 @@ class TestTask {
             headless: false,
             devtools: true
         })
-    ]
+    ],
+    webUiPort: 9001
 })
-class App {
-
-}
+class App {}

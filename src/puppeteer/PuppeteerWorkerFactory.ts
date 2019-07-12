@@ -1,10 +1,9 @@
-import {Browser, launch, LaunchOptions, Page as PuppeteerPage} from "puppeteer";
+import {Browser, launch, LaunchOptions} from "puppeteer";
 import {WorkerFactory} from "../spider/worker/WorkerFactory";
 import {Serializable} from "../common/serialize/Serializable";
 import {logger} from "../common/util/logger";
-
-export interface Page extends PuppeteerPage {}
-export abstract class Page implements PuppeteerPage {}
+import {Page} from "puppeteer/lib/Page";
+export {Page};
 
 @Serializable()
 export class PuppeteerWorkerFactory implements WorkerFactory<Page> {
