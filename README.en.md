@@ -547,11 +547,12 @@ Job panel: search jobs and view details
 
 
 # Update Note
-2019-07-11 v2.2.2-preview.1562823732385
+2019-07-11 v2.2.2-preview.1562895051605
 1. @Bean @Autowired bug fixed, support type identification for @Autowired   
 2. Add new method RequestUtil.linesToHeaders to parse header-lines; add headerLines property to the parameter named options of
     RequestUtil.simple, add an optional parameter handler to watch the response    
 3. Add cookies automatically when using PuppeteerUtil.useProxy to proxy requests  
+4. Add async function support for Page.evaluate, evaluateOnNewDocument, evaluateHandle, $eval, $$eval       
 
 2019-06-22 v2.2.1
 1. Rewrite the way to inject the worker instance through the reflection mechanism provided by typescript and reflect-metadata 

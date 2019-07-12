@@ -1,6 +1,6 @@
 import "source-map-support/register";
-import moment = require("moment");
-import ansiColors = require('ansi-colors');
+import * as moment from "moment";
+import * as ansiColors from 'ansi-colors';
 
 export type LoggerSetting = {
 

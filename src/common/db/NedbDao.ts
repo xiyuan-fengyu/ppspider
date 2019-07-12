@@ -5,10 +5,10 @@ import * as path from "path";
 import * as readline from "readline";
 import {DbDao, Pager, Sort} from "./DbDao";
 import {FileUtil, logger, PromiseUtil} from "../..";
-import Persistence = require("nedb/lib/persistence");
-import Index = require("nedb/lib/indexes");
-import model = require("nedb/lib/model");
-import storage = require("nedb/lib/storage");
+import * as Persistence from "nedb/lib/persistence";
+import * as Index from "nedb/lib/indexes";
+import * as model from "nedb/lib/model";
+import * as storage from "nedb/lib/storage";
 
 Persistence.prototype.setAutocompactionInterval = function(interval) {
     this.compactInterval = Math.max(interval || 0, 60000);

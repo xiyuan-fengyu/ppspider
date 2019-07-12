@@ -1,7 +1,7 @@
 /**
  * moment 时间格式化
  */
-import moment = require("moment");
+import * as moment from "moment";
 
 export class DateUtil {
 
