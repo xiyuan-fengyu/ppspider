@@ -521,6 +521,7 @@ Job 面板可以对所有子任务实例进行搜索，查看任务详情
     simple方法增加可选handler参数，方便监听请求结果  
 3. PuppeteerUtil.useProxy 代理请求时，自动添加 cookies   
 4. Page.evaluate, evaluateOnNewDocument, evaluateHandle, $eval, $$eval 支持 async function 参数   
+5. Page 的引入方式修正  
 
 2019-06-22 v2.2.1
 1. 通过 typescript 和 reflect-metadata 提供的反射机制，重写 @OnStart, @OnTime, @FromQueue 回调函数注入worker实例的方式；
