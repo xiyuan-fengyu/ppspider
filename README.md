@@ -142,6 +142,7 @@ https://github.com/xiyuan-fengyu/ppspider_docker_deploy
 13. 代理池 [ProxyPool](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/examples/ProxyPoolApp.ts)    
 14. [Bandcamp Music download](https://github.com/banbuchunqiu/ppspider_bandcamp)  
 15. 设置job的最大尝试次数 [SetMaxTryApp](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/examples/SetMaxTryApp.ts)  
+16. Page.evaluate 执行 async function [PuppeteerEvalAsyncApp](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/examples/PuppeteerEvalAsyncApp.ts)    
 
 # 系统介绍
 ## 装饰器

@@ -126,6 +126,7 @@ https://github.com/xiyuan-fengyu/ppspider_docker_deploy/blob/master/README.en.md
 13. [ProxyPool](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/examples/ProxyPoolApp.ts)  
 14. [Bandcamp Music download](https://github.com/banbuchunqiu/ppspider_bandcamp)    
 15. Set max try num of job [SetMaxTryApp](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/examples/SetMaxTryApp.ts)  
+16. Page.evaluate with async function [PuppeteerEvalAsyncApp](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/examples/PuppeteerEvalAsyncApp.ts)  
   
 # ppspider System Introduction
 ## Decorator
