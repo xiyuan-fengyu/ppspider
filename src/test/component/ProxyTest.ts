@@ -10,8 +10,8 @@ class TestTask {
         ]
     })
     async onStart(page: Page, job: Job) {
-        console.log(page instanceof Page);
         await PuppeteerUtil.defaultViewPort(page);
+        await PuppeteerUtil.setImgLoad(page, false);
         await PuppeteerUtil.useProxy(page, "http://127.0.0.1:2007");
         await page.goto(job.url);
         console.log(await page.evaluate(() => document.title));
