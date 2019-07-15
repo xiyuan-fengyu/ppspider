@@ -11,6 +11,7 @@ export {logger, LoggerSetting} from "./common/util/logger";
 export {PromiseUtil} from "./common/util/PromiseUtil";
 export {StringUtil} from "./common/util/StringUtil";
 export {RequestUtil, SimpleResponse} from "./common/util/RequestUtil";
+export {UserAgents} from "./common/util/UserAgents";
 export {
     OnStartConfig,
     OnTimeConfig,
