@@ -12,21 +12,21 @@ const net = require('net');
 
 net.createServer(socket => {
     const reqId = new Date().getTime() + "_" + (Math.random() * 10000).toFixed();
-    // console.log(reqId + " connected");
+    console.log(reqId + " connected");
 
     const proxySocket = new net.Socket();
     // !fs.existsSync("proxy") && fs.mkdirSync("proxy", {recursive: true});
-    const reqF = fs.createWriteStream('proxy/' + reqId + "_req.txt",{encoding:'binary'});
-    const resF = fs.createWriteStream('proxy/' + reqId + "_res.txt",{encoding:'binary'});
+    // const reqF = fs.createWriteStream('proxy/' + reqId + "_req.txt",{encoding:'binary'});
+    // const resF = fs.createWriteStream('proxy/' + reqId + "_res.txt",{encoding:'binary'});
     proxySocket.connect(2007, '127.0.0.1', () => {
         socket.pipe(proxySocket);
-        socket.pipe(reqF);
+        // socket.pipe(reqF);
     });
     proxySocket.pipe(socket);
-    proxySocket.pipe(resF);
+    // proxySocket.pipe(resF);
 
     socket.on("close", () => {
-        // console.log(reqId + " disconnected");
+        console.log(reqId + " disconnected");
     });
     socket.on("error", err => {});
     proxySocket.on("close", () => {});
