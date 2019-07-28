@@ -7,16 +7,15 @@
  */
 
 import * as fs from "fs";
-import {FileUtil} from "../..";
 
 const net = require('net');
 
 net.createServer(socket => {
     const reqId = new Date().getTime() + "_" + (Math.random() * 10000).toFixed();
-    console.log(reqId + " connected");
+    // console.log(reqId + " connected");
 
     const proxySocket = new net.Socket();
-    FileUtil.mkdirs("proxy");
+    // !fs.existsSync("proxy") && fs.mkdirSync("proxy", {recursive: true});
     const reqF = fs.createWriteStream('proxy/' + reqId + "_req.txt",{encoding:'binary'});
     const resF = fs.createWriteStream('proxy/' + reqId + "_res.txt",{encoding:'binary'});
     proxySocket.connect(2007, '127.0.0.1', () => {
@@ -27,9 +26,9 @@ net.createServer(socket => {
     proxySocket.pipe(resF);
 
     socket.on("close", () => {
-        console.log(reqId + " disconnected");
+        // console.log(reqId + " disconnected");
     });
     socket.on("error", err => {});
     proxySocket.on("close", () => {});
     proxySocket.on("error", () => {});
-}).listen(3000, '127.0.0.1');
+}).listen(3000, '0.0.0.0');
