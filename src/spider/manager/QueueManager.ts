@@ -281,14 +281,18 @@ export class QueueManager {
         const queueTypes = {OnStart: 0, OnTime: 1, FromQueue: 2};
         res.queues.sort((item1, item2) => {
             if (item1.target !== item2.target) {
-                return item1.target > item2.target;
+                return item1.target < item2.target ? -1 : 1;
             }
             else if (item1.type != item2.type) {
-                return queueTypes[item1.type] > queueTypes[item2.type];
+                return queueTypes[item1.type] - queueTypes[item2.type];
             }
             else {
                 const methods = this.targetMethodIndexes[item1.target];
-                return (methods[item1.method] || 0) - (methods[item2.method] || 0);
+                const delta = (methods[item1.method] || 0) - (methods[item2.method] || 0);
+                if (delta != 0) {
+                    return delta;
+                }
+                return item1.name < item2.name ? -1 : 1;
             }
         });
 
@@ -313,7 +317,10 @@ export class QueueManager {
 
                 for (let queueName of Object.keys(tempQueueManager.queueInfos)) {
                     const queueInfo = tempQueueManager.queueInfos[queueName];
-                    const thisQueueInfo = this.queueInfos[queueName];
+                    let thisQueueInfo = this.queueInfos[queueName];
+                    if (!thisQueueInfo) {
+                        thisQueueInfo = this.cloneRegexpNamedFromQueueInfo(queueName);
+                    }
                     if (thisQueueInfo) {
                         thisQueueInfo.success = queueInfo.success;
                         thisQueueInfo.fail = queueInfo.fail;
@@ -678,6 +685,17 @@ export class QueueManager {
         this.addQueueConfig(config.name, config);
     }
 
+    private cloneRegexpNamedFromQueueInfo(queueName: string) {
+        // 尝试通过正则表达式查找 FromQueue 类型的队列，并clone一个专有的队列配置
+        for (let key in this.queueInfos) {
+            const tempQueueInfo = this.queueInfos[key];
+            if (tempQueueInfo.config && tempQueueInfo.config["type"] == "FromQueue" && queueName.match(tempQueueInfo.config["name"])) {
+                this.addQueueConfig(queueName, Object.assign({}, tempQueueInfo.config));
+                return this.queueInfos[queueName];
+            }
+        }
+    }
+
     /**
      * 将任务添加到队列中
      * @param {Job} parent
@@ -693,6 +711,9 @@ export class QueueManager {
                 const queueName = jobInfo.queueName;
 
                 let queueInfo = this.queueInfos[queueName];
+                if (!queueInfo) {
+                    queueInfo = this.cloneRegexpNamedFromQueueInfo(queueName);
+                }
                 if (!queueInfo || !queueInfo.config) {
                     // 仅当没有与AddToQueue队列配置对应的FromQueue时，会导致这种情况，这时候直接忽略这些job
                     continue;

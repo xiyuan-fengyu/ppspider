@@ -14,12 +14,23 @@ function getAddToQueueConfig(queueConfigs: AddToQueueConfig | AddToQueueConfig[]
                     config = queueConfig;
                     break;
                 }
+                // AddToQueue 支持正则匹配队列名
+                else if (queueName.match(queueConfig.name)) {
+                    config = Object.assign({}, queueConfig);
+                    config.name = queueName;
+                    break;
+                }
             }
         }
         else {
             const queueConfig = queueConfigs as AddToQueueConfig;
             if (queueConfig.name == queueName) {
                 config = queueConfig;
+            }
+            // AddToQueue 支持正则匹配队列名
+            else if (queueName.match(queueConfig.name)) {
+                config = Object.assign({}, queueConfig);
+                config.name = queueName;
             }
         }
 
