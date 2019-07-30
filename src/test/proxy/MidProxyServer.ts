@@ -7,7 +7,6 @@
  */
 
 import * as fs from "fs";
-import {FileUtil} from "../..";
 
 const net = require('net');
 
@@ -16,15 +15,15 @@ net.createServer(socket => {
     console.log(reqId + " connected");
 
     const proxySocket = new net.Socket();
-    FileUtil.mkdirs("proxy");
-    const reqF = fs.createWriteStream('proxy/' + reqId + "_req.txt",{encoding:'binary'});
-    const resF = fs.createWriteStream('proxy/' + reqId + "_res.txt",{encoding:'binary'});
+    // !fs.existsSync("proxy") && fs.mkdirSync("proxy", {recursive: true});
+    // const reqF = fs.createWriteStream('proxy/' + reqId + "_req.txt",{encoding:'binary'});
+    // const resF = fs.createWriteStream('proxy/' + reqId + "_res.txt",{encoding:'binary'});
     proxySocket.connect(2007, '127.0.0.1', () => {
         socket.pipe(proxySocket);
-        socket.pipe(reqF);
+        // socket.pipe(reqF);
     });
     proxySocket.pipe(socket);
-    proxySocket.pipe(resF);
+    // proxySocket.pipe(resF);
 
     socket.on("close", () => {
         console.log(reqId + " disconnected");
@@ -32,4 +31,4 @@ net.createServer(socket => {
     socket.on("error", err => {});
     proxySocket.on("close", () => {});
     proxySocket.on("error", () => {});
-}).listen(3000, '127.0.0.1');
+}).listen(3000, '0.0.0.0');
