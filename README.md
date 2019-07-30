@@ -143,6 +143,7 @@ https://github.com/xiyuan-fengyu/ppspider_docker_deploy
 14. [Bandcamp Music download](https://github.com/banbuchunqiu/ppspider_bandcamp)  
 15. 设置job的最大尝试次数 [SetMaxTryApp](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/examples/SetMaxTryApp.ts)  
 16. Page.evaluate 执行 async function [PuppeteerEvalAsyncApp](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/examples/PuppeteerEvalAsyncApp.ts)    
+17. AddToQueue/FromQueue name 属性使用正则表达式，动态创建一组队列 [AddToRegexQueue](https://github.com/xiyuan-fengyu/ppspider/blob/master/src/test/component/AddToRegexQueue.ts)      
 
 # 系统介绍
 ## 装饰器
@@ -523,7 +524,7 @@ Job 面板可以对所有子任务实例进行搜索，查看任务详情
 4. Page.evaluate, evaluateOnNewDocument, evaluateHandle, $eval, $$eval 支持 async function 参数   
 5. Page 的引入方式修正  
 6. 增加 UserAgents 工具类，用于随机获取 user-agent  
-7. AddToQueue FromQueue name支持正则表达式  
+7. AddToQueue FromQueue name支持正则表达式([例子](https://github.com/xiyuan-fengyu/ppspider/blob/master/src/test/component/AddToRegexQueue.ts))  
 
 2019-06-22 v2.2.1
 1. 通过 typescript 和 reflect-metadata 提供的反射机制，重写 @OnStart, @OnTime, @FromQueue 回调函数注入worker实例的方式；

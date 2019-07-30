@@ -127,6 +127,7 @@ https://github.com/xiyuan-fengyu/ppspider_docker_deploy/blob/master/README.en.md
 14. [Bandcamp Music download](https://github.com/banbuchunqiu/ppspider_bandcamp)    
 15. Set max try num of job [SetMaxTryApp](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/examples/SetMaxTryApp.ts)  
 16. Page.evaluate with async function [PuppeteerEvalAsyncApp](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/examples/PuppeteerEvalAsyncApp.ts)  
+17. Set AddToQueue/FromQueue name with a regexp string to create a series of queues dynamically [AddToRegexQueue](https://github.com/xiyuan-fengyu/ppspider/blob/master/src/test/component/AddToRegexQueue.ts)    
   
 # ppspider System Introduction
 ## Decorator
@@ -557,7 +558,7 @@ Job panel: search jobs and view details
 4. Add async function support for Page.evaluate, evaluateOnNewDocument, evaluateHandle, $eval, $$eval       
 5. Page import fixed  
 6. Add UserAgents util to get random user-agent    
-7. Add regexp support for AddToQueue/FromQueue name     
+7. Add regexp support for AddToQueue/FromQueue name([example](https://github.com/xiyuan-fengyu/ppspider/blob/master/src/test/component/AddToRegexQueue.ts))     
 
 2019-06-22 v2.2.1
 1. Rewrite the way to inject the worker instance through the reflection mechanism provided by typescript and reflect-metadata 
