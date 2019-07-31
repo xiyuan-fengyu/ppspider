@@ -94,8 +94,11 @@ export class PuppeteerWorkerFactory implements WorkerFactory<Page> {
             };
         });
 
-        // evaluate等方法支持 async await 关键字
+        // 默认分辨率 1920 * 1080
+        await page.setViewport({width: 1920, height: 1080});
+
         await page.evaluateOnNewDocument(() => {
+            // evaluate等方法支持 async await 关键字
             !window["__awaiter"] && (window["__awaiter"] = function (thisArg, _arguments, P, generator) {
                 return new (P || (P = Promise))(function (resolve, reject) {
                     function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
@@ -103,6 +106,11 @@ export class PuppeteerWorkerFactory implements WorkerFactory<Page> {
                     function step(result) { result.done ? resolve(result.value) : new P(function (resolve) { resolve(result.value); }).then(fulfilled, rejected); }
                     step((generator = generator.apply(thisArg, _arguments || [])).next());
                 });
+            });
+
+            // 绕开某些网站对 webdriver 的校验
+            Object.defineProperties(navigator, {
+                webdriver: {get: () => false}
             });
         });
 

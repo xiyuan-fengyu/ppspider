@@ -5,7 +5,7 @@ import {DownloadUtil} from "../common/util/DownloadUtil";
 import {logger} from "../common/util/logger";
 import {FileUtil} from "../common/util/FileUtil";
 import * as http from "http";
-import {RequestUtil} from "..";
+import {RequestUtil} from "../common/util/RequestUtil";
 
 
 export type ResponseListener = (response: Response) => any;
@@ -807,6 +807,114 @@ export class PuppeteerUtil {
             };
             page.on("request", _proxyHandler);
         }
+    }
+
+    static triggerAndWaitRequest(page: Page, trigger: () => void, predict: (url: string) => any, timeout: number = 1000, printReqUrlLog: boolean = false) {
+        return new Promise(async resolve => {
+            const handler = (req: Request) => {
+                printReqUrlLog && logger.debug(req.url());
+                if (predict(req.url())) {
+                    page.off("request", handler);
+                    resolve(req);
+                }
+            };
+            page.on("request", handler);
+            await trigger();
+            setTimeout(() => {
+                resolve(null);
+            }, timeout);
+        });
+    }
+
+    static triggerAndWaitResponse(page: Page, trigger: () => void, predict: (url: string) => any, timeout: number = 1000, printResUrlLog: boolean = false) {
+        return new Promise(async resolve => {
+            const handler = (res: Response) => {
+                printResUrlLog && logger.debug(res.url());
+                if (predict(res.url())) {
+                    page.off("response", handler);
+                    resolve(res);
+                }
+            };
+            page.on("response", handler);
+            await trigger();
+            setTimeout(() => {
+                resolve(null);
+            }, timeout);
+        });
+    }
+
+    /*
+    // dragPaths 获取的方式
+    // https://login.taobao.com/member/login.jhtml
+    {
+        const dom = document.getElementById("nc_1_n1z");
+        const points = [];
+        const mouseMoveHandler = event => {
+            points.push([event.pageX, event.pageY]);
+        };
+        const moveEnd = event => {
+            dom.removeEventListener("mousemove", mouseMoveHandler);
+            console.log(JSON.stringify(points));
+        };
+        dom.addEventListener("mousedown", event => {
+            points.splice(0, points.length);
+            dom.addEventListener("mousemove", mouseMoveHandler);
+            setTimeout(() => moveEnd(null), 5000);
+        });
+        dom.addEventListener("mouseup", moveEnd);
+    }
+     */
+    private static dragPaths = [
+        [[912,430],[917,430],[924,430],[932,430],[938,430],[946,430],[952,430],[960,430],[967,430],[972,430],[983,432],[995,432],[1010,432],[1024,432],[1039,432],[1055,432],[1070,432],[1086,432],[1102,432],[1116,432],[1131,432],[1146,433],[1161,433],[1176,434]],
+        [[1206,441],[1213,441],[1220,441],[1228,441],[1237,441],[1248,441],[1259,441],[1271,441],[1282,439],[1294,439],[1308,439],[1320,437],[1334,437],[1348,436],[1359,436],[1369,436],[1379,436],[1387,436],[1392,436],[1397,436],[1399,436],[1400,436],[1401,436],[1405,436],[1412,436],[1419,436],[1427,436],[1433,436],[1440,436],[1449,436],[1458,436],[1467,437]],
+        [[916,433],[923,434],[929,434],[935,434],[943,434],[951,434],[957,434],[964,434],[967,434],[971,434],[974,434],[975,434],[980,434],[985,434],[991,434],[997,434],[1005,434],[1011,434],[1019,434],[1025,434],[1031,434],[1035,434],[1039,434],[1041,434],[1042,434],[1045,434],[1051,435],[1059,435],[1071,438],[1085,438],[1098,438],[1111,438],[1123,438],[1134,438],[1141,438],[1146,438],[1149,438],[1152,438],[1154,438],[1156,438],[1160,438],[1162,438],[1165,438],[1169,438],[1172,438]],
+        [[1202,438],[1203,438],[1207,438],[1210,439],[1213,440],[1217,441],[1220,441],[1224,441],[1229,441],[1234,441],[1240,441],[1245,441],[1250,441],[1254,441],[1259,441],[1262,441],[1265,441],[1267,441],[1268,441],[1269,441],[1272,441],[1277,442],[1283,442],[1288,442],[1293,442],[1300,442],[1308,442],[1317,442],[1324,442],[1333,442],[1340,442],[1347,442],[1354,442],[1360,444],[1365,444],[1370,444],[1375,444],[1380,445],[1385,446],[1390,446],[1394,446],[1399,446],[1403,446],[1406,446],[1408,446],[1410,446],[1413,446],[1415,446],[1417,446],[1418,446],[1419,446],[1420,446],[1422,446],[1423,446],[1427,446],[1429,446],[1433,446],[1437,446],[1442,446],[1445,446],[1450,446],[1454,446],[1458,446],[1460,446],[1467,446],[1469,446],[1470,446]],
+    ];
+
+    static async drag(page: Page, from: number[], to: number[]) {
+        // 计算模拟路径
+        const newDragPath = [from];
+        const dragPath = this.dragPaths[Math.floor(this.dragPaths.length * Math.random())];
+        const dragPathL = dragPath.length;
+        const dragPathW = dragPath[dragPathL - 1][0] - dragPath[0][0];
+        const dragPathH = dragPath[dragPathL - 1][1] - dragPath[0][1];
+        const newDragPathW = to[0] - from[0];
+        const newDragPathH = to[1] - from[1];
+        for (let i = 1; i < dragPathL - 1; i++) {
+            const x = Math.floor((dragPath[i][0] - dragPath[0][0]) / dragPathW * newDragPathW + from[0]);
+            const y = Math.floor((dragPath[i][1] - dragPath[0][1]) / dragPathH * newDragPathH + from[1]);
+            newDragPath.push([x, y]);
+        }
+        newDragPath.push(to);
+
+        // 拖动鼠标
+        await page.mouse.move(newDragPath[0][0], newDragPath[0][1]);
+        await page.mouse.down();
+        for (let i = 1; i < dragPathL; i++) {
+            await page.mouse.move(newDragPath[i][0], newDragPath[i][1], {steps: 1});
+        }
+        await page.mouse.up();
+    }
+
+    static async dragBar(page: Page, barSelector: string, wrapperSelector: string) {
+        const dragFromTo = await page.evaluate((barSelector: string, wrapperSelector: string) => {
+            const bar = document.querySelector(barSelector);
+            const wrapper = document.querySelector(wrapperSelector);
+            const barRect = bar.getBoundingClientRect();
+            const wrapperRect = wrapper.getBoundingClientRect();
+            const mDownPosL = Math.floor(barRect.width * (Math.random() * 0.5 + 0.25));
+            const mDownPosT = Math.floor(barRect.height * (Math.random() * 0.5 + 0.25));
+            const from = [
+                barRect.left + mDownPosL,
+                barRect.top + mDownPosT
+            ];
+            const to = [
+                wrapperRect.left + wrapperRect.width + Math.floor( barRect.width * Math.random()),
+                wrapperRect.top + Math.floor(wrapperRect.height * (Math.random() * 0.5 + 0.25))
+            ];
+            return [from, to];
+        }, barSelector, wrapperSelector);
+        await this.drag(page, dragFromTo[0], dragFromTo[1]);
     }
 
 }
