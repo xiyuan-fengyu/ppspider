@@ -550,7 +550,7 @@ Job panel: search jobs and view details
 
 
 # Update Note
-2019-07-11 v2.2.2-preview.1564463764729
+2019-07-31 v2.2.2-preview.1564551925339
 1. @Bean @Autowired bug fixed, support type identification for @Autowired   
 2. Add new method RequestUtil.linesToHeaders to parse header-lines; add headerLines property to the parameter named options of
     RequestUtil.simple, add an optional parameter handler to watch the response    
@@ -559,6 +559,10 @@ Job panel: search jobs and view details
 5. Page import fixed  
 6. Add UserAgents util to get random user-agent    
 7. Add regexp support for AddToQueue/FromQueue name([example](https://github.com/xiyuan-fengyu/ppspider/blob/master/src/test/component/AddToRegexQueue.ts))     
+8. Set Page default viewport as 1920 * 1080, set navigator.webdriver=false      
+9. Add a new function PuppeteerUtil.drag to drag bar     
+10. Add a new PuppeteerUtil.triggerAndWaitRequest to trigger and watch a request  
+11. Add a new PuppeteerUtil.triggerAndWaitResponse to trigger a request and watch the response    
 
 2019-06-22 v2.2.1
 1. Rewrite the way to inject the worker instance through the reflection mechanism provided by typescript and reflect-metadata 

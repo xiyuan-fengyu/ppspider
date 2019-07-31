@@ -3,7 +3,8 @@ import {Job, Launcher, OnStart, Page, PromiseUtil, PuppeteerUtil, PuppeteerWorke
 class TestTask {
 
     @OnStart({
-        urls: "https://login.taobao.com/member/login.jhtml"
+        urls: "https://login.taobao.com/member/login.jhtml",
+        timeout: -1
     })
     async onStart(page: Page, job: Job) {
         await page.goto(job.url);
