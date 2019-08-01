@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>研究滑块拼图的破解方案</title>
+</head>
+<body>
+
+    <script>
+        (async () => {
+            function createImgCanvas(imgSrc) {
+                return new Promise(resolve => {
+                    const img = document.createElement("img");
+                    img.onload = () => {
+                        const canvas = document.createElement("canvas");
+                        canvas.width = img.naturalWidth;
+                        canvas.height = img.naturalHeight;
+                        const context = canvas.getContext("2d");
+                        context.drawImage(img, 0, 0, canvas.width, canvas.height);
+                        resolve([canvas, context]);
+                    };
+                    img.src = imgSrc;
+                });
+            }
+
+            const [canvas0, context0] = await createImgCanvas("../../../lib/test/component/img0.jpg");
+            const [canvas1, context1] = await createImgCanvas("../../../lib/test/component/img1.jpg");
+            const [canvas2, context2] = await createImgCanvas("../../../lib/test/component/img0.jpg");
+            document.body.appendChild(canvas0);
+            document.body.appendChild(canvas1);
+            document.body.appendChild(canvas2);
+
+            const arrayDiff = (arr0, arr1) => {
+                if (arr0.length !== arr1.length) {
+                    return Number.MAX_VALUE;
+                }
+                let std = 0;
+                for (let i = 0; i < arr0.length; i++) {
+                    std += Math.pow(arr0[i] - arr1[i], 2);
+                }
+                return Math.pow(std, 0.5) / arr0.length;
+            };
+
+            const checkSize = 35;
+            let possibleRects = [];
+            for (let y = 0; y < canvas0.height - 40; y++) {
+                for (let x0 = 0; x0 < 80; x0++) {
+                    const colors0 = context0.getImageData(x0, y, checkSize, checkSize).data;
+                    const x1 = x0 + 5;
+                    const colors1 = context1.getImageData(x1, y, checkSize, checkSize).data;
+                    const diff = arrayDiff(colors0, colors1);
+                    if (diff < 0.068) {
+                        possibleRects.push([diff, x0, y]);
+                    }
+                }
+            }
+            possibleRects.sort((o1, o2) => o1[0] - o2[0]);
+            const firstRect = possibleRects[0];
+            let maskL = canvas0.width;
+            let maskT = canvas0.height;
+            let maskR = 0;
+            let maskB = 0;
+            possibleRects = possibleRects.filter(item => Math.abs(firstRect[1] - item[1]) < 10
+                && Math.abs(firstRect[2] - item[2]) < 10).slice(0, 10);
+            possibleRects.forEach(item => {
+                // console.log(item);
+                maskL = Math.min(maskL, item[1]);
+                maskT = Math.min(maskT, item[2]);
+                maskR = Math.max(maskR, item[1] + checkSize);
+                maskB = Math.max(maskT, item[2] + checkSize);
+            });
+
+            // console.log(maskL, maskT, maskR, maskB);
+            context2.fillStyle = "rgba(0,0,0,0.6)";
+            context2.fillRect(maskL, maskT, maskR - maskL, maskB - maskT);
+
+            const mixColor = (rgba0, rgba1) => {
+                const a0 = rgba0[3] / 255;
+                const a1 = rgba1[3] / 255;
+                const a = 1 - (1 - a0) * (1 - a1);
+                const r = (a0 * rgba0[0] + (1 - a0) * a1 * rgba1[0]) / a;
+                const g = (a0 * rgba0[1] + (1 - a0) * a1 * rgba1[1]) / a;
+                const b = (a0 * rgba0[2] + (1 - a0) * a1 * rgba1[2]) / a;
+                if (isNaN(r + g + b + a)) {
+                    console.log();
+                }
+                return [r, g, b, a * 255];
+            };
+
+            const checks = [];
+            const maskColors = context0.getImageData(maskL, maskT, maskR - maskL, maskB - maskT).data;
+            for (let alpha = 0.3; alpha <= 0.7; alpha += 0.05) {
+                const grayMask = [0, 0, 0, 255 * alpha];
+                const mixColors = [];
+                for (let i = 0; i < maskColors.length; i += 4) {
+                    const mixedColor = mixColor(maskColors.subarray(i, i + 4), grayMask);
+                    mixedColor.forEach(item => mixColors.push(item));
+                }
+                for (let xDelta = 50; xDelta < canvas0.width - 50; xDelta++) {
+                    const checkColors = context0.getImageData(maskL + xDelta, maskT, maskR - maskL, maskB - maskT).data;
+                    const diff = arrayDiff(mixColors, checkColors);
+                    checks.push([diff, alpha, maskL + xDelta]);
+                }
+            }
+            checks.sort((o1, o2) => o1[0] - o2[0]);
+            checks.forEach(item => console.log(item));
+        })();
+    </script>
+</body>
+</html>

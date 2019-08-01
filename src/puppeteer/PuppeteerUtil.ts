@@ -352,10 +352,7 @@ export class PuppeteerUtil {
 
             if (imgSrc) {
                 const newImgSrc = imgSrc + (imgSrc.indexOf("?") == -1 ? "?" : "&") + new Date().getTime() + "_" + (Math.random() * 10000).toFixed(0);
-                let topFrame = page as any;
-                while (topFrame.parentFrame()) {
-                    topFrame = topFrame.parentFrame();
-                }
+                let topFrame = this.getIFramePage(page);
                 const waitRespnse = PuppeteerUtil.onceResponse(topFrame, newImgSrc, async (response: Response) => {
                     if (response.ok()) {
                         let saveName = null;
@@ -896,7 +893,42 @@ export class PuppeteerUtil {
         await page.mouse.up();
     }
 
-    static async dragBar(page: Page, barSelector: string, wrapperSelector: string) {
+    private static getIFramePage(pageOrFrame: Page | Frame): Page {
+        // 如果 page 是一个 iframe，需要该iframe相对top frame的位置
+        let curFrame = pageOrFrame as any;
+        let parentFrame: Page | Frame;
+        while (curFrame.parentFrame && (parentFrame = curFrame.parentFrame())) {
+            curFrame = parentFrame;
+        }
+        return curFrame as Page;
+    }
+
+    private static async getIFramePageAndPos(pageOrFrame: Page | Frame): Promise<[Page, number, number]> {
+        // 如果 page 是一个 iframe，需要该iframe相对top frame的位置
+        let frameLeft = 0;
+        let frameTop = 0;
+        let curFrame = pageOrFrame as any;
+        let parentFrame: Page | Frame;
+        while (curFrame.parentFrame && (parentFrame = curFrame.parentFrame())) {
+            const curFrameName = (curFrame as Frame).name();
+            const [curFrameDomLeft, curFrameDomTop] = await parentFrame.evaluate(frameName => {
+                const rect = document.querySelector(`iframe[name='${frameName}']`).getBoundingClientRect();
+                return [rect.left, rect.top];
+            }, curFrameName);
+            frameLeft += curFrameDomLeft;
+            frameTop += curFrameDomTop;
+            curFrame = parentFrame;
+        }
+        return [curFrame as Page, frameLeft, frameTop];
+    }
+
+    /**
+     * 适用滑块验证码类型 https://login.taobao.com/member/login.jhtml
+     * @param page
+     * @param barSelector
+     * @param wrapperSelector
+     */
+    static async dragBar(page: Page | Frame, barSelector: string, wrapperSelector: string) {
         const dragFromTo = await page.evaluate((barSelector: string, wrapperSelector: string) => {
             const bar = document.querySelector(barSelector);
             const wrapper = document.querySelector(wrapperSelector);
@@ -914,7 +946,83 @@ export class PuppeteerUtil {
             ];
             return [from, to];
         }, barSelector, wrapperSelector);
-        await this.drag(page, dragFromTo[0], dragFromTo[1]);
+
+        const [topPage, frameLeft, frameTop] = await this.getIFramePageAndPos(page);
+        if (frameLeft || frameTop) {
+            dragFromTo[0][0] += frameLeft;
+            dragFromTo[0][1] += frameTop;
+            dragFromTo[1][0] += frameLeft;
+            dragFromTo[1][1] += frameTop;
+        }
+
+        await this.drag(topPage, dragFromTo[0], dragFromTo[1]);
+    }
+
+    /**
+     * 适用于拖动滑块拼图的类型 https://passport.bilibili.com/login
+     * @param page
+     * @param wrapperSelector 拼图验证码控件dom元素的selector
+     * @param dragRect 可拖动的滑块控件的区域 [left, top, right, bottom] （相对于wrapperSelector）
+     * @param clipRect 拼图区域，用于截图计算拖动偏移 [left, top, right, bottom] （相对于wrapperSelector）
+     */
+    static async dragJigsaw(
+        page: Page | Frame,
+        wrapperSelector: string,
+        dragRect: [number, number, number, number],
+        clipRect: [number, number, number, number]) {
+        // 原位置，向右拖动5px，向右拖动10px，截取三张图片，通过三张截图计算出 拼图 和 缺图 位置
+        const [topPage, frameLeft, frameTop] = await this.getIFramePageAndPos(page);
+        const [wrapperLeft, wrapperTop] = await page.evaluate(wrapperSelector => {
+            const rect = document.querySelector(wrapperSelector).getBoundingClientRect();
+            return [rect.left, rect.top];
+        }, wrapperSelector);
+
+        dragRect[0] += frameLeft + wrapperLeft;
+        dragRect[2] += frameLeft + wrapperLeft;
+        dragRect[1] += frameTop + wrapperTop;
+        dragRect[3] += frameTop + wrapperTop;
+
+        clipRect[0] += frameLeft + wrapperLeft;
+        clipRect[2] += frameLeft + wrapperLeft;
+        clipRect[1] += frameTop + wrapperTop;
+        clipRect[3] += frameTop + wrapperTop;
+
+        const startPos = [
+            Math.floor(dragRect[0] + Math.random() * (dragRect[2] - dragRect[0])),
+            Math.floor(dragRect[1] + Math.random() * (dragRect[3] - dragRect[1]))
+        ];
+
+        await topPage.mouse.move(startPos[0], startPos[1]);
+        const img0 = await topPage.screenshot({
+            path: "img0.jpg",
+            encoding: "binary",
+            type: "jpeg",
+            quality: 100,
+            clip: {
+                x: clipRect[0],
+                y: clipRect[1],
+                width: clipRect[2] - clipRect[0],
+                height: clipRect[3] - clipRect[1]
+            }
+        });
+
+        await topPage.mouse.down();
+        await topPage.mouse.move(startPos[0] + 5, startPos[1] - 2, {steps: 1});
+        const img1 = await topPage.screenshot({
+            path: "img1.jpg",
+            encoding: "binary",
+            type: "jpeg",
+            quality: 100,
+            clip: {
+                x: clipRect[0],
+                y: clipRect[1],
+                width: clipRect[2] - clipRect[0],
+                height: clipRect[3] - clipRect[1]
+            }
+        });
+
+        console.log(img0);
+        console.log(img1);
     }
 
 }
