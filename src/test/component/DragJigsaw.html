@@ -30,15 +30,26 @@
             document.body.appendChild(canvas1);
             document.body.appendChild(canvas2);
 
-            const arrayDiff = (arr0, arr1) => {
+            const colorsDiff = (arr0, arr1) => {
                 if (arr0.length !== arr1.length) {
                     return Number.MAX_VALUE;
                 }
                 let std = 0;
-                for (let i = 0; i < arr0.length; i++) {
-                    std += Math.pow(arr0[i] - arr1[i], 2);
+                for (let i = 0; i < arr0.length; i += 4) {
+                    const rRate = arr0[i] / (arr1[i] || 1);
+                    const gRate = arr0[i + 1] / (arr1[i + 1] || 1);
+                    const bRate = arr0[i + 2] / (arr1[i + 2] || 1);
+                    const aRate = arr0[i + 3] / (arr1[i + 3] || 1);
+                    const mean = (rRate + gRate + bRate + aRate) / 4;
+                    std += Math.pow(
+                        Math.pow(rRate - mean, 2)
+                        + Math.pow(gRate - mean, 2)
+                        + Math.pow(bRate - mean, 2)
+                        + Math.pow(aRate - mean, 2),
+                        0.5
+                    );
                 }
-                return Math.pow(std, 0.5) / arr0.length;
+                return std / arr0.length;
             };
 
             const checkSize = 35;
@@ -48,8 +59,8 @@
                     const colors0 = context0.getImageData(x0, y, checkSize, checkSize).data;
                     const x1 = x0 + 5;
                     const colors1 = context1.getImageData(x1, y, checkSize, checkSize).data;
-                    const diff = arrayDiff(colors0, colors1);
-                    if (diff < 0.068) {
+                    const diff = colorsDiff(colors0, colors1);
+                    if (diff < 0.006) {
                         possibleRects.push([diff, x0, y]);
                     }
                 }
@@ -89,7 +100,7 @@
 
             const checks = [];
             const maskColors = context0.getImageData(maskL, maskT, maskR - maskL, maskB - maskT).data;
-            for (let alpha = 0.3; alpha <= 0.7; alpha += 0.05) {
+            for (let alpha = 0.5; alpha <= 0.7; alpha += 0.05) {
                 const grayMask = [0, 0, 0, 255 * alpha];
                 const mixColors = [];
                 for (let i = 0; i < maskColors.length; i += 4) {
@@ -98,12 +109,22 @@
                 }
                 for (let xDelta = 50; xDelta < canvas0.width - 50; xDelta++) {
                     const checkColors = context0.getImageData(maskL + xDelta, maskT, maskR - maskL, maskB - maskT).data;
-                    const diff = arrayDiff(mixColors, checkColors);
+                    const diff = colorsDiff(mixColors, checkColors);
                     checks.push([diff, alpha, maskL + xDelta]);
                 }
             }
             checks.sort((o1, o2) => o1[0] - o2[0]);
             checks.forEach(item => console.log(item));
+
+            context2.fillStyle = "rgba(255,0,0,0.3)";
+            {
+                const grayMask = [0, 0, 0, 255 * checks[0][1]];
+                for (let i = 0; i < maskColors.length; i += 4) {
+                    const mixedColor = mixColor(maskColors.subarray(i, i + 4), grayMask);
+                    context2.fillStyle = `rgba(${mixedColor[0]},${mixedColor[1]},${mixedColor[2]},${mixedColor[3] / 255})`;
+                    context2.fillRect(checks[0][2] + i / 4 % (maskR - maskL), Math.floor(maskT + i / 4 / (maskR - maskL)), 1, 1);
+                }
+            }
         })();
     </script>
 </body>
