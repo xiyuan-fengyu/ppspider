@@ -10,22 +10,27 @@
         (async () => {
             function createImgCanvas(imgSrc) {
                 return new Promise(resolve => {
-                    const img = document.createElement("img");
-                    img.onload = () => {
-                        const canvas = document.createElement("canvas");
-                        canvas.width = img.naturalWidth;
-                        canvas.height = img.naturalHeight;
-                        const context = canvas.getContext("2d");
-                        context.drawImage(img, 0, 0, canvas.width, canvas.height);
-                        resolve([canvas, context]);
+                    const xhr = new XMLHttpRequest();
+                    xhr.open("GET", imgSrc);
+                    xhr.onload = () => {
+                        const img = document.createElement("img");
+                        img.onload = () => {
+                            const canvas = document.createElement("canvas");
+                            canvas.width = img.naturalWidth;
+                            canvas.height = img.naturalHeight;
+                            const context = canvas.getContext("2d");
+                            context.drawImage(img, 0, 0, canvas.width, canvas.height);
+                            resolve([canvas, context]);
+                        };
+                        img.src = "data:image/jpeg;base64, " + xhr.responseText;
                     };
-                    img.src = imgSrc;
+                    xhr.send();
                 });
             }
 
-            const [canvas0, context0] = await createImgCanvas("../../../lib/test/component/img0.jpg");
-            const [canvas1, context1] = await createImgCanvas("../../../lib/test/component/img1.jpg");
-            const [canvas2, context2] = await createImgCanvas("../../../lib/test/component/img0.jpg");
+            const [canvas0, context0] = await createImgCanvas("../../../lib/test/component/img0.base64");
+            const [canvas1, context1] = await createImgCanvas("../../../lib/test/component/img1.base64");
+            const [canvas2, context2] = await createImgCanvas("../../../lib/test/component/img0.base64");
             document.body.appendChild(canvas0);
             document.body.appendChild(canvas1);
             document.body.appendChild(canvas2);
@@ -35,96 +40,147 @@
                     return Number.MAX_VALUE;
                 }
                 let std = 0;
-                for (let i = 0; i < arr0.length; i += 4) {
-                    const rRate = arr0[i] / (arr1[i] || 1);
-                    const gRate = arr0[i + 1] / (arr1[i + 1] || 1);
-                    const bRate = arr0[i + 2] / (arr1[i + 2] || 1);
-                    const aRate = arr0[i + 3] / (arr1[i + 3] || 1);
-                    const mean = (rRate + gRate + bRate + aRate) / 4;
-                    std += Math.pow(
-                        Math.pow(rRate - mean, 2)
-                        + Math.pow(gRate - mean, 2)
-                        + Math.pow(bRate - mean, 2)
-                        + Math.pow(aRate - mean, 2),
-                        0.5
-                    );
+                for (let i = 0; i < arr0.length; i += 1) {
+                    std += Math.pow(arr0[i] - arr1[i], 2);
                 }
-                return std / arr0.length;
+                return Math.pow(std, 0.5) / arr0.length;
             };
 
-            const checkSize = 35;
-            let possibleRects = [];
-            for (let y = 0; y < canvas0.height - 40; y++) {
-                for (let x0 = 0; x0 < 80; x0++) {
+            // 颜色混合
+            // 参考 https://stackoverflow.com/questions/12011081/alpha-blending-2-rgba-colors-in-c
+            const mixColor = (backRgba, frontRgba) => {
+                const alpha = frontRgba[3] + 1;
+                const invAlpha = 256 - frontRgba[3];
+                return [
+                    (alpha * frontRgba[0] + invAlpha * backRgba[0]) >> 8,
+                    (alpha * frontRgba[1] + invAlpha * backRgba[1]) >> 8,
+                    (alpha * frontRgba[2] + invAlpha * backRgba[2]) >> 8,
+                    255
+                ];
+            };
+
+            const checkIntersect = (rect0, rect1) => {
+                return !(
+                    rect0.right < rect1.left
+                    || rect0.left > rect1.right
+                    || rect0.bottom < rect1.top
+                    || rect0.top > rect1.bottom
+                );
+            };
+
+            const checkSize = 16;
+            let possibleMaskRects = [];// [diffTotal, total, left, top, right, bottom]
+            const mergeRects = (rects, newRectInfo) => {
+                const existedRect = rects.find(item => checkIntersect(item.rect, newRectInfo.rect));
+                if (existedRect) {
+                    existedRect.diff += newRectInfo.diff;
+                    existedRect.total += newRectInfo.total;
+                    existedRect.rect.left = Math.min(existedRect.rect.left, newRectInfo.rect.left);
+                    existedRect.rect.right = Math.max(existedRect.rect.right, newRectInfo.rect.right);
+                    existedRect.rect.top = Math.min(existedRect.rect.top, newRectInfo.rect.top);
+                    existedRect.rect.bottom = Math.max(existedRect.rect.bottom, newRectInfo.rect.bottom);
+                }
+                else {
+                    rects.push(newRectInfo);
+                }
+            };
+            for (let y = 0; y < canvas0.height - 40; y += 3) {
+                for (let x0 = 0; x0 < 80; x0 += 2) {
                     const colors0 = context0.getImageData(x0, y, checkSize, checkSize).data;
-                    const x1 = x0 + 5;
-                    const colors1 = context1.getImageData(x1, y, checkSize, checkSize).data;
-                    const diff = colorsDiff(colors0, colors1);
-                    if (diff < 0.006) {
-                        possibleRects.push([diff, x0, y]);
+                    const colors1 = context1.getImageData(x0, y, checkSize, checkSize).data;
+                    const diff0 = colorsDiff(colors0, colors1);
+                    // 图0 和 图1 同区域有较大差别
+                    if (diff0 >= 0.5) {
+                        const colors2 = context1.getImageData(x0 + 5, y, checkSize, checkSize).data;
+                        const diff1 = colorsDiff(colors0, colors2);
+                        // 图0 和 图1 偏移5px的 区域很相似
+                        if (diff1 < 0.068) {
+                            // 这样的区域一定就是滑块的区域
+                            // console.log(diff0, diff1);
+                            mergeRects(possibleMaskRects, {
+                                diff: diff0,
+                                total: 1,
+                                rect: {
+                                    left: x0,
+                                    top: y,
+                                    right: x0 + checkSize,
+                                    bottom: y + checkSize
+                                }
+                            });
+                        }
                     }
                 }
             }
-            possibleRects.sort((o1, o2) => o1[0] - o2[0]);
-            const firstRect = possibleRects[0];
-            let maskL = canvas0.width;
-            let maskT = canvas0.height;
-            let maskR = 0;
-            let maskB = 0;
-            possibleRects = possibleRects.filter(item => Math.abs(firstRect[1] - item[1]) < 10
-                && Math.abs(firstRect[2] - item[2]) < 10).slice(0, 10);
-            possibleRects.forEach(item => {
-                // console.log(item);
-                maskL = Math.min(maskL, item[1]);
-                maskT = Math.min(maskT, item[2]);
-                maskR = Math.max(maskR, item[1] + checkSize);
-                maskB = Math.max(maskT, item[2] + checkSize);
-            });
-
-            // console.log(maskL, maskT, maskR, maskB);
-            context2.fillStyle = "rgba(0,0,0,0.6)";
-            context2.fillRect(maskL, maskT, maskR - maskL, maskB - maskT);
-
-            const mixColor = (rgba0, rgba1) => {
-                const a0 = rgba0[3] / 255;
-                const a1 = rgba1[3] / 255;
-                const a = 1 - (1 - a0) * (1 - a1);
-                const r = (a0 * rgba0[0] + (1 - a0) * a1 * rgba1[0]) / a;
-                const g = (a0 * rgba0[1] + (1 - a0) * a1 * rgba1[1]) / a;
-                const b = (a0 * rgba0[2] + (1 - a0) * a1 * rgba1[2]) / a;
-                if (isNaN(r + g + b + a)) {
-                    console.log();
+            while (true) {
+                const oldSize = possibleMaskRects.length;
+                const newRects = [];
+                for (let item of possibleMaskRects) {
+                    mergeRects(newRects, item);
                 }
-                return [r, g, b, a * 255];
-            };
-
-            const checks = [];
-            const maskColors = context0.getImageData(maskL, maskT, maskR - maskL, maskB - maskT).data;
-            for (let alpha = 0.5; alpha <= 0.7; alpha += 0.05) {
-                const grayMask = [0, 0, 0, 255 * alpha];
-                const mixColors = [];
-                for (let i = 0; i < maskColors.length; i += 4) {
-                    const mixedColor = mixColor(maskColors.subarray(i, i + 4), grayMask);
-                    mixedColor.forEach(item => mixColors.push(item));
+                if (oldSize === newRects.length) {
+                    break;
                 }
-                for (let xDelta = 50; xDelta < canvas0.width - 50; xDelta++) {
-                    const checkColors = context0.getImageData(maskL + xDelta, maskT, maskR - maskL, maskB - maskT).data;
-                    const diff = colorsDiff(mixColors, checkColors);
-                    checks.push([diff, alpha, maskL + xDelta]);
+                else {
+                    possibleMaskRects = newRects;
                 }
             }
-            checks.sort((o1, o2) => o1[0] - o2[0]);
-            checks.forEach(item => console.log(item));
+            possibleMaskRects.forEach(item => item.diffAvg = item.diff / item.total);
+            possibleMaskRects.sort((o1, o2) => o1.diffAvg - o2.diffAvg);
+            for (let possibleMaskRect of possibleMaskRects) {
+                let maskL = possibleMaskRect.rect.left;
+                let maskT = possibleMaskRect.rect.top;
+                let maskR = possibleMaskRect.rect.right;
+                let maskB = possibleMaskRect.rect.bottom;
 
-            context2.fillStyle = "rgba(255,0,0,0.3)";
-            {
-                const grayMask = [0, 0, 0, 255 * checks[0][1]];
-                for (let i = 0; i < maskColors.length; i += 4) {
-                    const mixedColor = mixColor(maskColors.subarray(i, i + 4), grayMask);
-                    context2.fillStyle = `rgba(${mixedColor[0]},${mixedColor[1]},${mixedColor[2]},${mixedColor[3] / 255})`;
-                    context2.fillRect(checks[0][2] + i / 4 % (maskR - maskL), Math.floor(maskT + i / 4 / (maskR - maskL)), 1, 1);
+                // 只检验正中央的部分
+                const centerCheckSize = 20;
+                if (maskR - maskL >= centerCheckSize) {
+                    const delta = (maskR - maskL - centerCheckSize) / 2;
+                    maskL += delta;
+                    maskR -= delta;
+                }
+                if (maskB - maskT >= centerCheckSize) {
+                    const delta = (maskB - maskT - centerCheckSize) / 2;
+                    maskT += delta;
+                    maskB -= delta;
+                }
+
+                if (context2) {
+                    context2.fillStyle = `rgba(0,0,0,0.45)`;
+                    context2.fillRect(maskL, maskT, maskR - maskL, maskB - maskT);
+                }
+
+                const checks = [];
+                const maskColors = context0.getImageData(maskL, maskT, maskR - maskL, maskB - maskT).data;
+                for (let alpha = 0.4; alpha <= 0.7; alpha += 0.05) {
+                    const grayMask = [0, 0, 0, 255 * alpha];
+                    const mixColors = [];
+                    for (let i = 0; i < maskColors.length; i += 4) {
+                        const mixedColor = mixColor(maskColors.subarray(i, i + 4), grayMask);
+                        mixedColor.forEach(item => mixColors.push(item));
+                    }
+                    for (let xDelta = 50; xDelta < canvas0.width - 50; xDelta++) {
+                        const checkColors = context0.getImageData(maskL + xDelta, maskT, maskR - maskL, maskB - maskT).data;
+                        const diff = colorsDiff(mixColors, checkColors);
+                        if (diff < 0.8) {
+                            checks.push([diff, alpha, maskL + xDelta]);
+                        }
+                    }
+                }
+                if (checks.length) {
+                    checks.sort((o1, o2) => o1[0] - o2[0]);
+
+                    if (context2) {
+                        checks.forEach(item => console.log(item));
+                        context2.fillStyle = `rgba(255,120,0,0.3)`;
+                        context2.fillRect(checks[0][2], maskT, maskR - maskL, maskB - maskT);
+                        console.log("拖动距离：" + (checks[0][2] - maskL));
+                    }
+
+                    return checks[0][2] - maskL;
                 }
             }
+
         })();
     </script>
 </body>

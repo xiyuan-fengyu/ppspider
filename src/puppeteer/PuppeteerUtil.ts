@@ -6,6 +6,7 @@ import {logger} from "../common/util/logger";
 import {FileUtil} from "../common/util/FileUtil";
 import * as http from "http";
 import {RequestUtil} from "../common/util/RequestUtil";
+import {PromiseUtil} from "..";
 
 
 export type ResponseListener = (response: Response) => any;
@@ -890,6 +891,7 @@ export class PuppeteerUtil {
         for (let i = 1; i < dragPathL; i++) {
             await page.mouse.move(newDragPath[i][0], newDragPath[i][1], {steps: 1});
         }
+        await new Promise(resolve => setTimeout(resolve, 50));
         await page.mouse.up();
     }
 
@@ -960,6 +962,7 @@ export class PuppeteerUtil {
 
     /**
      * 适用于拖动滑块拼图的类型 https://passport.bilibili.com/login
+     * 算法研究参考 src/test/component/DragJigsaw.html
      * @param page
      * @param wrapperSelector 拼图验证码控件dom元素的selector
      * @param dragRect 可拖动的滑块控件的区域 [left, top, right, bottom] （相对于wrapperSelector）
@@ -994,8 +997,8 @@ export class PuppeteerUtil {
 
         await topPage.mouse.move(startPos[0], startPos[1]);
         const img0 = await topPage.screenshot({
-            path: "img0.jpg",
-            encoding: "binary",
+            path: "img0.base64",
+            encoding: "base64",
             type: "jpeg",
             quality: 100,
             clip: {
@@ -1009,8 +1012,8 @@ export class PuppeteerUtil {
         await topPage.mouse.down();
         await topPage.mouse.move(startPos[0] + 5, startPos[1] - 2, {steps: 1});
         const img1 = await topPage.screenshot({
-            path: "img1.jpg",
-            encoding: "binary",
+            path: "img1.base64",
+            encoding: "base64",
             type: "jpeg",
             quality: 100,
             clip: {
@@ -1021,8 +1024,183 @@ export class PuppeteerUtil {
             }
         });
 
-        console.log(img0);
-        console.log(img1);
+        // 识别拖动距离
+        const dragDistance = await page.evaluate(async (imgBase64_0, imgBase64_1) => {
+            function createImgCanvas(imgSrc): Promise<[HTMLCanvasElement, CanvasRenderingContext2D]> {
+                return new Promise(resolve => {
+                    const img = document.createElement("img");
+                    img.onload = () => {
+                        const canvas = document.createElement("canvas");
+                        canvas.width = img.naturalWidth;
+                        canvas.height = img.naturalHeight;
+                        const context = canvas.getContext("2d");
+                        context.drawImage(img, 0, 0, canvas.width, canvas.height);
+                        resolve([canvas, context]);
+                    };
+                    img.src = imgSrc;
+                });
+            }
+
+            const [canvas0, context0] = await createImgCanvas("data:image/jpeg;base64, " + imgBase64_0);
+            const [canvas1, context1] = await createImgCanvas("data:image/jpeg;base64, " + imgBase64_1);
+            const context2 = null;
+
+            const colorsDiff = (arr0, arr1) => {
+                if (arr0.length !== arr1.length) {
+                    return Number.MAX_VALUE;
+                }
+                let std = 0;
+                for (let i = 0; i < arr0.length; i += 1) {
+                    std += Math.pow(arr0[i] - arr1[i], 2);
+                }
+                return Math.pow(std, 0.5) / arr0.length;
+            };
+
+            // 颜色混合
+            // 参考 https://stackoverflow.com/questions/12011081/alpha-blending-2-rgba-colors-in-c
+            const mixColor = (backRgba, frontRgba) => {
+                const alpha = frontRgba[3] + 1;
+                const invAlpha = 256 - frontRgba[3];
+                return [
+                    (alpha * frontRgba[0] + invAlpha * backRgba[0]) >> 8,
+                    (alpha * frontRgba[1] + invAlpha * backRgba[1]) >> 8,
+                    (alpha * frontRgba[2] + invAlpha * backRgba[2]) >> 8,
+                    255
+                ];
+            };
+
+            const checkIntersect = (rect0, rect1) => {
+                return !(
+                    rect0.right < rect1.left
+                    || rect0.left > rect1.right
+                    || rect0.bottom < rect1.top
+                    || rect0.top > rect1.bottom
+                );
+            };
+
+            const checkSize = 10;
+            let possibleMaskRects = [];// [diffTotal, total, left, top, right, bottom]
+            const mergeRects = (rects, newRectInfo) => {
+                const existedRect = rects.find(item => checkIntersect(item.rect, newRectInfo.rect));
+                if (existedRect) {
+                    existedRect.diff += newRectInfo.diff;
+                    existedRect.total += newRectInfo.total;
+                    existedRect.rect.left = Math.min(existedRect.rect.left, newRectInfo.rect.left);
+                    existedRect.rect.right = Math.max(existedRect.rect.right, newRectInfo.rect.right);
+                    existedRect.rect.top = Math.min(existedRect.rect.top, newRectInfo.rect.top);
+                    existedRect.rect.bottom = Math.max(existedRect.rect.bottom, newRectInfo.rect.bottom);
+                }
+                else {
+                    rects.push(newRectInfo);
+                }
+            };
+            for (let y = 0; y < canvas0.height - 40; y += 3) {
+                for (let x0 = 0; x0 < 80; x0 += 2) {
+                    const colors0 = context0.getImageData(x0, y, checkSize, checkSize).data;
+                    const x1 = x0 + 5;
+                    const colors1 = context1.getImageData(x1, y, checkSize, checkSize).data;
+                    const diff0 = colorsDiff(colors0, colors1);
+                    // 图0 和 图1 偏移5px的 区域很相似
+                    if (diff0 < 0.15) {
+                        const colors2 = context1.getImageData(x0, y, checkSize, checkSize).data;
+                        const diff1 = colorsDiff(colors0, colors2);
+                        // 图0 和 图1 同区域有较大差别
+                        if (diff1 > 1) {
+                            // 这样的区域一定就是滑块的区域
+                            // console.log(diff0, diff1);
+                            mergeRects(possibleMaskRects, {
+                                diff: diff0,
+                                total: 1,
+                                rect: {
+                                    left: x0,
+                                    top: y,
+                                    right: x0 + checkSize,
+                                    bottom: y + checkSize
+                                }
+                            });
+                        }
+                    }
+                }
+            }
+            while (true) {
+                const oldSize = possibleMaskRects.length;
+                const newRects = [];
+                for (let item of possibleMaskRects) {
+                    mergeRects(newRects, item);
+                }
+                if (oldSize === newRects.length) {
+                    break;
+                }
+                else {
+                    possibleMaskRects = newRects;
+                }
+            }
+            possibleMaskRects.forEach(item => item.diffAvg = item.diff / item.total);
+            possibleMaskRects.sort((o1, o2) => o1.diffAvg - o2.diffAvg);
+            for (let possibleMaskRect of possibleMaskRects) {
+                let maskL = possibleMaskRect.rect.left;
+                let maskT = possibleMaskRect.rect.top;
+                let maskR = possibleMaskRect.rect.right;
+                let maskB = possibleMaskRect.rect.bottom;
+
+                // 只检验正中央的部分
+                const centerCheckSize = 20;
+                if (maskR - maskL >= centerCheckSize) {
+                    const delta = (maskR - maskL - centerCheckSize) / 2;
+                    maskL += delta;
+                    maskR -= delta;
+                }
+                if (maskB - maskT >= centerCheckSize) {
+                    const delta = (maskB - maskT - centerCheckSize) / 2;
+                    maskT += delta;
+                    maskB -= delta;
+                }
+
+                if (context2) {
+                    context2.fillStyle = `rgba(0,0,0,0.45)`;
+                    context2.fillRect(maskL, maskT, maskR - maskL, maskB - maskT);
+                }
+
+                const checks = [];
+                const maskColors = context0.getImageData(maskL, maskT, maskR - maskL, maskB - maskT).data;
+                for (let alpha = 0.4; alpha <= 0.7; alpha += 0.05) {
+                    const grayMask = [0, 0, 0, 255 * alpha];
+                    const mixColors = [];
+                    for (let i = 0; i < maskColors.length; i += 4) {
+                        const mixedColor = mixColor(maskColors.subarray(i, i + 4), grayMask);
+                        mixedColor.forEach(item => mixColors.push(item));
+                    }
+                    for (let xDelta = 50; xDelta < canvas0.width - 50; xDelta++) {
+                        const checkColors = context0.getImageData(maskL + xDelta, maskT, maskR - maskL, maskB - maskT).data;
+                        const diff = colorsDiff(mixColors, checkColors);
+                        if (diff < 0.8) {
+                            checks.push([diff, alpha, maskL + xDelta]);
+                        }
+                    }
+                }
+                if (checks.length) {
+                    checks.sort((o1, o2) => o1[0] - o2[0]);
+
+                    if (context2) {
+                        checks.forEach(item => console.log(item));
+                        context2.fillStyle = `rgba(255,120,0,0.3)`;
+                        context2.fillRect(checks[0][2], maskT, maskR - maskL, maskB - maskT);
+                        console.log("拖动距离：" + (checks[0][2] - maskL));
+                    }
+
+                    return checks[0][2] - maskL;
+                }
+            }
+        }, img0, img1);
+
+        // 拖动到正确的位置
+        for (let i = startPos[0] + 6, offsetY = 0, midX = startPos[0] + dragDistance / 2, halfDis = midX - i; i < startPos[0] + dragDistance; i += 2) {
+            offsetY = (offsetY + [-1, 0, 1][Math.floor(3 * Math.random())]) % 4;
+            await topPage.mouse.move(i, startPos[1] + offsetY, {steps: 1});
+            await new Promise(resolve => setTimeout(resolve, 6 * Math.abs(midX - i) / halfDis));
+        }
+        await topPage.mouse.up();
+        // await this.drag(topPage, dragFrom, dragTo);
     }
 
 }
