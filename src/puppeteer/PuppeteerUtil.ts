@@ -1078,7 +1078,7 @@ export class PuppeteerUtil {
                 );
             };
 
-            const checkSize = 10;
+            const checkSize = 16;
             let possibleMaskRects = [];// [diffTotal, total, left, top, right, bottom]
             const mergeRects = (rects, newRectInfo) => {
                 const existedRect = rects.find(item => checkIntersect(item.rect, newRectInfo.rect));
@@ -1094,18 +1094,17 @@ export class PuppeteerUtil {
                     rects.push(newRectInfo);
                 }
             };
-            for (let y = 0; y < canvas0.height - 40; y += 3) {
+            for (let y = 0; y < canvas0.height - checkSize; y += 3) {
                 for (let x0 = 0; x0 < 80; x0 += 2) {
                     const colors0 = context0.getImageData(x0, y, checkSize, checkSize).data;
-                    const x1 = x0 + 5;
-                    const colors1 = context1.getImageData(x1, y, checkSize, checkSize).data;
+                    const colors1 = context1.getImageData(x0, y, checkSize, checkSize).data;
                     const diff0 = colorsDiff(colors0, colors1);
-                    // 图0 和 图1 偏移5px的 区域很相似
-                    if (diff0 < 0.15) {
-                        const colors2 = context1.getImageData(x0, y, checkSize, checkSize).data;
+                    // 图0 和 图1 同区域有较大差别
+                    if (diff0 >= 0.5) {
+                        const colors2 = context1.getImageData(x0 + 5, y, checkSize, checkSize).data;
                         const diff1 = colorsDiff(colors0, colors2);
-                        // 图0 和 图1 同区域有较大差别
-                        if (diff1 > 1) {
+                        // 图0 和 图1 偏移5px的 区域很相似
+                        if (diff1 < 0.06) {
                             // 这样的区域一定就是滑块的区域
                             // console.log(diff0, diff1);
                             mergeRects(possibleMaskRects, {
