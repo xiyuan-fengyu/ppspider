@@ -807,8 +807,8 @@ export class PuppeteerUtil {
         }
     }
 
-    static triggerAndWaitRequest(page: Page, trigger: () => void, predict: (url: string) => any, timeout: number = 1000, printReqUrlLog: boolean = false) {
-        return new Promise(async resolve => {
+    static triggerAndWaitRequest(page: Page, trigger: () => any, predict: (url: string) => any, timeout: number = 1000, printReqUrlLog: boolean = false) {
+        return new Promise<Request>(async resolve => {
             const handler = (req: Request) => {
                 printReqUrlLog && logger.debug(req.url());
                 if (predict(req.url())) {
@@ -824,8 +824,8 @@ export class PuppeteerUtil {
         });
     }
 
-    static triggerAndWaitResponse(page: Page, trigger: () => void, predict: (url: string) => any, timeout: number = 1000, printResUrlLog: boolean = false) {
-        return new Promise(async resolve => {
+    static triggerAndWaitResponse(page: Page, trigger: () => any, predict: (url: string) => any, timeout: number = 1000, printResUrlLog: boolean = false) {
+        return new Promise<Response>(async resolve => {
             const handler = (res: Response) => {
                 printResUrlLog && logger.debug(res.url());
                 if (predict(res.url())) {
@@ -839,60 +839,6 @@ export class PuppeteerUtil {
                 resolve(null);
             }, timeout);
         });
-    }
-
-    /*
-    // dragPaths 获取的方式
-    // https://login.taobao.com/member/login.jhtml
-    {
-        const dom = document.getElementById("nc_1_n1z");
-        const points = [];
-        const mouseMoveHandler = event => {
-            points.push([event.pageX, event.pageY]);
-        };
-        const moveEnd = event => {
-            dom.removeEventListener("mousemove", mouseMoveHandler);
-            console.log(JSON.stringify(points));
-        };
-        dom.addEventListener("mousedown", event => {
-            points.splice(0, points.length);
-            dom.addEventListener("mousemove", mouseMoveHandler);
-            setTimeout(() => moveEnd(null), 5000);
-        });
-        dom.addEventListener("mouseup", moveEnd);
-    }
-     */
-    private static dragPaths = [
-        [[912,430],[917,430],[924,430],[932,430],[938,430],[946,430],[952,430],[960,430],[967,430],[972,430],[983,432],[995,432],[1010,432],[1024,432],[1039,432],[1055,432],[1070,432],[1086,432],[1102,432],[1116,432],[1131,432],[1146,433],[1161,433],[1176,434]],
-        [[1206,441],[1213,441],[1220,441],[1228,441],[1237,441],[1248,441],[1259,441],[1271,441],[1282,439],[1294,439],[1308,439],[1320,437],[1334,437],[1348,436],[1359,436],[1369,436],[1379,436],[1387,436],[1392,436],[1397,436],[1399,436],[1400,436],[1401,436],[1405,436],[1412,436],[1419,436],[1427,436],[1433,436],[1440,436],[1449,436],[1458,436],[1467,437]],
-        [[916,433],[923,434],[929,434],[935,434],[943,434],[951,434],[957,434],[964,434],[967,434],[971,434],[974,434],[975,434],[980,434],[985,434],[991,434],[997,434],[1005,434],[1011,434],[1019,434],[1025,434],[1031,434],[1035,434],[1039,434],[1041,434],[1042,434],[1045,434],[1051,435],[1059,435],[1071,438],[1085,438],[1098,438],[1111,438],[1123,438],[1134,438],[1141,438],[1146,438],[1149,438],[1152,438],[1154,438],[1156,438],[1160,438],[1162,438],[1165,438],[1169,438],[1172,438]],
-        [[1202,438],[1203,438],[1207,438],[1210,439],[1213,440],[1217,441],[1220,441],[1224,441],[1229,441],[1234,441],[1240,441],[1245,441],[1250,441],[1254,441],[1259,441],[1262,441],[1265,441],[1267,441],[1268,441],[1269,441],[1272,441],[1277,442],[1283,442],[1288,442],[1293,442],[1300,442],[1308,442],[1317,442],[1324,442],[1333,442],[1340,442],[1347,442],[1354,442],[1360,444],[1365,444],[1370,444],[1375,444],[1380,445],[1385,446],[1390,446],[1394,446],[1399,446],[1403,446],[1406,446],[1408,446],[1410,446],[1413,446],[1415,446],[1417,446],[1418,446],[1419,446],[1420,446],[1422,446],[1423,446],[1427,446],[1429,446],[1433,446],[1437,446],[1442,446],[1445,446],[1450,446],[1454,446],[1458,446],[1460,446],[1467,446],[1469,446],[1470,446]],
-    ];
-
-    static async drag(page: Page, from: number[], to: number[]) {
-        // 计算模拟路径
-        const newDragPath = [from];
-        const dragPath = this.dragPaths[Math.floor(this.dragPaths.length * Math.random())];
-        const dragPathL = dragPath.length;
-        const dragPathW = dragPath[dragPathL - 1][0] - dragPath[0][0];
-        const dragPathH = dragPath[dragPathL - 1][1] - dragPath[0][1];
-        const newDragPathW = to[0] - from[0];
-        const newDragPathH = to[1] - from[1];
-        for (let i = 1; i < dragPathL - 1; i++) {
-            const x = Math.floor((dragPath[i][0] - dragPath[0][0]) / dragPathW * newDragPathW + from[0]);
-            const y = Math.floor((dragPath[i][1] - dragPath[0][1]) / dragPathH * newDragPathH + from[1]);
-            newDragPath.push([x, y]);
-        }
-        newDragPath.push(to);
-
-        // 拖动鼠标
-        await page.mouse.move(newDragPath[0][0], newDragPath[0][1]);
-        await page.mouse.down();
-        for (let i = 1; i < dragPathL; i++) {
-            await page.mouse.move(newDragPath[i][0], newDragPath[i][1], {steps: 1});
-        }
-        await new Promise(resolve => setTimeout(resolve, 50));
-        await page.mouse.up();
     }
 
     private static getIFramePage(pageOrFrame: Page | Frame): Page {
@@ -922,6 +868,66 @@ export class PuppeteerUtil {
             curFrame = parentFrame;
         }
         return [curFrame as Page, frameLeft, frameTop];
+    }
+
+    /**
+     * 模拟 ease-in-out 缓动
+     * 参考 https://www.cnblogs.com/cloudgamer/archive/2009/01/06/Tween.html
+     * 使用 sin 来模拟时间和位置的关系
+     * s = [sin(PI * (t - T / 2) / T) + 1] * S / 2 + S0
+     * @param T 整个运动持续时间(单位：秒)
+     * @param fromS 整个运动的起始位置(单位：像素px)
+     * @param toS 整个运动的结束位置(单位：像素px)
+     * @param tStep 步进时长(单位：秒)
+     */
+    private static easeInOutBySin(T: number, fromS: number, toS: number, tStep: number = 0.05) {
+        const path = [];
+        for (let t = 0; t <= T; t += tStep) {
+            const s = (Math.sin(Math.PI * (t - T / 2) / T) + 1) * (toS - fromS) / 2 + fromS;
+            path.push(s);
+        }
+        return path;
+    }
+
+    private static randomYs(fromY: number, toY: number, steps: number, stepOffset: number = 1, maxOffset: number = 4) {
+        const endSteps = maxOffset / stepOffset;
+        const path = [fromY];
+        let curY = fromY;
+        const stepOffsets = [-stepOffset, 0, stepOffset];
+        for (let i = 1; i < steps - 1; i++) {
+            if (i + endSteps >= steps) {
+                const newY = curY + (toY - curY) / (steps - i);
+                if (Math.abs(newY - curY) > maxOffset) {
+                    curY = newY;
+                }
+            }
+            else {
+                curY += stepOffsets[Math.floor(Math.random() * stepOffsets.length)];
+            }
+            path.push(curY);
+        }
+        path.push(toY);
+        return path;
+    }
+
+    static async drag(page: Page, from: number[], to: number[], duration: number = 0.6, steps: number = 30) {
+        const xs = this.easeInOutBySin(duration, from[0], to[0], duration / steps);
+        const ys = this.randomYs(from[1], to[1], steps);
+        const newDragPath = [];
+        for (let i = 0; i < xs.length; i++) {
+            newDragPath.push([xs[i], ys[i] == null ? to[1] : ys[i]]);
+        }
+
+        // 拖动鼠标
+        await page.mouse.move(newDragPath[0][0], newDragPath[0][1]);
+        await page.mouse.down();
+        for (let i = 1; i < newDragPath.length; i++) {
+            await Promise.all([
+                page.mouse.move(newDragPath[i][0], newDragPath[i][1], {steps: 1}),
+                PromiseUtil.sleep(duration / steps * 1000)
+            ]);
+        }
+        await page.mouse.up();
     }
 
     /**
@@ -957,7 +963,7 @@ export class PuppeteerUtil {
             dragFromTo[1][1] += frameTop;
         }
 
-        await this.drag(topPage, dragFromTo[0], dragFromTo[1]);
+        await this.drag(topPage, dragFromTo[0], dragFromTo[1], 0.45);
     }
 
     /**
@@ -1045,15 +1051,30 @@ export class PuppeteerUtil {
             const [canvas1, context1] = await createImgCanvas("data:image/jpeg;base64, " + imgBase64_1);
             const context2 = null;
 
-            const colorsDiff = (arr0, arr1) => {
-                if (arr0.length !== arr1.length) {
-                    return Number.MAX_VALUE;
+            // start
+            const colorGray = colorArr => {
+                const grayArr = [];
+                for (let i = 0; i < colorArr.length; i += 4) {
+                    // 灰度计算 参考 https://blog.csdn.net/xdrt81y/article/details/8289963
+                    const gray = (colorArr[i] * 19595 + colorArr[i + 1] * 38469 + colorArr[i + 2] * 7472) >> 16;
+                    grayArr.push(gray);
                 }
-                let std = 0;
-                for (let i = 0; i < arr0.length; i += 1) {
-                    std += Math.pow(arr0[i] - arr1[i], 2);
+                return grayArr;
+            };
+
+            const colorDiff = (arr0, arr1) => {
+                const gray0 = colorGray(arr0);
+                const gray1 = colorGray(arr1);
+                let diff = 0;
+                let diffCount = 0;
+                for (let i = 0; i < gray0.length; i++) {
+                    const delta = Math.abs(gray0[i] - gray1[i]);
+                    diff += delta;
+                    if (delta) {
+                        diffCount++;
+                    }
                 }
-                return Math.pow(std, 0.5) / arr0.length;
+                return diff / (diffCount || 1);
             };
 
             // 颜色混合
@@ -1069,137 +1090,112 @@ export class PuppeteerUtil {
                 ];
             };
 
-            const checkIntersect = (rect0, rect1) => {
-                return !(
-                    rect0.right < rect1.left
-                    || rect0.left > rect1.right
-                    || rect0.bottom < rect1.top
-                    || rect0.top > rect1.bottom
-                );
-            };
+            let maskL = null;
+            let maskR = null;
+            let maskT = null;
+            let maskB = null;
 
-            const checkSize = 16;
-            let possibleMaskRects = [];// [diffTotal, total, left, top, right, bottom]
-            const mergeRects = (rects, newRectInfo) => {
-                const existedRect = rects.find(item => checkIntersect(item.rect, newRectInfo.rect));
-                if (existedRect) {
-                    existedRect.diff += newRectInfo.diff;
-                    existedRect.total += newRectInfo.total;
-                    existedRect.rect.left = Math.min(existedRect.rect.left, newRectInfo.rect.left);
-                    existedRect.rect.right = Math.max(existedRect.rect.right, newRectInfo.rect.right);
-                    existedRect.rect.top = Math.min(existedRect.rect.top, newRectInfo.rect.top);
-                    existedRect.rect.bottom = Math.max(existedRect.rect.bottom, newRectInfo.rect.bottom);
+            for (let x = 0; x < 80; x++) {
+                const diff = colorDiff(
+                    context0.getImageData(x, 0, 1, canvas0.height).data,
+                    context1.getImageData(x, 0, 1, canvas0.height).data);
+                if (diff > 20) {
+                    if (maskL == null) {
+                        maskL = x;
+                    }
+                    maskR = x;
                 }
-                else {
-                    rects.push(newRectInfo);
+            }
+
+            for (let y = 0; y < canvas0.height; y++) {
+                const diff = colorDiff(
+                    context0.getImageData(0, y, canvas0.width, 1).data,
+                    context1.getImageData(0, y, canvas0.width, 1).data);
+                if (diff > 20) {
+                    if (maskT == null) {
+                        maskT = y;
+                    }
+                    maskB = y;
                 }
-            };
-            for (let y = 0; y < canvas0.height - checkSize; y += 3) {
-                for (let x0 = 0; x0 < 80; x0 += 2) {
-                    const colors0 = context0.getImageData(x0, y, checkSize, checkSize).data;
-                    const colors1 = context1.getImageData(x0, y, checkSize, checkSize).data;
-                    const diff0 = colorsDiff(colors0, colors1);
-                    // 图0 和 图1 同区域有较大差别
-                    if (diff0 >= 0.5) {
-                        const colors2 = context1.getImageData(x0 + 5, y, checkSize, checkSize).data;
-                        const diff1 = colorsDiff(colors0, colors2);
-                        // 图0 和 图1 偏移5px的 区域很相似
-                        if (diff1 < 0.06) {
-                            // 这样的区域一定就是滑块的区域
-                            // console.log(diff0, diff1);
-                            mergeRects(possibleMaskRects, {
-                                diff: diff0,
-                                total: 1,
-                                rect: {
-                                    left: x0,
-                                    top: y,
-                                    right: x0 + checkSize,
-                                    bottom: y + checkSize
-                                }
-                            });
-                        }
+            }
+
+            if (context2) {
+                context2.fillStyle = `rgba(0,0,0,0.45)`;
+                context2.fillRect(maskL, 0, 1, canvas0.height);
+                context2.fillRect(maskR, 0, 1, canvas0.height);
+                context2.fillRect(0, maskT, canvas0.width, 1);
+                context2.fillRect(0, maskB, canvas0.width, 1);
+            }
+
+            // 只检验正中央的部分
+            const centerCheckSize = 16;
+            if (maskR - maskL >= centerCheckSize) {
+                const delta = (maskR - maskL - centerCheckSize) / 2;
+                maskL += delta;
+                maskR -= delta;
+            }
+            if (maskB - maskT >= centerCheckSize) {
+                const delta = (maskB - maskT - centerCheckSize) / 2;
+                maskT += delta;
+                maskB -= delta;
+            }
+
+            if (context2) {
+                context2.fillStyle = `rgba(0,0,0,0.4)`;
+                context2.fillRect(maskL, maskT, maskR - maskL, maskB - maskT);
+            }
+
+            const possibleDesRects = [];
+            const maskColors = context0.getImageData(maskL, maskT, maskR - maskL, maskB - maskT).data;
+            for (let alpha = 0.3; alpha <= 0.7; alpha += 0.05) {
+                const grayMask = [0, 0, 0, 255 * alpha];
+                const mixColors = [];
+                for (let i = 0; i < maskColors.length; i += 4) {
+                    const mixedColor = mixColor(maskColors.subarray(i, i + 4), grayMask);
+                    mixedColor.forEach(item => mixColors.push(item));
+                }
+                for (let xDelta = 50; xDelta < canvas0.width - 50; xDelta++) {
+                    const checkColors = context0.getImageData(maskL + xDelta, maskT, maskR - maskL, maskB - maskT).data;
+                    const diff = colorDiff(mixColors, checkColors);
+                    if (diff < 20) {
+                        possibleDesRects.push({
+                            diff: diff,
+                            alpha: alpha,
+                            delta: xDelta,
+                            mask: {
+                                left: maskL,
+                                top: maskT,
+                                right: maskR,
+                                bottom: maskB
+                            }
+                        });
                     }
                 }
             }
-            while (true) {
-                const oldSize = possibleMaskRects.length;
-                const newRects = [];
-                for (let item of possibleMaskRects) {
-                    mergeRects(newRects, item);
-                }
-                if (oldSize === newRects.length) {
-                    break;
-                }
-                else {
-                    possibleMaskRects = newRects;
-                }
-            }
-            possibleMaskRects.forEach(item => item.diffAvg = item.diff / item.total);
-            possibleMaskRects.sort((o1, o2) => o1.diffAvg - o2.diffAvg);
-            for (let possibleMaskRect of possibleMaskRects) {
-                let maskL = possibleMaskRect.rect.left;
-                let maskT = possibleMaskRect.rect.top;
-                let maskR = possibleMaskRect.rect.right;
-                let maskB = possibleMaskRect.rect.bottom;
+            if (possibleDesRects.length) {
+                possibleDesRects.sort((o1, o2) => o1.diff - o2.diff);
 
-                // 只检验正中央的部分
-                const centerCheckSize = 20;
-                if (maskR - maskL >= centerCheckSize) {
-                    const delta = (maskR - maskL - centerCheckSize) / 2;
-                    maskL += delta;
-                    maskR -= delta;
-                }
-                if (maskB - maskT >= centerCheckSize) {
-                    const delta = (maskB - maskT - centerCheckSize) / 2;
-                    maskT += delta;
-                    maskB -= delta;
-                }
+                const bestDesRect = possibleDesRects[0];
 
                 if (context2) {
-                    context2.fillStyle = `rgba(0,0,0,0.45)`;
-                    context2.fillRect(maskL, maskT, maskR - maskL, maskB - maskT);
+                    context2.fillStyle = `rgba(255,120,0,0.4)`;
+                    context2.fillRect(bestDesRect.delta + bestDesRect.mask.left, bestDesRect.mask.top,
+                        bestDesRect.mask.right - bestDesRect.mask.left, bestDesRect.mask.bottom - bestDesRect.mask.top);
+                    possibleDesRects.forEach(item => console.log(item));
+                    console.log("拖动距离：" + bestDesRect.delta);
                 }
 
-                const checks = [];
-                const maskColors = context0.getImageData(maskL, maskT, maskR - maskL, maskB - maskT).data;
-                for (let alpha = 0.4; alpha <= 0.7; alpha += 0.05) {
-                    const grayMask = [0, 0, 0, 255 * alpha];
-                    const mixColors = [];
-                    for (let i = 0; i < maskColors.length; i += 4) {
-                        const mixedColor = mixColor(maskColors.subarray(i, i + 4), grayMask);
-                        mixedColor.forEach(item => mixColors.push(item));
-                    }
-                    for (let xDelta = 50; xDelta < canvas0.width - 50; xDelta++) {
-                        const checkColors = context0.getImageData(maskL + xDelta, maskT, maskR - maskL, maskB - maskT).data;
-                        const diff = colorsDiff(mixColors, checkColors);
-                        if (diff < 0.8) {
-                            checks.push([diff, alpha, maskL + xDelta]);
-                        }
-                    }
-                }
-                if (checks.length) {
-                    checks.sort((o1, o2) => o1[0] - o2[0]);
-
-                    if (context2) {
-                        checks.forEach(item => console.log(item));
-                        context2.fillStyle = `rgba(255,120,0,0.3)`;
-                        context2.fillRect(checks[0][2], maskT, maskR - maskL, maskB - maskT);
-                        console.log("拖动距离：" + (checks[0][2] - maskL));
-                    }
-
-                    return checks[0][2] - maskL;
-                }
+                return bestDesRect.delta;
             }
+            // end
         }, img0, img1);
 
         // 拖动到正确的位置
-        for (let i = startPos[0] + 6, offsetY = 0, midX = startPos[0] + dragDistance / 2, halfDis = midX - i; i < startPos[0] + dragDistance; i += 2) {
-            offsetY = (offsetY + [-1, 0, 1][Math.floor(3 * Math.random())]) % 4;
-            await topPage.mouse.move(i, startPos[1] + offsetY, {steps: 1});
-            await new Promise(resolve => setTimeout(resolve, 6 * Math.abs(midX - i) / halfDis));
-        }
-        await topPage.mouse.up();
-        // await this.drag(topPage, dragFrom, dragTo);
+        const dur = Math.max(dragDistance / 300, 0.3);
+        console.log(dragDistance, dur);
+        await this.drag(topPage,
+            [startPos[0] + 6, startPos[1] - 2],
+            [startPos[0] + dragDistance + Math.random() * 2, startPos[1] + Math.random() * 2], dur);
     }
 
 }

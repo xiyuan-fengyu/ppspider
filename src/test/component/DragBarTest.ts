@@ -13,7 +13,7 @@ class TestTask {
         await page.type("#TPL_username_1", "12345", {delay: 50});
         await page.type("#TPL_password_1", "qwert", {delay: 50});
         await PuppeteerUtil.dragBar(page, "#nc_1_n1z", "#nc_1_wrapper");
-        await PromiseUtil.sleep(10000000);
+        await PromiseUtil.sleep(1000000000);
     }
 
 }
