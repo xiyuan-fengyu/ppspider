@@ -29,8 +29,7 @@
                 });
             }
 
-            async function createImgCanvas(imgSrc) {
-                const base64 = (await req("GET", imgSrc)).responseText;
+            async function createImgCanvas(imgBase64) {
                 return new Promise(resolve => {
                     const img = document.createElement("img");
                     img.onload = () => {
@@ -41,18 +40,17 @@
                         context.drawImage(img, 0, 0, canvas.width, canvas.height);
                         resolve([canvas, context]);
                     };
-                    img.src = "data:image/jpeg;base64, " + base64;
+                    img.src = "data:image/jpeg;base64, " + imgBase64;
                 });
             }
 
-            // src/test/component/DragJigsawTest1.ts 这个例子截取的图片的缺图位置为 透明黑色遮罩
-            // src/test/component/DragJigsawTest2.ts 这个例子截取的图片的缺图位置为 透明白色遮罩
-            const gapMaskColor = JSON.parse((await req("GET", "../../../lib/test/component/gapMaskColor.json")).responseText);
+            const dragJigsaw = JSON.parse((await req("GET", "../../../lib/test/component/dragJigsaw.json")).responseText);
+            const gapMaskColor = dragJigsaw.gapMaskColor;
 
             // 需要先运行一次 src/test/component/DragJigsawTest1 或 src/test/component/DragJigsawTest2 来生成对应的验证码截图
-            const [canvas0, context0] = await createImgCanvas("../../../lib/test/component/img0.base64");
-            const [canvas1, context1] = await createImgCanvas("../../../lib/test/component/img1.base64");
-            const [canvas2, context2] = await createImgCanvas("../../../lib/test/component/img0.base64");
+            const [canvas0, context0] = await createImgCanvas(dragJigsaw.img0);
+            const [canvas1, context1] = await createImgCanvas(dragJigsaw.img1);
+            const [canvas2, context2] = await createImgCanvas(dragJigsaw.img0);
             document.body.appendChild(canvas0);
             document.body.appendChild(canvas1);
             document.body.appendChild(canvas2);

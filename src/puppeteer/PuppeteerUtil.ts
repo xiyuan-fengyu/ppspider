@@ -1007,7 +1007,6 @@ export class PuppeteerUtil {
 
         await topPage.mouse.move(startPos[0], startPos[1]);
         const img0 = await topPage.screenshot({
-            path: "img0.base64",
             encoding: "base64",
             type: "jpeg",
             quality: 100,
@@ -1022,7 +1021,6 @@ export class PuppeteerUtil {
         await topPage.mouse.down();
         await topPage.mouse.move(startPos[0] + 5, startPos[1] - 2, {steps: 1});
         const img1 = await topPage.screenshot({
-            path: "img1.base64",
             encoding: "base64",
             type: "jpeg",
             quality: 100,
@@ -1034,8 +1032,12 @@ export class PuppeteerUtil {
             }
         });
 
-        // 保存当前的 gapMaskColor，用于 src/test/component/DragJigsaw.html 调试
-        fs.writeFileSync("gapMaskColor.json", JSON.stringify(gapMaskColor), "utf-8");
+        // 保存当前的 gapMaskColor，两张截图的数据，用于 src/test/component/DragJigsaw.html 调试
+        fs.writeFileSync("dragJigsaw.json", JSON.stringify({
+            gapMaskColor,
+            img0,
+            img1
+        }), "utf-8");
 
         // 识别拖动距离
         let dragDistance = await page.evaluate(async (imgBase64_0: string, imgBase64_1: string, gapMaskColor: [number, number, number]) => {
