@@ -516,7 +516,7 @@ Job 面板可以对所有子任务实例进行搜索，查看任务详情
     参数类型，导致 page 参数无法正常注入，这个错误在启动过程中就会检查出来。  
           
 # 更新日志
-2019-07-31 v2.2.2-preview.1564551925339
+2019-07-31 v2.2.2-preview.1565077196541
 1. @Bean @Autowired bug修复，@Autowired支持类型识别  
 2. RequestUtil 增加多行headers字符串解析方法，simple方法增加 headerLines 属性，方便传入多行headers字符串，
     simple方法增加可选handler参数，方便监听请求结果  
@@ -529,6 +529,9 @@ Job 面板可以对所有子任务实例进行搜索，查看任务详情
 9. 增加模拟拖动滑块的方法 PuppeteerUtil.drag    
 10. 增加方法 PuppeteerUtil.triggerAndWaitRequest，用于触发并监听一个请求  
 11. 增加方法 PuppeteerUtil.triggerAndWaitResponse，用于触发并监听一个请求的应答    
+12. 提供两种滑块验证码的破解方案  
+    从左拖动到最右边的滑块验证码 [PuppeteerUtil.dragBar](https://github.com/xiyuan-fengyu/ppspider/blob/master/src/test/component/DragBarTest.ts)    
+    需要拖动到合适位置完成拼图的滑块验证码 [PuppeteerUtil.dragJigsaw](https://github.com/xiyuan-fengyu/ppspider/blob/master/src/test/component/DragJigsawTest1.ts)  
 
 2019-06-22 v2.2.1
 1. 通过 typescript 和 reflect-metadata 提供的反射机制，重写 @OnStart, @OnTime, @FromQueue 回调函数注入worker实例的方式；

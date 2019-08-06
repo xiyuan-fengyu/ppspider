@@ -550,7 +550,7 @@ Job panel: search jobs and view details
 
 
 # Update Note
-2019-07-31 v2.2.2-preview.1564551925339
+2019-07-31 v2.2.2-preview.1565077196541
 1. @Bean @Autowired bug fixed, support type identification for @Autowired   
 2. Add new method RequestUtil.linesToHeaders to parse header-lines; add headerLines property to the parameter named options of
     RequestUtil.simple, add an optional parameter handler to watch the response    
@@ -563,7 +563,10 @@ Job panel: search jobs and view details
 9. Add a new function PuppeteerUtil.drag to drag bar     
 10. Add a new PuppeteerUtil.triggerAndWaitRequest to trigger and watch a request  
 11. Add a new PuppeteerUtil.triggerAndWaitResponse to trigger a request and watch the response    
-
+12. Provides solutions for slider verification  
+    Drag from left to right [PuppeteerUtil.dragBar](https://github.com/xiyuan-fengyu/ppspider/blob/master/src/test/component/DragBarTest.ts)    
+    Drag to the right place to complete the puzzle [PuppeteerUtil.dragJigsaw](https://github.com/xiyuan-fengyu/ppspider/blob/master/src/test/component/DragJigsawTest1.ts)  
+    
 2019-06-22 v2.2.1
 1. Rewrite the way to inject the worker instance through the reflection mechanism provided by typescript and reflect-metadata 
    during calling method decorated by @OnStart, @OnTime, @FromQueue.  
