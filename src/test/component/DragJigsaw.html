@@ -3,34 +3,53 @@
 <head>
     <meta charset="UTF-8">
     <title>研究滑块拼图的破解方案</title>
+    <style>
+        html, body {
+            padding: 0;
+            margin: 0;
+        }
+
+        body canvas {
+            display: block;
+            margin: 12px auto;
+        }
+    </style>
 </head>
 <body>
 
     <script>
         (async () => {
-            function createImgCanvas(imgSrc) {
-                return new Promise(resolve => {
+            function req(method, url) {
+                return new Promise((resolve, reject) => {
                     const xhr = new XMLHttpRequest();
-                    xhr.open("GET", imgSrc);
-                    xhr.onload = () => {
-                        const img = document.createElement("img");
-                        img.onload = () => {
-                            const canvas = document.createElement("canvas");
-                            canvas.width = img.naturalWidth;
-                            canvas.height = img.naturalHeight;
-                            const context = canvas.getContext("2d");
-                            context.drawImage(img, 0, 0, canvas.width, canvas.height);
-                            resolve([canvas, context]);
-                        };
-                        img.src = "data:image/jpeg;base64, " + xhr.responseText;
-                    };
+                    xhr.open(method, url);
+                    xhr.onload = () => resolve(xhr);
+                    xhr.onerror = reject;
                     xhr.send();
                 });
             }
 
-            const gapMaskColor = [255, 255, 255];
+            async function createImgCanvas(imgSrc) {
+                const base64 = (await req("GET", imgSrc)).responseText;
+                return new Promise(resolve => {
+                    const img = document.createElement("img");
+                    img.onload = () => {
+                        const canvas = document.createElement("canvas");
+                        canvas.width = img.naturalWidth;
+                        canvas.height = img.naturalHeight;
+                        const context = canvas.getContext("2d");
+                        context.drawImage(img, 0, 0, canvas.width, canvas.height);
+                        resolve([canvas, context]);
+                    };
+                    img.src = "data:image/jpeg;base64, " + base64;
+                });
+            }
 
-            // 需要先运行一次 src/test/component/DragJigsawTest 来生成对应的验证码截图
+            // src/test/component/DragJigsawTest1.ts 这个例子截取的图片的缺图位置为 透明黑色遮罩
+            // src/test/component/DragJigsawTest2.ts 这个例子截取的图片的缺图位置为 透明白色遮罩
+            const gapMaskColor = JSON.parse((await req("GET", "../../../lib/test/component/gapMaskColor.json")).responseText);
+
+            // 需要先运行一次 src/test/component/DragJigsawTest1 或 src/test/component/DragJigsawTest2 来生成对应的验证码截图
             const [canvas0, context0] = await createImgCanvas("../../../lib/test/component/img0.base64");
             const [canvas1, context1] = await createImgCanvas("../../../lib/test/component/img1.base64");
             const [canvas2, context2] = await createImgCanvas("../../../lib/test/component/img0.base64");
@@ -77,20 +96,29 @@
                 ];
             };
 
-            let maskL = null;
-            let maskR = null;
-            let maskT = null;
-            let maskB = null;
+            const mixColors = (backColors, fronRgba) => {
+                const mixedColors = [];
+                for (let i = 0; i < backColors.length; i += 4) {
+                    const mixedColor = mixColor(backColors.subarray(i, i + 4), fronRgba);
+                    mixedColor.forEach(item => mixedColors.push(item));
+                }
+                return mixedColors;
+            };
+
+            let maskEdgeL = null;
+            let maskEdgeR = null;
+            let maskEdgeT = null;
+            let maskEdgeB = null;
 
             for (let x = 0; x < 80; x++) {
                 const diff = colorDiff(
                     context0.getImageData(x, 0, 1, canvas0.height).data,
                     context1.getImageData(x, 0, 1, canvas0.height).data);
                 if (diff > 20) {
-                    if (maskL == null) {
-                        maskL = x;
+                    if (maskEdgeL == null) {
+                        maskEdgeL = x;
                     }
-                    maskR = x;
+                    maskEdgeR = x;
                 }
             }
 
@@ -99,75 +127,94 @@
                     context0.getImageData(0, y, canvas0.width, 1).data,
                     context1.getImageData(0, y, canvas0.width, 1).data);
                 if (diff > 20) {
-                    if (maskT == null) {
-                        maskT = y;
+                    if (maskEdgeT == null) {
+                        maskEdgeT = y;
                     }
-                    maskB = y;
+                    maskEdgeB = y;
                 }
             }
 
             if (context2) {
                 context2.fillStyle = `rgba(0,0,0,0.45)`;
-                context2.fillRect(maskL, 0, 1, canvas0.height);
-                context2.fillRect(maskR, 0, 1, canvas0.height);
-                context2.fillRect(0, maskT, canvas0.width, 1);
-                context2.fillRect(0, maskB, canvas0.width, 1);
+                context2.fillRect(maskEdgeL, 0, 1, canvas0.height);
+                context2.fillRect(maskEdgeR, 0, 1, canvas0.height);
+                context2.fillRect(0, maskEdgeT, canvas0.width, 1);
+                context2.fillRect(0, maskEdgeB, canvas0.width, 1);
             }
 
             // 只检验正中央的部分
-            const centerCheckSize = 16;
-            if (maskR - maskL >= centerCheckSize) {
-                const delta = (maskR - maskL - centerCheckSize) / 2;
-                maskL += delta;
-                maskR -= delta;
+            let maskCenterL = maskEdgeL;
+            let maskCenterR = maskEdgeR;
+            let maskCenterT = maskEdgeT;
+            let maskCenterB = maskEdgeB;
+            const centerCheckSize = 28;
+            if (maskCenterR - maskCenterL >= centerCheckSize) {
+                const delta = (maskCenterR - maskCenterL - centerCheckSize) / 2;
+                maskCenterL += delta;
+                maskCenterR -= delta;
             }
-            if (maskB - maskT >= centerCheckSize) {
-                const delta = (maskB - maskT - centerCheckSize) / 2;
-                maskT += delta;
-                maskB -= delta;
+            if (maskCenterB - maskCenterT >= centerCheckSize) {
+                const delta = (maskCenterB - maskCenterT - centerCheckSize) / 2;
+                maskCenterT += delta;
+                maskCenterB -= delta;
             }
 
             if (context2) {
                 context2.fillStyle = `rgba(0,0,0,0.4)`;
-                context2.fillRect(maskL, maskT, maskR - maskL, maskB - maskT);
+                context2.fillRect(maskCenterL, maskCenterT, maskCenterR - maskCenterL, maskCenterB - maskCenterT);
             }
 
             const possibleDesRects = [];
-            const maskColors = context0.getImageData(maskL, maskT, maskR - maskL, maskB - maskT).data;
+            const maskColors = context0.getImageData(maskCenterL, maskCenterT, maskCenterR - maskCenterL, maskCenterB - maskCenterT).data;
             for (let alpha = 0.3; alpha <= 0.7; alpha += 0.05) {
                 const grayMask = [...gapMaskColor, 255 * alpha];
-                const mixColors = [];
-                for (let i = 0; i < maskColors.length; i += 4) {
-                    const mixedColor = mixColor(maskColors.subarray(i, i + 4), grayMask);
-                    mixedColor.forEach(item => mixColors.push(item));
-                }
-                for (let xDelta = 50; xDelta < canvas0.width - 50; xDelta++) {
-                    const checkColors = context0.getImageData(maskL + xDelta, maskT, maskR - maskL, maskB - maskT).data;
-                    const diff = colorDiff(mixColors, checkColors);
-                    if (diff < 20) {
-                        possibleDesRects.push({
-                            diff: diff,
-                            alpha: alpha,
-                            delta: xDelta,
-                            mask: {
-                                left: maskL,
-                                top: maskT,
-                                right: maskR,
-                                bottom: maskB
+                const mixedColors = mixColors(maskColors, grayMask);
+                for (let xDelta = 45; xDelta < canvas0.width - 50; xDelta++) {
+                    const checkColors = context0.getImageData(maskCenterL + xDelta, maskCenterT, maskCenterR - maskCenterL, maskCenterB - maskCenterT).data;
+                    const diff = colorDiff(mixedColors, checkColors);
+                    if (diff < 25) {
+                        if (possibleDesRects.length > 0 && possibleDesRects[0].diff < diff) {
+
+                        }
+                        else {
+                            if (possibleDesRects.length > 0 && possibleDesRects[0].diff > diff) {
+                                possibleDesRects.splice(0, possibleDesRects.length);
                             }
-                        });
+                            possibleDesRects.push({
+                                diff: diff,
+                                alpha: alpha,
+                                delta: xDelta
+                            });
+                        }
                     }
                 }
             }
             if (possibleDesRects.length) {
-                possibleDesRects.sort((o1, o2) => o1.diff - o2.diff);
+                // 如果仅通过 diff 判定出多个最优解，则还需要通过扩大mask的范围，一直到diff有唯一最小值
+                let spreadSize = 1;
+                while (possibleDesRects.length > 1) {
+                    const maskColors = context0.getImageData(maskCenterL - spreadSize, maskCenterT - spreadSize, maskCenterR - maskCenterL + spreadSize * 2, maskCenterB - maskCenterT + spreadSize * 2).data;
+                    for (let item of possibleDesRects) {
+                        const grayMask = [...gapMaskColor, 255 * item.alpha];
+                        const mixedColors = mixColors(maskColors, grayMask);
+                        const checkColors = context0.getImageData(maskCenterL - spreadSize + item.delta, maskCenterT - spreadSize, maskCenterR - maskCenterL + spreadSize * 2, maskCenterB - maskCenterT + spreadSize * 2).data;
+                        item.spreadDiff = colorDiff(mixedColors, checkColors);
+                        item.spreadSize = spreadSize;
+                    }
+                    possibleDesRects.sort((o1, o2) => o1.spreadDiff - o2.spreadDiff);
+                    for (let i = 1; i < possibleDesRects.length; i++) {
+                        if (possibleDesRects[i].spreadDiff !== possibleDesRects[0].spreadDiff) {
+                            possibleDesRects.splice(i, possibleDesRects.length - i);
+                            break;
+                        }
+                    }
+                    spreadSize++;
+                }
 
                 const bestDesRect = possibleDesRects[0];
-
                 if (context2) {
                     context2.fillStyle = `rgba(255,120,0,0.4)`;
-                    context2.fillRect(bestDesRect.delta + bestDesRect.mask.left, bestDesRect.mask.top,
-                        bestDesRect.mask.right - bestDesRect.mask.left, bestDesRect.mask.bottom - bestDesRect.mask.top);
+                    context2.fillRect(bestDesRect.delta + maskCenterL, maskCenterT, maskCenterR - maskCenterL, maskCenterB - maskCenterT);
                     possibleDesRects.forEach(item => console.log(item));
                     console.log("拖动距离：" + bestDesRect.delta);
                 }

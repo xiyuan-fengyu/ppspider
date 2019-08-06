@@ -983,7 +983,7 @@ export class PuppeteerUtil {
         clipRect: [number, number, number, number],
         gapMaskColor: [number, number, number] = [0, 0, 0],
         distanceFix: (computedDis: number) => number = null) {
-        // 原位置，向右拖动5px，向右拖动10px，截取三张图片，通过三张截图计算出 拼图 和 缺图 位置
+        // 原位置，向右拖动5px，截取两张图片，通过两张截图计算出 拼图 和 缺图 位置，拖动距离
         const [topPage, frameLeft, frameTop] = await this.getIFramePageAndPos(page);
         const [wrapperLeft, wrapperTop] = await page.evaluate(wrapperSelector => {
             const rect = document.querySelector(wrapperSelector).getBoundingClientRect();
@@ -1033,6 +1033,9 @@ export class PuppeteerUtil {
                 height: clipRect[3] - clipRect[1]
             }
         });
+
+        // 保存当前的 gapMaskColor，用于 src/test/component/DragJigsaw.html 调试
+        fs.writeFileSync("gapMaskColor.json", JSON.stringify(gapMaskColor), "utf-8");
 
         // 识别拖动距离
         let dragDistance = await page.evaluate(async (imgBase64_0: string, imgBase64_1: string, gapMaskColor: [number, number, number]) => {
@@ -1094,20 +1097,29 @@ export class PuppeteerUtil {
                 ];
             };
 
-            let maskL = null;
-            let maskR = null;
-            let maskT = null;
-            let maskB = null;
+            const mixColors = (backColors, fronRgba) => {
+                const mixedColors = [];
+                for (let i = 0; i < backColors.length; i += 4) {
+                    const mixedColor = mixColor(backColors.subarray(i, i + 4), fronRgba);
+                    mixedColor.forEach(item => mixedColors.push(item));
+                }
+                return mixedColors;
+            };
+
+            let maskEdgeL = null;
+            let maskEdgeR = null;
+            let maskEdgeT = null;
+            let maskEdgeB = null;
 
             for (let x = 0; x < 80; x++) {
                 const diff = colorDiff(
                     context0.getImageData(x, 0, 1, canvas0.height).data,
                     context1.getImageData(x, 0, 1, canvas0.height).data);
                 if (diff > 20) {
-                    if (maskL == null) {
-                        maskL = x;
+                    if (maskEdgeL == null) {
+                        maskEdgeL = x;
                     }
-                    maskR = x;
+                    maskEdgeR = x;
                 }
             }
 
@@ -1116,75 +1128,94 @@ export class PuppeteerUtil {
                     context0.getImageData(0, y, canvas0.width, 1).data,
                     context1.getImageData(0, y, canvas0.width, 1).data);
                 if (diff > 20) {
-                    if (maskT == null) {
-                        maskT = y;
+                    if (maskEdgeT == null) {
+                        maskEdgeT = y;
                     }
-                    maskB = y;
+                    maskEdgeB = y;
                 }
             }
 
             if (context2) {
                 context2.fillStyle = `rgba(0,0,0,0.45)`;
-                context2.fillRect(maskL, 0, 1, canvas0.height);
-                context2.fillRect(maskR, 0, 1, canvas0.height);
-                context2.fillRect(0, maskT, canvas0.width, 1);
-                context2.fillRect(0, maskB, canvas0.width, 1);
+                context2.fillRect(maskEdgeL, 0, 1, canvas0.height);
+                context2.fillRect(maskEdgeR, 0, 1, canvas0.height);
+                context2.fillRect(0, maskEdgeT, canvas0.width, 1);
+                context2.fillRect(0, maskEdgeB, canvas0.width, 1);
             }
 
             // 只检验正中央的部分
-            const centerCheckSize = 16;
-            if (maskR - maskL >= centerCheckSize) {
-                const delta = (maskR - maskL - centerCheckSize) / 2;
-                maskL += delta;
-                maskR -= delta;
+            let maskCenterL = maskEdgeL;
+            let maskCenterR = maskEdgeR;
+            let maskCenterT = maskEdgeT;
+            let maskCenterB = maskEdgeB;
+            const centerCheckSize = 28;
+            if (maskCenterR - maskCenterL >= centerCheckSize) {
+                const delta = (maskCenterR - maskCenterL - centerCheckSize) / 2;
+                maskCenterL += delta;
+                maskCenterR -= delta;
             }
-            if (maskB - maskT >= centerCheckSize) {
-                const delta = (maskB - maskT - centerCheckSize) / 2;
-                maskT += delta;
-                maskB -= delta;
+            if (maskCenterB - maskCenterT >= centerCheckSize) {
+                const delta = (maskCenterB - maskCenterT - centerCheckSize) / 2;
+                maskCenterT += delta;
+                maskCenterB -= delta;
             }
 
             if (context2) {
                 context2.fillStyle = `rgba(0,0,0,0.4)`;
-                context2.fillRect(maskL, maskT, maskR - maskL, maskB - maskT);
+                context2.fillRect(maskCenterL, maskCenterT, maskCenterR - maskCenterL, maskCenterB - maskCenterT);
             }
 
             const possibleDesRects = [];
-            const maskColors = context0.getImageData(maskL, maskT, maskR - maskL, maskB - maskT).data;
+            const maskColors = context0.getImageData(maskCenterL, maskCenterT, maskCenterR - maskCenterL, maskCenterB - maskCenterT).data;
             for (let alpha = 0.3; alpha <= 0.7; alpha += 0.05) {
                 const grayMask = [...gapMaskColor, 255 * alpha];
-                const mixColors = [];
-                for (let i = 0; i < maskColors.length; i += 4) {
-                    const mixedColor = mixColor(maskColors.subarray(i, i + 4), grayMask);
-                    mixedColor.forEach(item => mixColors.push(item));
-                }
-                for (let xDelta = 50; xDelta < canvas0.width - 50; xDelta++) {
-                    const checkColors = context0.getImageData(maskL + xDelta, maskT, maskR - maskL, maskB - maskT).data;
-                    const diff = colorDiff(mixColors, checkColors);
-                    if (diff < 20) {
-                        possibleDesRects.push({
-                            diff: diff,
-                            alpha: alpha,
-                            delta: xDelta,
-                            mask: {
-                                left: maskL,
-                                top: maskT,
-                                right: maskR,
-                                bottom: maskB
+                const mixedColors = mixColors(maskColors, grayMask);
+                for (let xDelta = 45; xDelta < canvas0.width - 50; xDelta++) {
+                    const checkColors = context0.getImageData(maskCenterL + xDelta, maskCenterT, maskCenterR - maskCenterL, maskCenterB - maskCenterT).data;
+                    const diff = colorDiff(mixedColors, checkColors);
+                    if (diff < 25) {
+                        if (possibleDesRects.length > 0 && possibleDesRects[0].diff < diff) {
+
+                        }
+                        else {
+                            if (possibleDesRects.length > 0 && possibleDesRects[0].diff > diff) {
+                                possibleDesRects.splice(0, possibleDesRects.length);
                             }
-                        });
+                            possibleDesRects.push({
+                                diff: diff,
+                                alpha: alpha,
+                                delta: xDelta
+                            });
+                        }
                     }
                 }
             }
             if (possibleDesRects.length) {
-                possibleDesRects.sort((o1, o2) => o1.diff - o2.diff);
+                // 如果仅通过 diff 判定出多个最优解，则还需要通过扩大mask的范围，一直到diff有唯一最小值
+                let spreadSize = 1;
+                while (possibleDesRects.length > 1) {
+                    const maskColors = context0.getImageData(maskCenterL - spreadSize, maskCenterT - spreadSize, maskCenterR - maskCenterL + spreadSize * 2, maskCenterB - maskCenterT + spreadSize * 2).data;
+                    for (let item of possibleDesRects) {
+                        const grayMask = [...gapMaskColor, 255 * item.alpha];
+                        const mixedColors = mixColors(maskColors, grayMask);
+                        const checkColors = context0.getImageData(maskCenterL - spreadSize + item.delta, maskCenterT - spreadSize, maskCenterR - maskCenterL + spreadSize * 2, maskCenterB - maskCenterT + spreadSize * 2).data;
+                        item.spreadDiff = colorDiff(mixedColors, checkColors);
+                        item.spreadSize = spreadSize;
+                    }
+                    possibleDesRects.sort((o1, o2) => o1.spreadDiff - o2.spreadDiff);
+                    for (let i = 1; i < possibleDesRects.length; i++) {
+                        if (possibleDesRects[i].spreadDiff !== possibleDesRects[0].spreadDiff) {
+                            possibleDesRects.splice(i, possibleDesRects.length - i);
+                            break;
+                        }
+                    }
+                    spreadSize++;
+                }
 
                 const bestDesRect = possibleDesRects[0];
-
                 if (context2) {
                     context2.fillStyle = `rgba(255,120,0,0.4)`;
-                    context2.fillRect(bestDesRect.delta + bestDesRect.mask.left, bestDesRect.mask.top,
-                        bestDesRect.mask.right - bestDesRect.mask.left, bestDesRect.mask.bottom - bestDesRect.mask.top);
+                    context2.fillRect(bestDesRect.delta + maskCenterL, maskCenterT, maskCenterR - maskCenterL, maskCenterB - maskCenterT);
                     possibleDesRects.forEach(item => console.log(item));
                     console.log("拖动距离：" + bestDesRect.delta);
                 }
@@ -1197,7 +1228,7 @@ export class PuppeteerUtil {
 
         // 拖动到正确的位置
         const dur = Math.max(dragDistance / 300, 0.3);
-        console.log(dragDistance, dur);
+        // console.log(dragDistance, dur);
         await this.drag(topPage,
             [startPos[0] + 6, startPos[1] - 2],
             [startPos[0] + dragDistance + Math.random() * 2, startPos[1] + Math.random() * 2], dur);
