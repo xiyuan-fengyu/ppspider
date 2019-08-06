@@ -28,6 +28,8 @@
                 });
             }
 
+            const gapMaskColor = [255, 255, 255];
+
             // 需要先运行一次 src/test/component/DragJigsawTest 来生成对应的验证码截图
             const [canvas0, context0] = await createImgCanvas("../../../lib/test/component/img0.base64");
             const [canvas1, context1] = await createImgCanvas("../../../lib/test/component/img1.base64");
@@ -133,7 +135,7 @@
             const possibleDesRects = [];
             const maskColors = context0.getImageData(maskL, maskT, maskR - maskL, maskB - maskT).data;
             for (let alpha = 0.3; alpha <= 0.7; alpha += 0.05) {
-                const grayMask = [0, 0, 0, 255 * alpha];
+                const grayMask = [...gapMaskColor, 255 * alpha];
                 const mixColors = [];
                 for (let i = 0; i < maskColors.length; i += 4) {
                     const mixedColor = mixColor(maskColors.subarray(i, i + 4), grayMask);

@@ -973,12 +973,16 @@ export class PuppeteerUtil {
      * @param wrapperSelector 拼图验证码控件dom元素的selector
      * @param dragRect 可拖动的滑块控件的区域 [left, top, right, bottom] （相对于wrapperSelector）
      * @param clipRect 拼图区域，用于截图计算拖动偏移 [left, top, right, bottom] （相对于wrapperSelector）
+     * @param gapMaskColor 缺口地方的透明遮罩颜色，一般为透明黑色或透明白色，默认为透明黑色，传值为 [0,0,0]
+     * @param distanceFix 用于部分情况下修正拖动距离
      */
     static async dragJigsaw(
         page: Page | Frame,
         wrapperSelector: string,
         dragRect: [number, number, number, number],
-        clipRect: [number, number, number, number]) {
+        clipRect: [number, number, number, number],
+        gapMaskColor: [number, number, number] = [0, 0, 0],
+        distanceFix: (computedDis: number) => number = null) {
         // 原位置，向右拖动5px，向右拖动10px，截取三张图片，通过三张截图计算出 拼图 和 缺图 位置
         const [topPage, frameLeft, frameTop] = await this.getIFramePageAndPos(page);
         const [wrapperLeft, wrapperTop] = await page.evaluate(wrapperSelector => {
@@ -1031,7 +1035,7 @@ export class PuppeteerUtil {
         });
 
         // 识别拖动距离
-        const dragDistance = await page.evaluate(async (imgBase64_0, imgBase64_1) => {
+        let dragDistance = await page.evaluate(async (imgBase64_0: string, imgBase64_1: string, gapMaskColor: [number, number, number]) => {
             function createImgCanvas(imgSrc): Promise<[HTMLCanvasElement, CanvasRenderingContext2D]> {
                 return new Promise(resolve => {
                     const img = document.createElement("img");
@@ -1148,7 +1152,7 @@ export class PuppeteerUtil {
             const possibleDesRects = [];
             const maskColors = context0.getImageData(maskL, maskT, maskR - maskL, maskB - maskT).data;
             for (let alpha = 0.3; alpha <= 0.7; alpha += 0.05) {
-                const grayMask = [0, 0, 0, 255 * alpha];
+                const grayMask = [...gapMaskColor, 255 * alpha];
                 const mixColors = [];
                 for (let i = 0; i < maskColors.length; i += 4) {
                     const mixedColor = mixColor(maskColors.subarray(i, i + 4), grayMask);
@@ -1188,7 +1192,8 @@ export class PuppeteerUtil {
                 return bestDesRect.delta;
             }
             // end
-        }, img0, img1);
+        }, img0, img1, gapMaskColor);
+        typeof distanceFix == "function" && (dragDistance = distanceFix(dragDistance));
 
         // 拖动到正确的位置
         const dur = Math.max(dragDistance / 300, 0.3);
