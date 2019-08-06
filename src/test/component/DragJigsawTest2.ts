@@ -16,7 +16,7 @@ class TestTask {
         await PromiseUtil.sleep(500);
         await PuppeteerUtil.dragJigsaw(page,
             "div.form-input-mobile-number div.yidun_control",
-            [2, 0, 40, 40], [0, -204, 382, -16], [255, 255, 255], dis => dis + 13);
+            [2, 0, 40, 40], [0, -204, 382, -16], [255, 255, 255], dis => dis + 12);
         await PromiseUtil.sleep(1000000000);
     }
 
