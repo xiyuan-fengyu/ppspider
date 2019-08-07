@@ -17,8 +17,9 @@ class TestTask {
             await PromiseUtil.sleep(1000);
             const res: Response = await PuppeteerUtil.triggerAndWaitResponse(page,
                 () => PuppeteerUtil.dragJigsaw(page,
-                    "div.geetest_holder.geetest_mobile.geetest_ant.geetest_embed",
-                    [25, 188, 46, 206], [12, 12, 260, 160]),
+                    "div.geetest_slider_button",
+                    "canvas.geetest_canvas_slice",
+                    "canvas.geetest_canvas_bg"),
                 url => url.startsWith("https://api.geetest.com/ajax.php?"), 1000);
             if (res) {
                 const resJson = PuppeteerUtil.jsonp(await res.text());
