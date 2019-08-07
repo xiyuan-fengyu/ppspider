@@ -19,7 +19,9 @@ class TestTask {
                 () => PuppeteerUtil.dragJigsaw(page,
                     "div.geetest_slider_button",
                     "canvas.geetest_canvas_slice",
-                    "canvas.geetest_canvas_bg"),
+                    "canvas.geetest_canvas_bg",
+                    dis => dis - 2,
+                    ),
                 url => url.startsWith("https://api.geetest.com/ajax.php?"), 1000);
             if (res) {
                 const resJson = PuppeteerUtil.jsonp(await res.text());

@@ -910,32 +910,23 @@ export class PuppeteerUtil {
         return path;
     }
 
-    static async drag(page: Page, from: number[], to: number[], T: number, steps: number) {
+    static async drag(page: Page, from: number[], to: number[], duration: number = 0.6, steps: number = 30) {
+        const xs = this.easeInOutBySin(duration, from[0], to[0], duration / steps);
         const ys = this.randomYs(from[1], to[1], steps);
-
-        const newDragPath = [from];
-        const S = to[0] - from[0];
-        for (let i = 1; i <= steps; i++) {
-            const t = T / steps * i;
-            const s = -400 / Math.pow(T, 2) * Math.pow(t - T / 2, 3) + 300 * t + S - 250 * T;
-            newDragPath.push([s + from[0], ys[i]]);
+        const newDragPath = [];
+        for (let i = 0; i < xs.length; i++) {
+            newDragPath.push([xs[i], ys[i]]);
         }
-
-        // for (let i = 0; i < xs.length; i++) {
-        //     newDragPath.push([xs[i], ys[i] == null ? to[1] : ys[i]]);
-        // }
 
         // 拖动鼠标
-        await page.mouse.move(from[0], from[1]);
+        await page.mouse.move(newDragPath[0][0], newDragPath[0][1]);
         await page.mouse.down();
-        // 将时间平均分为 steps 部分，每部分的唯一
-        for (let i = 1; i <= steps; i++) {
+        for (let i = 1; i < newDragPath.length; i++) {
             await Promise.all([
                 page.mouse.move(newDragPath[i][0], newDragPath[i][1], {steps: 1}),
-                PromiseUtil.sleep(T / steps)
+                PromiseUtil.sleep(duration / steps * 1000)
             ]);
         }
-        await PromiseUtil.sleep(10);
         await page.mouse.up();
     }
 
@@ -972,7 +963,7 @@ export class PuppeteerUtil {
             dragFromTo[1][1] += frameTop;
         }
 
-        await this.drag(topPage, dragFromTo[0], dragFromTo[1], 0.75, 30);
+        await this.drag(topPage, dragFromTo[0], dragFromTo[1], 0.45, 30);
     }
 
     /**
@@ -982,16 +973,16 @@ export class PuppeteerUtil {
      * @param sliderSelector
      * @param frontSelector
      * @param backSelector
-     * @param gapMaskColor 缺口地方的透明遮罩颜色，一般为透明黑色或透明白色，默认为透明黑色，传值为 [0,0,0]
      * @param distanceFix 用于部分情况下修正拖动距离
+     * @param gapMaskColor 缺口地方的透明遮罩颜色，一般为透明黑色或透明白色，默认为透明黑色，传值为 [0,0,0]
      */
     static async dragJigsaw(
         page: Page | Frame,
         sliderSelector: string,
         frontSelector: string,
         backSelector: string,
-        gapMaskColor: [number, number, number] = [0, 0, 0],
-        distanceFix: (computedDis: number) => number = null) {
+        distanceFix: (computedDis: number) => number = null,
+        gapMaskColor: [number, number, number] = [0, 0, 0]) {
         // 原位置，向右拖动5px，截取两张图片，通过两张截图计算出 拼图 和 缺图 位置，拖动距离
         const [topPage, frameLeft, frameTop] = await this.getIFramePageAndPos(page);
         const getPosAndImgBase64 = (selector: string) => page.evaluate(async selector => {
@@ -1223,7 +1214,7 @@ export class PuppeteerUtil {
             ];
         }, sliderSelector);
 
-        const dur = Math.max(dragDistance / 180, 0.6);
+        const dur = Math.max(dragDistance / 360, 0.3);
         // 拖动到正确的位置
         await this.drag(topPage,
             [dragPoint[0] + frameLeft, dragPoint[1] + frameTop],
