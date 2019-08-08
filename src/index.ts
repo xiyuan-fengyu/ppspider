@@ -8,6 +8,7 @@ export {DateUtil} from "./common/util/DateUtil";
 export {DownloadResult, DownloadUtil} from "./common/util/DownloadUtil";
 export {FileUtil} from "./common/util/FileUtil";
 export {logger, LoggerSetting} from "./common/util/logger";
+export {EasingFunctions, Paths} from "./common/util/Paths";
 export {PromiseUtil} from "./common/util/PromiseUtil";
 export {StringUtil} from "./common/util/StringUtil";
 export {RequestUtil, SimpleResponse} from "./common/util/RequestUtil";

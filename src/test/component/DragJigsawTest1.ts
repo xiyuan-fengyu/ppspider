@@ -20,7 +20,7 @@ class TestTask {
                     "div.geetest_slider_button",
                     "canvas.geetest_canvas_slice",
                     "canvas.geetest_canvas_bg",
-                    dis => dis - 2,
+                    dis => dis + 1
                     ),
                 url => url.startsWith("https://api.geetest.com/ajax.php?"), 1000);
             if (res) {
@@ -32,7 +32,7 @@ class TestTask {
                     await page.tap(".geetest_panel_error_content");
                 }
             }
-            await PromiseUtil.sleep(2000);
+            await PromiseUtil.sleep(3000);
         }
         await PromiseUtil.sleep(1000000000);
     }

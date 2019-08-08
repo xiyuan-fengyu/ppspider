@@ -7,6 +7,8 @@ import {FileUtil} from "../common/util/FileUtil";
 import * as http from "http";
 import {RequestUtil} from "../common/util/RequestUtil";
 import {PromiseUtil} from "..";
+import * as url from "url";
+import {EasingFunctions, Paths} from "../common/util/Paths";
 
 
 export type ResponseListener = (response: Response) => any;
@@ -870,49 +872,9 @@ export class PuppeteerUtil {
         return [curFrame as Page, frameLeft, frameTop];
     }
 
-    /**
-     * 模拟 ease-in-out 缓动，目前效果并不好，改用真实拖拉录制的数据进行缩放计算路径
-     * 参考 https://www.cnblogs.com/cloudgamer/archive/2009/01/06/Tween.html
-     * 使用 sin 来模拟时间和位置的关系
-     * s = [sin(PI * (t - T / 2) / T) + 1] * S / 2 + S0
-     * @param T 整个运动持续时间(单位：秒)
-     * @param fromS 整个运动的起始位置(单位：像素px)
-     * @param toS 整个运动的结束位置(单位：像素px)
-     * @param tStep 步进时长(单位：秒)
-     */
-    private static easeInOutBySin(T: number, fromS: number, toS: number, tStep: number = 0.05) {
-        const path = [];
-        for (let t = 0; t <= T; t += tStep) {
-            const s = (Math.sin(Math.PI * (t - T / 2) / T) + 1) * (toS - fromS) / 2 + fromS;
-            path.push(s);
-        }
-        return path;
-    }
-
-    private static randomYs(fromY: number, toY: number, steps: number, stepOffset: number = 1, maxOffset: number = 4) {
-        const endSteps = maxOffset / stepOffset;
-        const path = [fromY];
-        let curY = fromY;
-        const stepOffsets = [-stepOffset, 0, stepOffset];
-        for (let i = 1; i < steps; i++) {
-            if (i + endSteps >= steps) {
-                const newY = curY + (toY - curY) / (steps - i);
-                if (Math.abs(newY - curY) > maxOffset) {
-                    curY = newY;
-                }
-            }
-            else {
-                curY += stepOffsets[Math.floor(Math.random() * stepOffsets.length)];
-            }
-            path.push(curY);
-        }
-        path.push(toY);
-        return path;
-    }
-
-    static async drag(page: Page, from: number[], to: number[], duration: number = 0.6, steps: number = 30) {
-        const xs = this.easeInOutBySin(duration, from[0], to[0], duration / steps);
-        const ys = this.randomYs(from[1], to[1], steps);
+    static async drag(page: Page, from: number[], to: number[], duration: number = 0.6, steps: number = 60, easing: keyof EasingFunctions = "quarticInOut") {
+        const xs = Paths.easing(from[0], to[0], duration, steps, easing);
+        const ys = Paths.randomOffset(from[1], to[1], steps);
         const newDragPath = [];
         for (let i = 0; i < xs.length; i++) {
             newDragPath.push([xs[i], ys[i]]);
@@ -922,10 +884,8 @@ export class PuppeteerUtil {
         await page.mouse.move(newDragPath[0][0], newDragPath[0][1]);
         await page.mouse.down();
         for (let i = 1; i < newDragPath.length; i++) {
-            await Promise.all([
-                page.mouse.move(newDragPath[i][0], newDragPath[i][1], {steps: 1}),
-                PromiseUtil.sleep(duration / steps * 1000)
-            ]);
+            page.mouse.move(newDragPath[i][0], newDragPath[i][1], {steps: 1}).catch(err => {});
+            await PromiseUtil.sleep(duration / steps * 1000);
         }
         await page.mouse.up();
     }
@@ -963,7 +923,7 @@ export class PuppeteerUtil {
             dragFromTo[1][1] += frameTop;
         }
 
-        await this.drag(topPage, dragFromTo[0], dragFromTo[1], 0.45, 30);
+        await this.drag(topPage, dragFromTo[0], dragFromTo[1], 0.45, 60, "sinusoidalInOut");
     }
 
     /**
@@ -985,40 +945,46 @@ export class PuppeteerUtil {
         gapMaskColor: [number, number, number] = [0, 0, 0]) {
         // 原位置，向右拖动5px，截取两张图片，通过两张截图计算出 拼图 和 缺图 位置，拖动距离
         const [topPage, frameLeft, frameTop] = await this.getIFramePageAndPos(page);
-        const getPosAndImgBase64 = (selector: string) => page.evaluate(async selector => {
+        const getImageInfo = (selector: string) => page.evaluate(selector => {
             const dom = document.querySelector(selector);
             const rect = dom.getBoundingClientRect();
-            let imgOrBase64 = null;
+            let imgSrc: string = null;
             if (dom.nodeName == "CANVAS") {
-                imgOrBase64 = (dom as HTMLCanvasElement).toDataURL('image/png');
+                imgSrc = (dom as HTMLCanvasElement).toDataURL('image/png');
             }
             else if (dom.nodeName == "IMG") {
-                const img = dom as HTMLImageElement;
-                const canvas = document.createElement("canvas");
-                canvas.width = img.naturalWidth;
-                canvas.height = img.naturalHeight;
-                const context = canvas.getContext("2d");
-                context.drawImage(img, 0, 0, canvas.width, canvas.height);
-                imgOrBase64 = (canvas as HTMLCanvasElement).toDataURL('image/png');
+                imgSrc = dom.src;
             }
-            return [rect.left, rect.top, imgOrBase64];
-        }, selector);
+            return {
+                left: rect.left,
+                top: rect.top,
+                width: rect.width,
+                height: rect.height,
+                src: imgSrc
+            };
+        }, selector).then(async res => {
+            if (!res.src.startsWith("data:image/png;base64,")) {
+                const pageUrl = page.url();
+                const imgUrl = url.resolve(pageUrl, res.src);
+                const imgRes = await RequestUtil.simple({
+                    url: imgUrl,
+                    headers: {
+                        "Referer": pageUrl,
+                        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36"
+                    }
+                });
+                res.src = "data:image/png;base64," + imgRes.body.toString("base64");
+            }
+            return res;
+        });
 
-        const [frontLeft, frontTop, frontBase64] = await getPosAndImgBase64(frontSelector);
-        const [backLeft, backTop, backBase64] = await getPosAndImgBase64(backSelector);
+        const frontInfo = await getImageInfo(frontSelector);
+        const backInfo = await getImageInfo(backSelector);
 
         const jigsawInfo = {
             gapMaskColor: gapMaskColor,
-            front: {
-                left: frontLeft,
-                top: frontTop,
-                base64: frontBase64
-            },
-            back: {
-                left: backLeft,
-                top: backTop,
-                base64: backBase64
-            }
+            front: frontInfo,
+            back: backInfo
         };
 
         // 保存当前信息，用于 src/test/component/DragJigsaw.html 调试
@@ -1026,18 +992,18 @@ export class PuppeteerUtil {
 
         // 计算拖动距离
         let dragDistance = await page.evaluate(async (jigsawInfo: any) => {
-            function createImgCanvas(imgSrc): Promise<[HTMLCanvasElement, CanvasRenderingContext2D]> {
+            function createImgCanvas(imgInfo): Promise<[HTMLCanvasElement, CanvasRenderingContext2D]> {
                 return new Promise(resolve => {
                     const img = document.createElement("img");
                     img.onload = () => {
                         const canvas = document.createElement("canvas");
-                        canvas.width = img.naturalWidth;
-                        canvas.height = img.naturalHeight;
+                        canvas.width = imgInfo.width;
+                        canvas.height = imgInfo.height;
                         const context = canvas.getContext("2d");
                         context.drawImage(img, 0, 0, canvas.width, canvas.height);
                         resolve([canvas, context]);
                     };
-                    img.src = imgSrc;
+                    img.src = imgInfo.src;
                 });
             }
 
@@ -1045,8 +1011,8 @@ export class PuppeteerUtil {
             const offsetL = jigsawInfo.back.left - jigsawInfo.front.left;
             const offsetT = jigsawInfo.back.top - jigsawInfo.front.top;
 
-            const [frontCanvas, frontContext] = await createImgCanvas(jigsawInfo.front.base64);
-            const [backCanvas, backContext] = await createImgCanvas(jigsawInfo.back.base64);
+            const [frontCanvas, frontContext] = await createImgCanvas(jigsawInfo.front);
+            const [backCanvas, backContext] = await createImgCanvas(jigsawInfo.back);
             const [frontCanvasForDebug, frontContextForDebug] = [null, null];
             const [backCanvasForDebug, backContextForDebug] = [null, null];
 
@@ -1166,7 +1132,7 @@ export class PuppeteerUtil {
                     for (let xDelta = 45; xDelta < backCanvas.width - 50; xDelta++) {
                         const checkColors = backContext.getImageData(maskCenterL + offsetL + xDelta, maskCenterT + offsetT, maskCenterR - maskCenterL, maskCenterB - maskCenterT).data;
                         const diff = colorDiff(mixedColors, checkColors);
-                        if (diff < 20) {
+                        if (diff < 25) {
                             if (possiblePosArr.length > 0 && possiblePosArr[0].diff < diff) {
 
                             }
@@ -1184,10 +1150,31 @@ export class PuppeteerUtil {
                     }
                 }
                 if (possiblePosArr.length) {
+                    // 如果仅通过 diff 判定出多个最优解，则还需要通过扩大mask的范围，一直到diff有唯一最小值
+                    let spreadSize = 12;
+                    while (possiblePosArr.length > 1) {
+                        const maskColors = frontContext.getImageData(maskCenterL - spreadSize, maskCenterT - spreadSize, maskCenterR - maskCenterL + spreadSize * 2, maskCenterB - maskCenterT + spreadSize * 2).data;
+                        for (let item of possiblePosArr) {
+                            const grayMask = [...gapMaskColor, 255 * item.alpha];
+                            const mixedColors = mixColors(maskColors, grayMask);
+                            const checkColors = backContext.getImageData(maskCenterL - spreadSize + item.delta + offsetL, maskCenterT - spreadSize + offsetT, maskCenterR - maskCenterL + spreadSize * 2, maskCenterB - maskCenterT + spreadSize * 2).data;
+                            item.spreadDiff = colorDiff(mixedColors, checkColors);
+                            item.spreadSize = spreadSize;
+                        }
+                        possiblePosArr.sort((o1, o2) => o1.spreadDiff - o2.spreadDiff);
+                        for (let i = 1; i < possiblePosArr.length; i++) {
+                            if (possiblePosArr[i].spreadDiff !== possiblePosArr[0].spreadDiff) {
+                                possiblePosArr.splice(i, possiblePosArr.length - i);
+                                break;
+                            }
+                        }
+                        spreadSize += 1;
+                    }
+
                     const bestPos = possiblePosArr[0];
 
                     if (frontCanvasForDebug) {
-                        frontContextForDebug.fillStyle = `rgba(${gapMaskColor[0]},${gapMaskColor[1]},${gapMaskColor[2]},${bestPos.alpha})`;
+                        frontContextForDebug.fillStyle = `rgba(0,120,255,0.5)`;
                         frontContextForDebug.fillRect(maskCenterL, maskCenterT, maskCenterR - maskCenterL, maskCenterB - maskCenterT);
                     }
 
@@ -1214,12 +1201,12 @@ export class PuppeteerUtil {
             ];
         }, sliderSelector);
 
-        const dur = Math.max(dragDistance / 360, 0.3);
+        const dur = Math.min(Math.max(dragDistance / 240, 0.45), 0.9);
         // 拖动到正确的位置
         await this.drag(topPage,
             [dragPoint[0] + frameLeft, dragPoint[1] + frameTop],
             [dragPoint[0] + frameLeft + dragDistance, dragPoint[1] + frameTop + Math.random() * 6 - 3],
-            dur, 30);
+            dur, 60, "quarticInOut");
     }
 
 }

@@ -9,13 +9,19 @@
             margin: 0;
         }
 
-        body canvas {
+        body {
+            display: flex;
+            justify-content: center;
+        }
+
+        #canvasBox canvas {
             display: block;
-            margin: 12px auto;
+            margin: 12px 12px 0 12px;
         }
     </style>
 </head>
 <body>
+    <div id="canvasBox"></div>
 
     <script>
         (async () => {
@@ -29,18 +35,18 @@
                 });
             }
 
-            async function createImgCanvas(imgBase64) {
+            async function createImgCanvas(imgInfo) {
                 return new Promise(resolve => {
                     const img = document.createElement("img");
                     img.onload = () => {
                         const canvas = document.createElement("canvas");
-                        canvas.width = img.naturalWidth;
-                        canvas.height = img.naturalHeight;
+                        canvas.width = imgInfo.width;
+                        canvas.height = imgInfo.height;
                         const context = canvas.getContext("2d");
                         context.drawImage(img, 0, 0, canvas.width, canvas.height);
                         resolve([canvas, context]);
                     };
-                    img.src = imgBase64;
+                    img.src = imgInfo.src;
                 });
             }
 
@@ -50,12 +56,13 @@
             const offsetT = jigsawInfo.back.top - jigsawInfo.front.top;
 
             // 需要先运行一次 src/test/component/DragJigsawTest1 或 src/test/component/DragJigsawTest2 来生成对应的验证码截图
-            const [frontCanvas, frontContext] = await createImgCanvas(jigsawInfo.front.base64);
-            const [backCanvas, backContext] = await createImgCanvas(jigsawInfo.back.base64);
-            const [frontCanvasForDebug, frontContextForDebug] = await createImgCanvas(jigsawInfo.front.base64);
-            const [backCanvasForDebug, backContextForDebug] = await createImgCanvas(jigsawInfo.back.base64);
-            document.body.appendChild(frontCanvasForDebug);
-            document.body.appendChild(backCanvasForDebug);
+            const [frontCanvas, frontContext] = await createImgCanvas(jigsawInfo.front);
+            const [backCanvas, backContext] = await createImgCanvas(jigsawInfo.back);
+            const [frontCanvasForDebug, frontContextForDebug] = await createImgCanvas(jigsawInfo.front);
+            const [backCanvasForDebug, backContextForDebug] = await createImgCanvas(jigsawInfo.back);
+            const canvasBox = document.getElementById("canvasBox");
+            canvasBox.appendChild(frontCanvasForDebug);
+            canvasBox.appendChild(backCanvasForDebug);
 
             {
                 // start
@@ -173,7 +180,7 @@
                     for (let xDelta = 45; xDelta < backCanvas.width - 50; xDelta++) {
                         const checkColors = backContext.getImageData(maskCenterL + offsetL + xDelta, maskCenterT + offsetT, maskCenterR - maskCenterL, maskCenterB - maskCenterT).data;
                         const diff = colorDiff(mixedColors, checkColors);
-                        if (diff < 20) {
+                        if (diff < 25) {
                             if (possiblePosArr.length > 0 && possiblePosArr[0].diff < diff) {
 
                             }
@@ -191,10 +198,31 @@
                     }
                 }
                 if (possiblePosArr.length) {
+                    // 如果仅通过 diff 判定出多个最优解，则还需要通过扩大mask的范围，一直到diff有唯一最小值
+                    let spreadSize = 12;
+                    while (possiblePosArr.length > 1) {
+                        const maskColors = frontContext.getImageData(maskCenterL - spreadSize, maskCenterT - spreadSize, maskCenterR - maskCenterL + spreadSize * 2, maskCenterB - maskCenterT + spreadSize * 2).data;
+                        for (let item of possiblePosArr) {
+                            const grayMask = [...gapMaskColor, 255 * item.alpha];
+                            const mixedColors = mixColors(maskColors, grayMask);
+                            const checkColors = backContext.getImageData(maskCenterL - spreadSize + item.delta + offsetL, maskCenterT - spreadSize + offsetT, maskCenterR - maskCenterL + spreadSize * 2, maskCenterB - maskCenterT + spreadSize * 2).data;
+                            item.spreadDiff = colorDiff(mixedColors, checkColors);
+                            item.spreadSize = spreadSize;
+                        }
+                        possiblePosArr.sort((o1, o2) => o1.spreadDiff - o2.spreadDiff);
+                        for (let i = 1; i < possiblePosArr.length; i++) {
+                            if (possiblePosArr[i].spreadDiff !== possiblePosArr[0].spreadDiff) {
+                                possiblePosArr.splice(i, possiblePosArr.length - i);
+                                break;
+                            }
+                        }
+                        spreadSize += 1;
+                    }
+
                     const bestPos = possiblePosArr[0];
 
                     if (frontCanvasForDebug) {
-                        frontContextForDebug.fillStyle = `rgba(${gapMaskColor[0]},${gapMaskColor[1]},${gapMaskColor[2]},${bestPos.alpha})`;
+                        frontContextForDebug.fillStyle = `rgba(0,120,255,0.5)`;
                         frontContextForDebug.fillRect(maskCenterL, maskCenterT, maskCenterR - maskCenterL, maskCenterB - maskCenterT);
                     }
 

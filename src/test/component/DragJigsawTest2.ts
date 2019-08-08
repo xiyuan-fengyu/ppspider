@@ -18,7 +18,7 @@ class TestTask {
             "div.form-input-mobile-number div.yidun_slider",
             "div.form-input-mobile-number img.yidun_jigsaw",
             "div.form-input-mobile-number img.yidun_bg-img",
-            dis => dis + 12,
+            dis => dis + 17,
             [255, 255, 255]
             );
         await PromiseUtil.sleep(1000000000);

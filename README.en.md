@@ -550,7 +550,7 @@ Job panel: search jobs and view details
 
 
 # Update Note
-2019-07-31 v2.2.2-preview.1565077196541
+2019-07-31 v2.2.2-preview.1565240656871
 1. @Bean @Autowired bug fixed, support type identification for @Autowired   
 2. Add new method RequestUtil.linesToHeaders to parse header-lines; add headerLines property to the parameter named options of
     RequestUtil.simple, add an optional parameter handler to watch the response    
