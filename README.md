@@ -144,6 +144,7 @@ https://github.com/xiyuan-fengyu/ppspider_docker_deploy
 15. 设置job的最大尝试次数 [SetMaxTryApp](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/examples/SetMaxTryApp.ts)  
 16. Page.evaluate 执行 async function [PuppeteerEvalAsyncApp](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/examples/PuppeteerEvalAsyncApp.ts)    
 17. AddToQueue/FromQueue name 属性使用正则表达式，动态创建一组队列 [AddToRegexQueue](https://github.com/xiyuan-fengyu/ppspider/blob/master/src/test/component/AddToRegexQueue.ts)      
+18. 滑块验证码 [PuppeteerUtil.dragJigsaw](https://github.com/xiyuan-fengyu/ppspider/blob/master/src/test/component/DragJigsawTest1.ts)   
 
 # 系统介绍
 ## 装饰器

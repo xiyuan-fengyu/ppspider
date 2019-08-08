@@ -128,7 +128,8 @@ https://github.com/xiyuan-fengyu/ppspider_docker_deploy/blob/master/README.en.md
 15. Set max try num of job [SetMaxTryApp](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/examples/SetMaxTryApp.ts)  
 16. Page.evaluate with async function [PuppeteerEvalAsyncApp](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/examples/PuppeteerEvalAsyncApp.ts)  
 17. Set AddToQueue/FromQueue name with a regexp string to create a series of queues dynamically [AddToRegexQueue](https://github.com/xiyuan-fengyu/ppspider/blob/master/src/test/component/AddToRegexQueue.ts)    
-  
+18. Drag to complete the puzzle [PuppeteerUtil.dragJigsaw](https://github.com/xiyuan-fengyu/ppspider/blob/master/src/test/component/DragJigsawTest1.ts)  
+   
 # ppspider System Introduction
 ## Decorator
 Declare like    
