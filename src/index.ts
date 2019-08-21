@@ -59,4 +59,5 @@ export {
     LinkPredictMap,
     PuppeteerUtil
 } from "./puppeteer/PuppeteerUtil";
-export {PuppeteerWorkerFactory, Page} from "./puppeteer/PuppeteerWorkerFactory";
+export {PuppeteerWorkerFactory} from "./puppeteer/PuppeteerWorkerFactory";
+export {Page} from "./puppeteer/Page";

@@ -2,8 +2,7 @@ import {Browser, launch, LaunchOptions} from "puppeteer";
 import {WorkerFactory} from "../spider/worker/WorkerFactory";
 import {Serializable} from "../common/serialize/Serializable";
 import {logger} from "../common/util/logger";
-import {Page} from "puppeteer/lib/Page";
-export {Page};
+import {Page} from "./Page";
 
 @Serializable()
 export class PuppeteerWorkerFactory implements WorkerFactory<Page> {
