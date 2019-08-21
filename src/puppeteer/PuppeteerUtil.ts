@@ -923,7 +923,7 @@ export class PuppeteerUtil {
             dragFromTo[1][1] += frameTop;
         }
 
-        await this.drag(topPage, dragFromTo[0], dragFromTo[1], 0.45, 60, "sinusoidalInOut");
+        await this.drag(topPage, dragFromTo[0], dragFromTo[1], 0.45 + Math.random() * 0.25, 60, "sinusoidalInOut");
     }
 
     /**
