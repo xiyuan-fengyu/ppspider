@@ -131,7 +131,7 @@ export class MongodbDao extends DbDao {
             this.dbPromise.then((db: Db) => {
                 const collection = db.collection(collectionName);
                 collection[multi ? "deleteMany" : "deleteOne"](query, (error, result) => {
-                    PromiseUtil.rejectOrResolve(reject, error, resolve, result.result.n);
+                    PromiseUtil.rejectOrResolve(reject, error, resolve, result && result.result ? result.result.n : 0);
                 });
             });
         });
