@@ -347,7 +347,16 @@ export class SerializableUtil {
                     writer.write(`g.${objSymbol}=getClass(${JSON.stringify(classInfo.id)});`);
                 }
                 else {
-                    writer.write(`g.${objSymbol}=(${obj.toString().replace(/\r?\n/g, ";")});`);
+                    let funStr = obj.toString();
+                    if (funStr.startsWith("class ")) {
+                        // 未用 @Serializable 标记的类不做序列化
+                        writer.write(`g.${objSymbol}={};`);
+                    }
+                    else {
+                        // 只对简单方法进行序列化
+                        funStr = funStr.split(/\r?\n/).filter(line => !line.trimLeft().startsWith("//")).join(";");
+                        writer.write(`g.${objSymbol}=(${funStr});`);
+                    }
                 }
             }
             for (let refInfo of existedObjRefs) {
