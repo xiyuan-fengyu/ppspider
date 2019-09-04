@@ -553,6 +553,7 @@ Job panel: search jobs and view details
 # Update Note
 2019-09-04 v2.2.3-preview.1567565333638  
 1. fix bug: null pointer error in src/common/db/MongodbDao.ts#remove     
+2. add a new parameter to transfer the parent job info for JobOverride callback method    
 
 2019-07-31 v2.2.2-preview
 1. @Bean @Autowired bug fixed, support type identification for @Autowired   

@@ -781,7 +781,7 @@ export class QueueManager {
 
         // 重写 job 的一些信息
         if (jobOverrideConfig) {
-            await jobOverrideConfig.method.call(jobOverrideConfig.target, job);
+            await jobOverrideConfig.method.call(jobOverrideConfig.target, job, parent);
         }
 
         // 通过filter做job存在性检测；增加异步检测的支持

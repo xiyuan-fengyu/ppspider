@@ -519,6 +519,7 @@ Job 面板可以对所有子任务实例进行搜索，查看任务详情
 # 更新日志
 2019-09-04 v2.2.3-preview.1567565333638  
 1. 修复 src/common/db/MongodbDao.ts 中 remove 方法中的空指针bug  
+2. JobOverride 回调方法增加参数，用于传递 parent job    
 
 2019-07-31 v2.2.2
 1. @Bean @Autowired bug修复，@Autowired支持类型识别  
