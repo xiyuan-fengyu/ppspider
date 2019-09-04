@@ -517,6 +517,9 @@ Job 面板可以对所有子任务实例进行搜索，查看任务详情
     参数类型，导致 page 参数无法正常注入，这个错误在启动过程中就会检查出来。  
           
 # 更新日志
+2019-09-04 v2.2.3-preview.1567565333638  
+1. 修复 src/common/db/MongodbDao.ts 中 remove 方法中的空指针bug  
+
 2019-07-31 v2.2.2
 1. @Bean @Autowired bug修复，@Autowired支持类型识别  
 2. RequestUtil 增加多行headers字符串解析方法，simple方法增加 headerLines 属性，方便传入多行headers字符串，
