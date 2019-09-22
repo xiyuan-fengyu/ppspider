@@ -155,9 +155,13 @@ export class PuppeteerUtil {
                         if (resourceType === "image") {
                             let responseCheckUrls: ResponseCheckUrlInfo[] = page[kResponseCheckUrls] || [];
                             if (responseCheckUrls.find(item => {
-                                let checkUrl = item.url.toString();
-                                if (checkUrl.startsWith("//")) checkUrl = requestUrl.split("//")[0] + checkUrl;
-                                return requestUrl.match(checkUrl) != null || checkUrl === requestUrl;
+                                let checkUrl = item.url;
+                                if (typeof item.url == "string") {
+                                    if ((checkUrl as string).startsWith("//")) {
+                                        checkUrl = requestUrl.split("//")[0] + checkUrl;
+                                    }
+                                }
+                                return requestUrl.match(checkUrl) || checkUrl == requestUrl;
                             })) {
                                 // 下载图片，不阻止
                             }
@@ -197,8 +201,12 @@ export class PuppeteerUtil {
                 let responseCheckUrls: ResponseCheckUrlInfo[] = page[kResponseCheckUrls] || [];
                 const removes = [];
                 for (let responseCheckUrl of responseCheckUrls) {
-                    let checkUrl = responseCheckUrl.url.toString();
-                    if (checkUrl.startsWith("//")) checkUrl = responseUrl.split("//")[0] + checkUrl;
+                    let checkUrl = responseCheckUrl.url;
+                    if (typeof checkUrl == "string") {
+                        if (checkUrl.startsWith("//")) {
+                            checkUrl = responseUrl.split("//")[0] + checkUrl;
+                        }
+                    }
                     if (responseUrl === checkUrl || responseUrl.match(checkUrl)) {
                         try {
                             await responseCheckUrl.listener(response);
@@ -336,7 +344,7 @@ export class PuppeteerUtil {
                         img.id = imgId;
                         img.style.display = "none";
                         document.body.appendChild(img);
-                        window[imgId] = img;
+                        (window as any)[imgId] = img;
                         return selectorOrSrc;
                     }
                     else {
@@ -412,7 +420,7 @@ export class PuppeteerUtil {
                     }
                 }, timeout);
                 await page.evaluate((imgId, newSrc) => {
-                    window[imgId].src = newSrc;
+                    (window as any)[imgId].src = newSrc;
                 }, imgId, newImgSrc);
                 await waitRespnse.then(res => {
                     if (res.isTimeout) {
@@ -444,33 +452,43 @@ export class PuppeteerUtil {
     static async links(page: Page | Frame, predicts: LinkPredictMap, onlyAddToFirstMatch: boolean = true) {
         if (predicts == null || Object.keys(predicts).length == 0) return {};
 
+        const predictExpEncode = predictExp => {
+            if (typeof predictExp == "function") {
+                return "function " + predictExp.toString();
+            }
+            else if (predictExp instanceof RegExp) {
+                return "RegExp " + predictExp.toString();
+            }
+            else return "string " + predictExp;
+        };
+
         const predictStrMap: any = {};
         for (let groupName of Object.keys(predicts)) {
             const predict = predicts[groupName];
             if (predict.constructor == Array) {
-                let predictExp = predict[1];
-                if (predictExp instanceof RegExp) {
-                    predictExp = predictExp.toString();
-                    predictExp = predictExp.substring(1, predictExp.lastIndexOf('/'));
-                }
-                predictStrMap[groupName] = [
-                    predict[0],
-                    (typeof predict[1] === "function" ? "function" : "string") + " " + (predictExp || "")
-                ];
+                predictStrMap[groupName] = [predict[0], predictExpEncode(predict[1])];
             }
             else {
-                let predictExp = predict;
-                if (predictExp instanceof RegExp) {
-                    predictExp = predictExp.toString();
-                    predictExp = predictExp.substring(1, predictExp.lastIndexOf('/'));
-                }
-                predictStrMap[groupName] = (typeof predict === "function" ? "function" : "string") + " " + (predictExp || "");
+                predictStrMap[groupName] = predictExpEncode(predict);
             }
         }
         return await page.evaluate((predictStrMap, onlyAddToFirstMatch) => {
             const hrefs = {};
             const existed = {};
             const all = document.querySelectorAll("a") || [];
+
+            const predictExpDecode = predictExp => {
+                const spaceI = predictExp.indexOf(' ');
+                const predictType = predictExp.substring(0, spaceI);
+                const predictRegPrFunStr = predictExp.substring(spaceI + 1);
+                let predictRegOrFun = null;
+                if (predictType == "function" || predictType == "RegExp") {
+                    eval("predictRegOrFun = " + predictRegPrFunStr);
+                }
+                else predictRegOrFun = predictRegPrFunStr;
+                return predictRegOrFun;
+            };
+
             for (let groupName of Object.keys(predictStrMap)) {
                 const predict = predictStrMap[groupName];
                 let selector = null;
@@ -482,13 +500,7 @@ export class PuppeteerUtil {
                 }
                 else predictStr = predict;
 
-                const spaceI = predictStr.indexOf(' ');
-                const predictType = predictStr.substring(0, spaceI);
-                const predictRegPrFunStr = predictStr.substring(spaceI + 1);
-                if (predictType == "function") {
-                    eval("predictRegOrFun = " + predictRegPrFunStr);
-                }
-                else predictRegOrFun = predictRegPrFunStr;
+                predictRegOrFun = predictExpDecode(predictStr);
 
                 const aArr = selector ? (document.querySelectorAll(selector) || []) : all;
                 const matchHrefs = {};
