@@ -517,11 +517,12 @@ Job 面板可以对所有子任务实例进行搜索，查看任务详情
     参数类型，导致 page 参数无法正常注入，这个错误在启动过程中就会检查出来。  
           
 # 更新日志
-2019-09-04 v2.2.3-preview.1569121574515  
+2019-09-04 v2.2.3-preview.1569208986875  
 1. 修复 src/common/db/MongodbDao.ts 中 remove 方法中的空指针bug  
 2. JobOverride 回调方法增加参数，用于传递 parent job    
 3. 序列化过程忽略没有使用@Serializable标记的类信息  
 4. 修复 PuppeteerUtil 中 RegExp 匹配问题  
+5. RequestUtil 增加 SocksProxyAgent  
 
 2019-07-31 v2.2.2
 1. @Bean @Autowired bug修复，@Autowired支持类型识别  

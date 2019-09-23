@@ -2,6 +2,7 @@ import * as request from "request";
 import {CoreOptions, UriOptions, UrlOptions} from "request";
 import * as HttpProxyAgent from 'http-proxy-agent';
 import * as HttpsProxyAgent from 'https-proxy-agent';
+import * as SocksProxyAgent from 'socks-proxy-agent';
 import {IncomingHttpHeaders, IncomingMessage} from "http";
 import {PassThrough} from "stream";
 import * as zlib from "zlib";
@@ -51,7 +52,10 @@ export class RequestUtil {
                 options.headers["accept-encoding"] = "identity, gzip, deflate";
 
                 const reqUrl = options["url"] || options["uri"];
-                if (reqUrl.startsWith("https")) {
+                if (proxy.startsWith("socks")) {
+                    options.agent = new SocksProxyAgent(options.proxy);
+                }
+                else if (reqUrl.startsWith("https")) {
                     options.agent = new HttpsProxyAgent(options.proxy);
                 }
                 else {

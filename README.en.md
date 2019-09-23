@@ -551,11 +551,12 @@ Job panel: search jobs and view details
 
 
 # Update Note
-2019-09-04 v2.2.3-preview.1569121574515  
+2019-09-04 v2.2.3-preview.1569208986875  
 1. fix bug: null pointer error in src/common/db/MongodbDao.ts#remove     
 2. add a new parameter to transfer the parent job info for JobOverride callback method    
 3. ignore classes which are not marked with @Serializable during the serialization process    
 4. fix bug: match with RegExp.toString    
+5. Add SocksProxyAgent support in RequestUtil    
 
 2019-07-31 v2.2.2-preview
 1. @Bean @Autowired bug fixed, support type identification for @Autowired   

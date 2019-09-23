@@ -161,7 +161,7 @@ export class PuppeteerUtil {
                                         checkUrl = requestUrl.split("//")[0] + checkUrl;
                                     }
                                 }
-                                return requestUrl.match(checkUrl) || checkUrl == requestUrl;
+                                return requestUrl.match(checkUrl) != null || checkUrl == requestUrl;
                             })) {
                                 // 下载图片，不阻止
                             }
