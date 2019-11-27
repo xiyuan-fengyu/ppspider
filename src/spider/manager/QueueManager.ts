@@ -2,7 +2,7 @@ import {Assign, Serializable, SerializableUtil, Transient} from "../../common/se
 import {Queue} from "../queue/Queue";
 import {
     AddToQueueInfo,
-    AddToQueueInfos,
+    AddToQueueInfos, Class_Filter,
     FromQueueConfig,
     JobConfig,
     JobOverrideConfig,
@@ -394,7 +394,7 @@ export class QueueManager {
     }
 
     reExecuteOnStartJob(queueName: string) {
-        this.addOnStartJob(queueName);
+        this.addOnStartJob(queueName, NoFilter);
         return {
             success: true,
             message: "add job to queue successfully"
@@ -622,13 +622,13 @@ export class QueueManager {
         this.addOnStartJob(queueName);
     }
 
-    private addOnStartJob(queueName: string) {
+    private addOnStartJob(queueName: string, filterType: Class_Filter = BloonFilter) {
         const config = this.queueInfos[queueName].config as OnStartConfig;
         this.addToQueue(null, {
             queueName: queueName,
             jobs: config.urls,
             queueType: DefaultQueue,
-            filterType: BloonFilter
+            filterType: filterType
         });
     }
 
