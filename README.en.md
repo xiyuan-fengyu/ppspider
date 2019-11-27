@@ -551,7 +551,7 @@ Job panel: search jobs and view details
 
 
 # Update Note
-2019-09-04 v2.2.3-preview.1574828593065   
+2019-09-04 v2.2.3-preview.1574833261676   
 1. OnStart use BloonFilter as default    
 2. fix a bug in db search by page    
 

@@ -345,7 +345,7 @@ export class QueueManager {
                                 value: queueInfo.config["cron"]
                             });
                         }
-                        else if (taskType == "FromQueue") {
+                        else {
                             thisQueueInfo.queue = queueInfo.queue;
                         }
 
