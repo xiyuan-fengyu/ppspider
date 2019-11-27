@@ -628,7 +628,7 @@ export class QueueManager {
             queueName: queueName,
             jobs: config.urls,
             queueType: DefaultQueue,
-            filterType: NoFilter
+            filterType: BloonFilter
         });
     }
 

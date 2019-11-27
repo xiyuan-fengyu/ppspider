@@ -551,6 +551,10 @@ Job panel: search jobs and view details
 
 
 # Update Note
+2019-09-04 v2.2.3-preview.1574827952853   
+1. OnStart use BloonFilter as default    
+2. fix a bug in db search by page    
+
 2019-09-04 v2.2.3-preview.1569208986875  
 1. fix bug: null pointer error in src/common/db/MongodbDao.ts#remove     
 2. add a new parameter to transfer the parent job info for JobOverride callback method    
