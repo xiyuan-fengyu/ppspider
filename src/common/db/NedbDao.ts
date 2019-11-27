@@ -453,7 +453,7 @@ export class NedbDao extends DbDao {
                 }
 
                 const pageSize = pager.pageSize || 10;
-                const pageIndex = Math.min(pager.pageIndex || 0, parseInt("" + (total - 1) / pageSize));
+                const pageIndex = Math.min(pager.pageIndex || 0, parseInt("" + Math.max(total - 1, 0) / pageSize));
                 let list;
                 try {
                     list = await this.findList(collectionName, query, pager.projection || {}, pager.sort, pageIndex * pageSize, pageSize);
