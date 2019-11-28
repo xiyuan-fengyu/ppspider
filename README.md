@@ -517,9 +517,10 @@ Job 面板可以对所有子任务实例进行搜索，查看任务详情
     参数类型，导致 page 参数无法正常注入，这个错误在启动过程中就会检查出来。  
           
 # 更新日志
-2019-09-04 v2.2.3-preview.1574836558253   
-1. OnStart任务过滤器默认采用BloonFilter  
+2019-09-04 v2.2.3-preview.1574909694087   
+1. OnStart任务可配置使用 BloonFilter(默认，保存状态后重启不重复执行)或NoFilter(保存状态后重启重复执行)    
 2. 修复db分页查询中的bug  
+3. 添加 OnEvent 注解，用于监听系统事件，目前仅一种实际应用 [OnEvent Example](https://github.com/xiyuan-fengyu/ppspider/blob/master/src/test/component/OnEventTest.ts)     
 
 2019-09-04 v2.2.3-preview.1569208986875  
 1. 修复 src/common/db/MongodbDao.ts 中 remove 方法中的空指针bug  

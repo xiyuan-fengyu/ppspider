@@ -11,7 +11,7 @@ import {
     IdKeyData,
     JobConfig,
     JobOverrideConfig,
-    JobOverrideConfigs,
+    JobOverrideConfigs, OnEventConfig,
     RequestMappingConfig
 } from "../Types";
 import {EventEmitter} from "events";
@@ -70,6 +70,11 @@ export function addDataUiRequestConfig(config: DataUiRequestConfig) {
     dataUiRequestConfigs.push(config);
 }
 
+const onEventConfigs: OnEventConfig[] = [];
+export function addOnEventConfig(config: OnEventConfig) {
+    onEventConfigs.push(config);
+}
+
 export const appInfo: AppInfo = {} as any;
 
 export function Launcher(appConfig: AppConfig) {
@@ -84,6 +89,12 @@ export function Launcher(appConfig: AppConfig) {
     // 初始化消息总线
     appInfo.eventBus = new EventEmitter();
     appInfo.eventBus.setMaxListeners(1024);
+    for (let onEventConfig of onEventConfigs) {
+        appInfo.eventBus.on(onEventConfig.event, (...args: any) => {
+            const target = getBean(onEventConfig.target);
+            target[onEventConfig.method].call(target, ...args);
+        });
+    }
 
     // 设置 QueueManager 状态缓存目录
     appInfo.queueCache = appInfo.queueCache || appInfo.workplace + "/queueCache.txt";

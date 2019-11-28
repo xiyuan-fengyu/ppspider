@@ -6,4 +6,6 @@ export class Events {
 
     static readonly QueueManager_InterruptJobSuccess = jobId => "QueueManager_InterruptJobSuccess_" + jobId;
 
+    static readonly QueueManager_JobExecuted = "QueueManager_JobExecuted";
+
 }

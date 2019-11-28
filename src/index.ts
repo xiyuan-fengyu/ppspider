@@ -32,6 +32,7 @@ export {DataUi, DataUiRequest} from "./spider/decorators/DataUi";
 export {FromQueue} from "./spider/decorators/FromQueue";
 export {JobOverride} from "./spider/decorators/JobOverride";
 export {appInfo, Launcher} from "./spider/decorators/Launcher";
+export {OnEvent} from "./spider/decorators/OnEvent";
 export {OnStart} from "./spider/decorators/OnStart";
 export {OnTime} from "./spider/decorators/OnTime";
 export {RequestMapping} from "./spider/decorators/RequestMapping";
@@ -44,6 +45,7 @@ export {DefaultQueue} from "./spider/queue/DefaultQueue";
 export {AbsQueue} from "./spider/queue/AbsQueue";
 export {Queue} from "./spider/queue/Queue";
 export {WorkerFactory} from "./spider/worker/WorkerFactory";
+export {Events} from "./spider/Events";
 export {NetworkTracing, PageRequests, PageRequest} from "./puppeteer/NetworkTracing";
 export {
     ResponseListener,

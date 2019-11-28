@@ -27,6 +27,7 @@ export type OnStartConfig = {
     exeIntervalJitter?: number; // 在 exeInterval 基础上增加一个随机的抖动，这个值为左右抖动最大半径，默认为 exeIntervalJitter * 0.25
     timeout?: number; // 任务超时时间，单位：毫秒，默认：300000ms(5分钟)，负数表示永不超时
     description?: string; // 任务描述
+    filterType?: Class_Filter; // 添加任务过滤器，默认是 BloonFilter，系统重启时，不会重复执行；如果希望重复执行，可以用 NoFilter
 }
 
 export type OnTimeConfig = {
@@ -78,6 +79,12 @@ export type DataUiRequestConfig = {
     requestMethod: (...args) => any; // 可以是 @DataUi 标记类中的方法
     handleTarget: any; // 处理请求的target类
     handleMethod: string; // 处理请求的method名字
+}
+
+export type OnEventConfig = {
+    event: string,
+    target: any,
+    method: string
 }
 
 export type AppConfig = {

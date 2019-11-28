@@ -550,10 +550,11 @@ Job panel: search jobs and view details
   and the page instance will not be injected successfully. This error is checked during startup.  
 
 
-# Update Note
-2019-09-04 v2.2.3-preview.1574836558253   
-1. OnStart use BloonFilter as default    
-2. fix a bug in db search by page    
+# Update Note   
+2019-09-04 v2.2.3-preview.1574909694087   
+1. OnStart can be configured to use BloonFilter(default, will not re-run after saving status and restart) or NoFilter(will re-run after saving status and restart)    
+2. fix a bug in db search by page  
+3. add a new decorator called OnEvent, used to watch system event, there is only one use presently [OnEvent Example](https://github.com/xiyuan-fengyu/ppspider/blob/master/src/test/component/OnEventTest.ts)     
 
 2019-09-04 v2.2.3-preview.1569208986875  
 1. fix bug: null pointer error in src/common/db/MongodbDao.ts#remove     

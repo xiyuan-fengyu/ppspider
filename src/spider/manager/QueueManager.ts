@@ -299,6 +299,26 @@ export class QueueManager {
         return res;
     }
 
+    private simpleQueueInfos() {
+        const queues: any = {};
+        for (let queueName in this.queueInfos) {
+            const queueInfo = this.queueInfos[queueName];
+            if (!queueInfo.config || !queueInfo.queue) {
+                continue;
+            }
+            const taskType = queueInfo.config['type'];
+            queues[queueName] = {
+                type: taskType,
+                running: queueInfo.curParallel,
+                success: queueInfo.success || 0,
+                fail: queueInfo.fail || 0,
+                tryFail: queueInfo.tryFail || 0,
+                remain: queueInfo.queue.size()
+            };
+        }
+        return queues;
+    }
+
     /**
      * 从运行状态持久化文件中恢复运行状态
      * 实际上是通过反序列化创建了一个临时的QueueManager实例，然后将需要的信息复制给当前的实例
@@ -361,6 +381,15 @@ export class QueueManager {
         catch (e) {
             logger.warn(e.stack);
         }
+
+        // 初始化 OnStart 类型任务
+        for (let queueName in this.queueInfos) {
+            const queueInfo = this.queueInfos[queueName];
+            if (queueInfo.config["type"] == "OnStart") {
+                this.addOnStartJob(queueInfo.name, (queueInfo.config as OnStartConfig).filterType || BloonFilter);
+            }
+        }
+
         this.delayPushInfo();
     }
 
@@ -618,11 +647,10 @@ export class QueueManager {
     }
 
     private addOnStartConfig(config: OnStartConfig) {
-        const queueName = this.addQueueConfig(null, config);
-        this.addOnStartJob(queueName);
+        this.addQueueConfig(null, config);
     }
 
-    private addOnStartJob(queueName: string, filterType: Class_Filter = BloonFilter) {
+    private addOnStartJob(queueName: string, filterType: Class_Filter) {
         const config = this.queueInfos[queueName].config as OnStartConfig;
         this.addToQueue(null, {
             queueName: queueName,
@@ -887,6 +915,11 @@ export class QueueManager {
                             const interval = (queueInfo.config.exeInterval || 0)
                                 + (Math.random() * 2 - 1) * queueInfo.config.exeIntervalJitter;
                             this.queueParallelNextExeTimes[queueName][curParallelIndex] = new Date().getTime() + interval;
+                        }).then(() => {
+                            appInfo.eventBus.emit(Events.QueueManager_JobExecuted, {
+                                job: job,
+                                queues: this.simpleQueueInfos()
+                            });
                         });
                     }
                     else break;
