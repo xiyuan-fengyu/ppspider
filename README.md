@@ -145,6 +145,7 @@ https://github.com/xiyuan-fengyu/ppspider_docker_deploy
 16. Page.evaluate 执行 async function [PuppeteerEvalAsyncApp](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/examples/PuppeteerEvalAsyncApp.ts)    
 17. AddToQueue/FromQueue name 属性使用正则表达式，动态创建一组队列 [AddToRegexQueue](https://github.com/xiyuan-fengyu/ppspider/blob/master/src/test/component/AddToRegexQueue.ts)      
 18. 滑块验证码 [PuppeteerUtil.dragJigsaw](https://github.com/xiyuan-fengyu/ppspider/blob/master/src/test/component/DragJigsawTest1.ts)   
+19. 无头模式下，请求返回结果不正常的处理办法 [HandlBadRequestOnHeadlessApp](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/examples/HandlBadRequestOnHeadlessApp.ts)  
 
 # 系统介绍
 ## 装饰器
@@ -193,6 +194,7 @@ export type OnStartConfig = {
     exeIntervalJitter?: number; // 在 exeInterval 基础上增加一个随机的抖动，这个值为左右抖动最大半径，默认为 exeIntervalJitter * 0.25
     timeout?: number; // 任务超时时间，单位：毫秒，默认：300000ms(5分钟)，负数表示永不超时
     description?: string; // 任务描述
+    filterType?: Class_Filter; // 添加任务过滤器，默认是 BloonFilter；保存状态后，系统重启时，不会重复执行；如果希望重复执行，可以用 NoFilter
 }
 ```
 使用例子 [@OnStart example](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/quickstart/App.ts)  
