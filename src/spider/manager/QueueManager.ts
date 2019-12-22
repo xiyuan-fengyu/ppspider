@@ -948,9 +948,9 @@ export class QueueManager {
             job.tryNum++;
             await appInfo.jobManager.save(job, true);
 
-            let res;
+            let interrupted = false;
             try {
-                res = await new Promise(async (resolve, reject) => {
+                await new Promise(async (resolve, reject) => {
                     // 如果任务设置有超时时间，则设置超时回调
                    if (queueInfo.config.timeout == null || queueInfo.config.timeout >= 0) {
                        const timeout = queueInfo.config.timeout || Defaults.jobTimeout;
@@ -962,6 +962,7 @@ export class QueueManager {
                     const listenInterrupt = (jobId, reason) => {
                         if (jobId == null || jobId == job._id) {
                             // 强制停止任务
+                            interrupted = true;
                             reject(new Error(Events.QueueManager_InterruptJob + ": " + reason));
                             if (jobId) {
                                 // 这里必须要setTimeout才能通知成功，很奇怪
@@ -1001,7 +1002,7 @@ export class QueueManager {
                 this.successNum++;
             }
             catch (e) {
-                if (job.tryNum >= ((job.datas._ || {}).maxTry || Defaults.maxTry)) {
+                if (interrupted || job.tryNum >= ((job.datas._ || {}).maxTry || Defaults.maxTry)) {
                     // 重试次数达到最大，任务失败
                     job.status = JobStatus.Fail;
                     this.failNum++;
