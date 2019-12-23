@@ -155,10 +155,12 @@ export class QueueManager {
         return new Promise<any>(resolve => {
             appInfo.jobManager.job(data._id).then(job => {
                 // 重新设置最大尝试次数
-                if (job.datas._ == null) {
+                if (!job.datas._) {
                     job.datas._ = {};
                 }
-                job.datas._.maxTry = job.tryNum + Defaults.maxTry;
+                if (!job.datas._.maxTry || job.datas._.maxTry >= 0) {
+                    job.datas._.maxTry = job.tryNum + (this.queueInfos[job.queue].config.maxTry || Defaults.maxTry);
+                }
 
                 // 重新添加到任务队列
                 this.addJobToQueue(job, null, job.queue, this.queueInfos[job.queue].queue, null);
@@ -747,12 +749,6 @@ export class QueueManager {
                     continue;
                 }
 
-                if (!queueInfo) {
-                    this.queueInfos[queueName] = queueInfo = {
-                        name: queueName,
-                        queue: null
-                    };
-                }
                 let queue: Queue = queueInfo.queue;
                 if (!queue) {
                     queueInfo.queue = queue = new (jobInfo.queueType || DefaultQueue)();
@@ -765,6 +761,12 @@ export class QueueManager {
                     filter = new theFilterType();
                     queue.addFilter(filter);
                 }
+
+                // 设置最大尝试次数
+                if (!jobInfo._) {
+                    jobInfo._ = {};
+                }
+                jobInfo._.maxTry = jobInfo._.maxTry || queueInfo.config.maxTry || Defaults.maxTry;
 
                 const jobs = jobInfo.jobs;
                 if (jobs != null) {
@@ -1002,7 +1004,8 @@ export class QueueManager {
                 this.successNum++;
             }
             catch (e) {
-                if (interrupted || job.tryNum >= ((job.datas._ || {}).maxTry || Defaults.maxTry)) {
+                const maxTry = ((job.datas._ || {}).maxTry || Defaults.maxTry);
+                if (interrupted || (maxTry >= 0 && job.tryNum >= maxTry)) {
                     // 重试次数达到最大，任务失败
                     job.status = JobStatus.Fail;
                     this.failNum++;
