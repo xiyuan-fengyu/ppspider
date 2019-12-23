@@ -56,6 +56,18 @@ export class QueueInfoComponent implements OnInit, ShouldKeepThisOnNav {
     });
   }
 
+  setQueueRunning(queueName: string, running: boolean) {
+    this.socketIOService.request({
+      key: "setQueueRunning",
+      data: {
+        queue: queueName,
+        running: running
+      }
+    }, res => {
+      this.toasterService.pop(res.success ? "success" : "warning", "Message", res.message);
+    });
+  }
+
   updateQueueConfig(queueName: string, field: string, newValue: any) {
     this.socketIOService.request({
       key: "updateQueueConfig",

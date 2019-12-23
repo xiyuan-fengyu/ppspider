@@ -81,6 +81,10 @@
             <mat-icon
               matTooltip="Execute this OnStart job again">refresh</mat-icon>
           </button>
+          <button (click)="setQueueRunning(queue.name, !queue.running)" mat-icon-button>
+            <mat-icon
+              [matTooltip]="queue.running ? 'Disable this queue' : 'Enable this queue'">{{queue.running ? 'pause' : 'play_arrow'}}</mat-icon>
+          </button>
         </mat-card-title>
         <mat-card-subtitle>
           <span class="taskType">{{queue.type}}</span>

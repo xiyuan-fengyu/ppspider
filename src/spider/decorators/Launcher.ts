@@ -183,7 +183,7 @@ export function Launcher(appConfig: AppConfig) {
             const paramnames = jobConfig["paramnames"];
             const paramtypes = jobConfig["paramtypes"];
             if (paramtypes == null) {
-                logger.error(new Error(`emitDecoratorMetadata is required, enable it in tsconfig.json: 
+                logger.error(new Error(`emitDecoratorMetadata is required, enable it in tsconfig.json:
                 {
                     "compilerOptions": {
                         "emitDecoratorMetadata": true
@@ -310,12 +310,21 @@ export function Launcher(appConfig: AppConfig) {
             }
 
             /**
-             * 更新任务配置
+             * 重新执行OnStart任务
              * @param {ClientRequest} request
              * @returns {any}
              */
             static reExecuteOnStartJob(request: IdKeyData): any {
                 return appInfo.queueManager.reExecuteOnStartJob(request.data);
+            }
+
+            /**
+             * 设置队列运行状态
+             * @param {ClientRequest} request
+             * @returns {any}
+             */
+            static setQueueRunning(request: IdKeyData): any {
+                return appInfo.queueManager.setQueueRunning(request.data.queue, request.data.running);
             }
 
             /**
