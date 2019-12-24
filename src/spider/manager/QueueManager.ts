@@ -24,6 +24,7 @@ import {NoFilter} from "../filter/NoFilter";
 import {Filter} from "../filter/Filter";
 import {BloonFilter} from "../filter/BloonFilter";
 import {PromiseUtil} from "../../common/util/PromiseUtil";
+import {ObjectUtil} from "../../common/util/ObjectUtil";
 
 type QueueInfo = {
 
@@ -256,7 +257,7 @@ export class QueueManager {
                 lastExeTime: queueInfo.lastExeTime,
                 timeout: queueInfo.config.timeout,
                 maxTry: queueInfo.config.maxTry,
-                userConfig: queueInfo.config.userConfig,
+                defaultDatas: queueInfo.config.defaultDatas || {},
             };
             if (taskType == "OnStart") {
                 const urls = queueInfo.config['urls'];
@@ -488,8 +489,8 @@ export class QueueManager {
         else if (data.field == "maxTry") {
           queueInfo.config.maxTry = data.value;
         }
-        else if (data.field == "userConfig") {
-          queueInfo.config.userConfig = data.value;
+        else if (data.field == "defaultDatas") {
+          queueInfo.config.defaultDatas = data.value;
         }
 
         this.delayPushInfo();
@@ -816,6 +817,14 @@ export class QueueManager {
         job.depth || (job.depth = 0);
         job.tryNum || (job.tryNum = 0);
         job.status || (job.status = JobStatus.Waiting);
+
+        // 如果 config 中有 defaultDatas 配置，需要进行defaultDatas和job.datas的融合
+        const queueInfo = this.queueInfos[queueName];
+        if (queueInfo.config.defaultDatas && Object.keys(queueInfo.config.defaultDatas).length > 0) {
+            const mergeDatas = ObjectUtil.deepClone(queueInfo.config.defaultDatas);
+            ObjectUtil.deepAssign(job.datas, mergeDatas);
+            job.datas = mergeDatas;
+        }
 
         // 添加额外信息
         if (_) {
