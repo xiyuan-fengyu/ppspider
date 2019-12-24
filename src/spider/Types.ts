@@ -29,6 +29,7 @@ export type OnStartConfig = {
     description?: string; // 任务描述
     filterType?: Class_Filter; // 添加任务过滤器，默认是 BloonFilter，系统重启时，不会重复执行；如果希望重复执行，可以用 NoFilter
     maxTry?: number; // 最大尝试次数，默认：3次，负数表示一直尝试
+    userConfig?: any; // 用户自定义配置
 }
 
 export type OnTimeConfig = {
@@ -41,6 +42,7 @@ export type OnTimeConfig = {
     timeout?: number;
     description?: string;
     maxTry?: number;
+    userConfig?: any;
 }
 
 export type FromQueueConfig = {
@@ -52,6 +54,7 @@ export type FromQueueConfig = {
     timeout?: number;
     description?: string;
     maxTry?: number;
+    userConfig?: any;
 }
 
 export type JobConfig =  OnStartConfig | OnTimeConfig | FromQueueConfig;

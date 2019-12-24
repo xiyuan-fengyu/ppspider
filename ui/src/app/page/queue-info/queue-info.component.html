@@ -99,6 +99,9 @@
             <div *ngFor="let url of queue.urls" class="url">
               <a [href]="url" target="_blank">{{url}}</a>
             </div>
+            <button (click)="openEditConfig(queue, 'urls', queue.urls)" mat-icon-button>
+              <mat-icon>edit</mat-icon>
+            </button>
           </div>
         </div>
         <div *ngIf="queue.type == 'FromQueue'" class="infoRow">
@@ -116,11 +119,29 @@
         </div>
 
         <div class="infoRow">
-          <label class="key">maxParallelConfig</label>
-          <div class="value">
-              <span (click)="openEditConfig(queue, 'parallel', queue.parallel)" class="editable">
-                {{stringify(queue.parallel)}}
-              </span>
+          <div class="grid">
+            <label class="key">maxParallelConfig</label>
+            <div class="value">
+                <span (click)="openEditConfig(queue, 'parallel', queue.parallel)" class="editable">
+                  {{stringify(queue.parallel)}}
+                </span>
+            </div>
+          </div>
+          <div class="grid">
+            <label class="key">timeout</label>
+            <div class="value">
+                <span (click)="openEditConfig(queue, 'timeout', queue.timeout)" class="editable">
+                  {{stringify(queue.timeout)}}
+                </span>
+            </div>
+          </div>
+          <div class="grid">
+            <label class="key">maxTry</label>
+            <div class="value">
+                <span (click)="openEditConfig(queue, 'maxTry', queue.maxTry)" class="editable">
+                  {{stringify(queue.maxTry)}}
+                </span>
+            </div>
           </div>
         </div>
 
@@ -170,6 +191,15 @@
           <div class="grid" title="count of failed tries | count of jobs failed after max try">
             <label class="key">failed</label>
             <div class="value">{{queue.tryFail}} | {{queue.fail}}</div>
+          </div>
+        </div>
+
+        <div class="infoRow">
+          <label class="key">userConfig</label>
+          <div class="value">
+              <span (click)="openEditConfig(queue, 'userConfig', queue.userConfig)" class="editable">
+                {{stringify(queue.userConfig)}}
+              </span>
           </div>
         </div>
 

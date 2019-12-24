@@ -252,7 +252,10 @@ export class QueueManager {
                 success: queueInfo.success || 0,
                 fail: queueInfo.fail || 0,
                 tryFail: queueInfo.tryFail || 0,
-                lastExeTime: queueInfo.lastExeTime
+                lastExeTime: queueInfo.lastExeTime,
+                timeout: queueInfo.config.timeout,
+                maxTry: queueInfo.config.maxTry,
+                userConfig: queueInfo.config.userConfig,
             };
             if (taskType == "OnStart") {
                 const urls = queueInfo.config['urls'];
@@ -475,6 +478,18 @@ export class QueueManager {
         else if (data.field == "curMaxParallel") {
             queueInfo.curMaxParallel = data.value;
         }
+        else if (data.field == "urls") {
+          (queueInfo.config as OnStartConfig).urls = data.value;
+        }
+        else if (data.field == "timeout") {
+          queueInfo.config.timeout = data.value;
+        }
+        else if (data.field == "maxTry") {
+          queueInfo.config.maxTry = data.value;
+        }
+        else if (data.field == "userConfig") {
+          queueInfo.config.userConfig = data.value;
+        }
 
         this.delayPushInfo();
         return {
@@ -611,6 +626,14 @@ export class QueueManager {
 
         if (config.exeIntervalJitter == null) {
             config.exeIntervalJitter = config.exeInterval * Defaults.exeIntervalJitterRate;
+        }
+
+        if (config.timeout == null) {
+          config.timeout = Defaults.jobTimeout;
+        }
+
+        if (config.maxTry == null) {
+          config.maxTry = Defaults.maxTry;
         }
 
         let queueInfo = this.queueInfos[queueName];
