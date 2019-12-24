@@ -107,6 +107,7 @@ export class QueueManager {
                 }
             }
         }
+        this.delayPushInfo();
     }
 
     /**

@@ -34,6 +34,6 @@ class TestTask {
             devtools: true
         })
     ],
-    webUiPort: 9001
+    webUiPort: 9000
 })
 class App {}

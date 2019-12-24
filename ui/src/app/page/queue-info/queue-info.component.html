@@ -99,9 +99,6 @@
             <div *ngFor="let url of queue.urls" class="url">
               <a [href]="url" target="_blank">{{url}}</a>
             </div>
-            <button (click)="openEditConfig(queue, 'urls', queue.urls)" mat-icon-button>
-              <mat-icon>edit</mat-icon>
-            </button>
           </div>
         </div>
         <div *ngIf="queue.type == 'FromQueue'" class="infoRow">
@@ -130,9 +127,10 @@
           <div class="grid">
             <label class="key">timeout</label>
             <div class="value">
-                <span (click)="openEditConfig(queue, 'timeout', queue.timeout)" class="editable">
-                  {{stringify(queue.timeout)}}
-                </span>
+              <span (click)="openEditConfig(queue, 'timeout', queue.timeout)" class="editable">
+                {{stringify(queue.timeout)}}
+              </span>
+              <span class="unit">ms</span>
             </div>
           </div>
           <div class="grid">
@@ -194,14 +192,14 @@
           </div>
         </div>
 
-        <div class="infoRow">
-          <label class="key">userConfig</label>
-          <div class="value">
-              <span (click)="openEditConfig(queue, 'userConfig', queue.userConfig)" class="editable">
-                {{stringify(queue.userConfig)}}
-              </span>
-          </div>
-        </div>
+<!--        <div class="infoRow">-->
+<!--          <label class="key">userConfig</label>-->
+<!--          <div class="value">-->
+<!--              <span (click)="openEditConfig(queue, 'userConfig', queue.userConfig)" class="editable">-->
+<!--                {{stringify(queue.userConfig)}}-->
+<!--              </span>-->
+<!--          </div>-->
+<!--        </div>-->
 
       </mat-card-content>
     </mat-card>
