@@ -357,6 +357,9 @@ export class QueueManager {
 
                         thisQueueInfo.config.exeInterval = queueInfo.config.exeInterval;
                         thisQueueInfo.config.exeIntervalJitter = queueInfo.config.exeIntervalJitter;
+                        thisQueueInfo.config.timeout = queueInfo.config.timeout;
+                        thisQueueInfo.config.maxTry = queueInfo.config.maxTry;
+                        thisQueueInfo.config.defaultDatas = queueInfo.config.defaultDatas;
 
                         this.updateConfig({
                             queue: queueName,

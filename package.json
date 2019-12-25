@@ -28,7 +28,7 @@
     "cron": "^1.7.1",
     "nedb": "^1.8.0",
     "mongodb": "^3.2.5",
-    "puppeteer": "1.17.0",
+    "puppeteer": "2.0.0",
     "request": "^2.88.0",
     "http-proxy-agent": "^2.1.0",
     "https-proxy-agent": "^2.2.1",
@@ -47,7 +47,7 @@
     "@types/nedb": "^1.8.5",
     "@types/mongodb": "^3.1.27",
     "@types/node": "^11.9.4",
-    "@types/puppeteer": "^1.12.4",
+    "@types/puppeteer": "^2.0.0",
     "@types/request": "^2.48.1",
     "@types/socket.io": "^2.1.2",
     "markdown-toc": "^1.2.0"
