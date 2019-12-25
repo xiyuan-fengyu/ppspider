@@ -790,11 +790,11 @@ export class QueueManager {
                     queue.addFilter(filter);
                 }
 
-                // 设置最大尝试次数
+                // 设置单个任务的最大尝试次数
                 if (!jobInfo._) {
                     jobInfo._ = {};
                 }
-                jobInfo._.maxTry = jobInfo._.maxTry || queueInfo.config.maxTry || Defaults.maxTry;
+                jobInfo._.maxTry = Math.max(jobInfo._.maxTry || 0, queueInfo.config.maxTry || Defaults.maxTry);
 
                 const jobs = jobInfo.jobs;
                 if (jobs != null) {
