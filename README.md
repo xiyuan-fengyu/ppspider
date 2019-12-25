@@ -195,6 +195,7 @@ export type OnStartConfig = {
     timeout?: number; // 任务超时时间，单位：毫秒，默认：300000ms(5分钟)，负数表示永不超时
     description?: string; // 任务描述
     filterType?: Class_Filter; // 添加任务过滤器，默认是 BloonFilter；保存状态后，系统重启时，不会重复执行；如果希望重复执行，可以用 NoFilter
+    defaultDatas?: any; // 该类任务统一预设的job.datas内容
 }
 ```
 使用例子 [@OnStart example](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/quickstart/App.ts)  
@@ -215,6 +216,7 @@ export type OnTimeConfig = {
     exeIntervalJitter?: number;
     timeout?: number;
     description?: string;
+    defaultDatas?: any; // 该类任务统一预设的job.datas内容
 }
 ```
 使用例子 [@OnTime example](https://github.com/xiyuan-fengyu/ppspider_example/tree/master/src/ontime/App.ts)  
@@ -267,6 +269,7 @@ export type FromQueueConfig = {
     exeIntervalJitter?: number;
     timeout?: number;
     description?: string;
+    defaultDatas?: any; // 该类任务统一预设的job.datas内容
 }
 ```
 使用例子 [@AddToQueue @FromQueue example](https://github.com/xiyuan-fengyu/ppspider_example/tree/master/src/queue)  
@@ -519,6 +522,14 @@ Job 面板可以对所有子任务实例进行搜索，查看任务详情
     参数类型，导致 page 参数无法正常注入，这个错误在启动过程中就会检查出来。  
           
 # 更新日志
+2019-09-04 v2.2.3-preview.1577237734925   
+1. 修复bug：Job被UI界面中断后不再重试  
+2. 任务和队列配置增加maxTry参数，支持maxTry小于0时一直尝试  
+3. 任务和队列配置增加defaultDatas，作为job.datas的预设值  
+4. UI界面增加切换队列running状态的操作  
+5. UI界面增加timeout/maxTry/defaultDatas的修改配置功能    
+
+
 2019-09-04 v2.2.3-preview.1574909694087   
 1. OnStart任务可配置使用 BloonFilter(默认，保存状态后重启不重复执行)或NoFilter(保存状态后重启重复执行)    
 2. 修复db分页查询中的bug  

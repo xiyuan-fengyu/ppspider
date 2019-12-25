@@ -210,6 +210,9 @@ export type OnStartConfig = {
 
     // default BloonFilter，the job won't execute again after save and restart. If you want to re-execute, use NoFilter
     filterType?: Class_Filter; 
+
+    // default content of job.datas
+    defaultDatas?: any; 
 }
 ```
 [@OnStart example](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/quickstart/App.ts)    
@@ -230,6 +233,7 @@ export type OnTimeConfig = {
     exeIntervalJitter?: number;
     timeout?: number;
     description?: string;
+    defaultDatas?: any; 
 }
 ```
 [@OnTime example](https://github.com/xiyuan-fengyu/ppspider_example/tree/master/src/ontime/App.ts)  
@@ -295,6 +299,8 @@ export type FromQueueConfig = {
     timeout?: number;
     
     description?: string;
+
+    defaultDatas?: any; 
 }
 ```
 [@AddToQueue @FromQueue example](https://github.com/xiyuan-fengyu/ppspider_example/tree/master/src/queue)  
@@ -554,7 +560,15 @@ Job panel: search jobs and view details
   and the page instance will not be injected successfully. This error is checked during startup.  
 
 
-# Update Note   
+# Update Note  
+2019-09-04 v2.2.3-preview.1577237734925   
+1. fix bug: job is no longer retried after being interrupted on UI interface    
+2. add maxTry parameter for task and queue configuration, support always try when maxTry is less than 0    
+3. add defaultDatas parameter for task and queue configuration as the default value for job.datas    
+4. add the operation of switching the running state of the queue on UI interface  
+5. add the operation to edit timeout/maxTry/defaultDatas paramters on UI interface       
+
+ 
 2019-09-04 v2.2.3-preview.1574909694087   
 1. OnStart can be configured to use BloonFilter(default, will not re-run after saving status and restart) or NoFilter(will re-run after saving status and restart)    
 2. fix a bug in db search by page  
