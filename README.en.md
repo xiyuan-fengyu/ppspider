@@ -204,6 +204,8 @@ export type OnStartConfig = {
     
     // Task timeout, in milliseconds, default: 300000, negative number means never timeout
     timeout?: number;
+
+    maxTry?: number;
     
     // description of this sub task type
     description?: string;
@@ -232,6 +234,7 @@ export type OnTimeConfig = {
     exeInterval?: number;
     exeIntervalJitter?: number;
     timeout?: number;
+    maxTry?: number;
     description?: string;
     defaultDatas?: any; 
 }
@@ -298,6 +301,8 @@ export type FromQueueConfig = {
     // Task timeout, in milliseconds, default: 300000, negative number means never timeout
     timeout?: number;
     
+    maxTry?: number;    
+
     description?: string;
 
     defaultDatas?: any; 
