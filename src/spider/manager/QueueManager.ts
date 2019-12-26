@@ -2,7 +2,8 @@ import {Assign, Serializable, SerializableUtil, Transient} from "../../common/se
 import {Queue} from "../queue/Queue";
 import {
     AddToQueueInfo,
-    AddToQueueInfos, Class_Filter,
+    AddToQueueInfos,
+    Class_Filter,
     FromQueueConfig,
     JobConfig,
     JobOverrideConfig,
@@ -157,11 +158,18 @@ export class QueueManager {
         return new Promise<any>(resolve => {
             appInfo.jobManager.job(data._id).then(job => {
                 // 重新设置最大尝试次数
-                if (!job.datas._) {
-                    job.datas._ = {};
+                const queueInfo = this.queueInfos[job.queue];
+                !job.datas._ && (job.datas._ = {});
+                if (job.datas._.maxTry < 0 || (!job.datas._.maxTry && queueInfo.config.maxTry < 0)) {
+                    // 无限尝试
                 }
-                if (!job.datas._.maxTry || job.datas._.maxTry >= 0) {
-                    job.datas._.maxTry = job.tryNum + (this.queueInfos[job.queue].config.maxTry || Defaults.maxTry);
+                else {
+                    // 有限次尝试，增加最大尝试次数
+                    let moreTry = queueInfo.config.maxTry ;
+                    if (!moreTry || moreTry < 0) {
+                        moreTry = Defaults.maxTry;
+                    }
+                    job.datas._.maxTry = job.tryNum + moreTry;
                 }
 
                 // 重新添加到任务队列
@@ -790,12 +798,6 @@ export class QueueManager {
                     queue.addFilter(filter);
                 }
 
-                // 设置单个任务的最大尝试次数
-                if (!jobInfo._) {
-                    jobInfo._ = {};
-                }
-                jobInfo._.maxTry = Math.max(jobInfo._.maxTry || 0, queueInfo.config.maxTry || Defaults.maxTry);
-
                 const jobs = jobInfo.jobs;
                 if (jobs != null) {
                     if (jobs.constructor == String || instanceofJob(jobs)) {
@@ -1040,7 +1042,15 @@ export class QueueManager {
                 this.successNum++;
             }
             catch (e) {
-                const maxTry = ((job.datas._ || {}).maxTry || Defaults.maxTry);
+                let maxTry = (job.datas._ || {}).maxTry;
+                if (!maxTry) {
+                    if (queueInfo.config.maxTry) {
+                        maxTry = queueInfo.config.maxTry;
+                    }
+                    else {
+                        maxTry = Defaults.maxTry;
+                    }
+                }
                 if (interrupted || (maxTry >= 0 && job.tryNum >= maxTry)) {
                     // 重试次数达到最大，任务失败
                     job.status = JobStatus.Fail;
