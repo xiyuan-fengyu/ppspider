@@ -64,7 +64,6 @@ export class QueueInfoComponent implements OnInit, ShouldKeepThisOnNav {
         running: running
       }
     }, res => {
-      this.toasterService.pop(res.success ? "success" : "warning", "Message", res.message);
     });
   }
 
