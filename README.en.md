@@ -67,15 +67,9 @@ npm install -g typescript
 ```
 
 ## Prepare the development environment
-Recommended IDEA(Ultimate version) + NodeJs Plugin  
-![Ultimate 版本截图](https://s1.ax1x.com/2018/06/13/CO6qRf.png)  
-The NodeJs plugin's version should match with the IDEA's version    
-![IDEA 版本](https://s1.ax1x.com/2018/06/13/COcdYt.png)  
-![nodejs 插件版本](https://s1.ax1x.com/2018/06/13/COcBSf.png)
-
-[IDEA download](https://www.jetbrains.com/idea/download/)  
-[NodeJs Plugin download](http://plugins.jetbrains.com/plugin/6098-nodejs)
-
+Recommended IDEA(Ultimate version)  
+![Ultimate 版本截图](https://s1.ax1x.com/2018/06/13/CO6qRf.png)    
+  
 Nodejs And Javascript Configuration in IDEA   
 ![nodejs-config.png](https://i.loli.net/2019/07/11/5d2747dff288e83940.png)  
 ![javascript-config.png](https://i.loli.net/2019/07/11/5d2747e00f32352225.png)  

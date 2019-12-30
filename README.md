@@ -67,16 +67,9 @@ npm install -g typescript
 ```
 
 ## 准备开发环境
-推荐使用 IDEA + nodejs 插件  
+推荐使用 IDEA    
 IDEA一定要下载 Ultimate 版本，否则有很多功能无法使用  
 ![Ultimate 版本截图](https://s1.ax1x.com/2018/06/13/CO6qRf.png)  
-下载nodejs插件的时候，需根据IDEA的版本下载可用的 nodejs 版本，IDEA的版本可通过菜单栏点击 Help -> About 看到  
-例如我正在使用的IDEA和nodejs插件版本  
-![IDEA 版本](https://s1.ax1x.com/2018/06/13/COcdYt.png)  
-![nodejs 插件版本](https://s1.ax1x.com/2018/06/13/COcBSf.png)
-
-[IDEA 下载地址](https://www.jetbrains.com/idea/download/)  
-[nodejs 插件下载地址](http://plugins.jetbrains.com/plugin/6098-nodejs)
 
 IDEA中 nodejs 和 javascript 配置  
 ![nodejs-config.png](https://i.loli.net/2019/07/11/5d2747dff288e83940.png)  
