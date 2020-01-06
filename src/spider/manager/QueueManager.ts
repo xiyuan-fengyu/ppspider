@@ -1013,7 +1013,7 @@ export class QueueManager {
                         }
                     };
 
-                    appInfo.eventBus.once(Events.QueueManager_InterruptJob, listenInterrupt);
+                    appInfo.eventBus.on(Events.QueueManager_InterruptJob, listenInterrupt);
                     try {
                         const paramArr = [];
 
