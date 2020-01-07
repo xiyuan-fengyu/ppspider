@@ -990,6 +990,7 @@ export class QueueManager {
 
             let interrupted = false;
             try {
+                let listenInterrupt = null;
                 await new Promise(async (resolve, reject) => {
                     // 如果任务设置有超时时间，则设置超时回调
                    if (queueInfo.config.timeout == null || queueInfo.config.timeout >= 0) {
@@ -999,7 +1000,7 @@ export class QueueManager {
                        }, timeout);
                    }
 
-                    const listenInterrupt = (jobId, reason) => {
+                    listenInterrupt = (jobId, reason) => {
                         if (jobId == null || jobId == job._id) {
                             // 强制停止任务
                             interrupted = true;
@@ -1013,7 +1014,7 @@ export class QueueManager {
                         }
                     };
 
-                    appInfo.eventBus.once(Events.QueueManager_InterruptJob, listenInterrupt);
+                    appInfo.eventBus.on(Events.QueueManager_InterruptJob, listenInterrupt);
                     try {
                         const paramArr = [];
 
@@ -1034,7 +1035,8 @@ export class QueueManager {
                     catch (e) {
                         reject(e);
                     }
-                    appInfo.eventBus.removeListener(Events.QueueManager_InterruptJob, listenInterrupt);
+                }).finally(() => {
+                    listenInterrupt && appInfo.eventBus.removeListener(Events.QueueManager_InterruptJob, listenInterrupt);
                 });
 
                 job.status = JobStatus.Success;
