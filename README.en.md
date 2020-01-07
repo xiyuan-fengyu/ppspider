@@ -560,6 +560,9 @@ Job panel: search jobs and view details
 
 
 # Update Note  
+2019-09-04 v2.2.3-preview.1578363288631
+1. fix bug in job interruption    
+
 2019-09-04 v2.2.3-preview.1577332807380   
 1. fix bug: job is no longer retried after being interrupted on UI interface    
 2. add maxTry parameter for task and queue configuration, support always try when maxTry is less than 0    
