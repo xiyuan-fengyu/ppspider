@@ -28,8 +28,8 @@ class TestTask {
                 if (resJson.success) {
                     break;
                 }
-                else if (resJson.user_error == "网络不给力") {
-                    await page.tap(".geetest_panel_error_content");
+                else {
+                    await page.tap(".geetest_refresh_1");
                 }
             }
             await PromiseUtil.sleep(3000);
