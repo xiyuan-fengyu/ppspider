@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>研究滑块拼图的破解方案</title>
+    <meta name="description" content="">
+    <style>
+        html, body {
+            padding: 0;
+            margin: 0;
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        #canvasBox {
+            margin: 12px auto;
+        }
+
+        #canvasBox canvas {
+            display: block;
+            margin: 12px 12px 0 12px;
+        }
+    </style>
+</head>
+<body>
+    <div style="margin: 12px auto">
+        <input id="openJigsawJson" type="file">
+    </div>
+    <div id="canvasBox"></div>
+
+    <script>
+        (async () => {
+            async function createImgCanvas(imgInfo) {
+                return new Promise((resolve, reject) => {
+                    const img = document.createElement("img");
+                    img.onload = () => {
+                        const canvas = document.createElement("canvas");
+                        canvas.width = imgInfo.width;
+                        canvas.height = imgInfo.height;
+                        const context = canvas.getContext("2d");
+                        context.drawImage(img, 0, 0, canvas.width, canvas.height);
+                        resolve([canvas, context]);
+                    };
+                    img.onerror = err => {
+                        reject(err);
+                    };
+                    img.src = imgInfo.src;
+                });
+            }
+
+            async function analysis(jigsawInfo) {
+                const offsetL = jigsawInfo.front.left - jigsawInfo.back.left;
+                const offsetT = jigsawInfo.front.top - jigsawInfo.back.top;
+
+                // 需要先运行一次 src/test/component/DragJigsawTest1 或 src/test/component/DragJigsawTest2 来生成对应的验证码截图
+                const [frontCanvas, frontContext] = await createImgCanvas(jigsawInfo.front);
+                const [backCanvas, backContext] = await createImgCanvas(jigsawInfo.back);
+                const [frontCanvasForDebug, frontContextForDebug] = await createImgCanvas(jigsawInfo.front);
+                const [backCanvasForDebug, backContextForDebug] = await createImgCanvas(jigsawInfo.back);
+                const canvasBox = document.getElementById("canvasBox");
+                for (let child of Array.from(canvasBox.children)) {
+                    canvasBox.removeChild(child);
+                }
+                canvasBox.appendChild(frontCanvasForDebug);
+                canvasBox.appendChild(backCanvasForDebug);
+
+                {
+                    // start
+                    const colorGray = colorArr => {
+                        const grayArr = [];
+                        for (let i = 0; i < colorArr.length; i += 4) {
+                            // 灰度计算 参考 https://blog.csdn.net/xdrt81y/article/details/8289963
+                            const gray = (colorArr[i] * 19595 + colorArr[i + 1] * 38469 + colorArr[i + 2] * 7472) >> 16;
+                            grayArr.push(gray);
+                        }
+                        return grayArr;
+                    };
+
+                    const colorDiff = (arr0, arr1) => {
+                        const gray0 = colorGray(arr0);
+                        const gray1 = colorGray(arr1);
+                        let diffs = [];
+                        for (let i = 0; i < gray0.length; i++) {
+                            const delta = Math.abs(gray0[i] - gray1[i]);
+                            diffs.push(delta);
+                        }
+                        diffs = diffs.sort((o1, o2) => o1 - o2).slice(Math.floor(diffs.length * 0.25), Math.floor(diffs.length * 0.75));
+                        const sum = diffs.reduce((pre, cur) => pre + cur);
+                        return sum / diffs.length;
+                    };
+
+                    // 颜色混合
+                    // 参考 https://stackoverflow.com/questions/12011081/alpha-blending-2-rgba-colors-in-c
+                    const mixColor = (backRgba, frontRgba) => {
+                        const alpha = frontRgba[3] + 1;
+                        const invAlpha = 256 - frontRgba[3];
+                        return [
+                            (alpha * frontRgba[0] + invAlpha * backRgba[0]) >> 8,
+                            (alpha * frontRgba[1] + invAlpha * backRgba[1]) >> 8,
+                            (alpha * frontRgba[2] + invAlpha * backRgba[2]) >> 8,
+                            255
+                        ];
+                    };
+
+                    const mixColors = (backColors, fronRgba) => {
+                        const mixedColors = [];
+                        for (let i = 0; i < backColors.length; i += 4) {
+                            const mixedColor = mixColor(backColors.subarray(i, i + 4), fronRgba);
+                            mixedColor.forEach(item => mixedColors.push(item));
+                        }
+                        return mixedColors;
+                    };
+
+                    // 非透明色的个数
+                    const notTransparentNum = colors => {
+                        let res = 0;
+                        for (let i = 3; i < colors.length; i += 4) {
+                            if (colors[i] >= 200) {
+                                res++;
+                            }
+                        }
+                        return res;
+                    };
+
+                    let maskEdgeL = null;
+                    let maskEdgeR = null;
+                    let maskEdgeT = null;
+                    let maskEdgeB = null;
+
+                    for (let x = 0; x < frontCanvas.width; x++) {
+                        const maskColors = frontContext.getImageData(x, 0, 1, frontCanvas.height).data;
+                        if (notTransparentNum(maskColors) > 20) {
+                            if (maskEdgeL == null) {
+                                maskEdgeL = x;
+                            }
+                            maskEdgeR = x;
+                        }
+                    }
+
+                    for (let y = 0; y < frontCanvas.height; y++) {
+                        const maskColors = frontContext.getImageData(0, y, frontCanvas.width, 1).data;
+                        if (notTransparentNum(maskColors) > 20) {
+                            if (maskEdgeT == null) {
+                                maskEdgeT = y;
+                            }
+                            maskEdgeB = y;
+                        }
+                    }
+
+                    if (frontCanvasForDebug) {
+                        frontContextForDebug.fillStyle = `rgb(255, 128, 83)`;
+                        frontContextForDebug.fillRect(maskEdgeL, 0, 1, frontCanvasForDebug.height);
+                        frontContextForDebug.fillRect(maskEdgeR, 0, 1, frontCanvasForDebug.height);
+                        frontContextForDebug.fillRect(0, maskEdgeT, frontCanvasForDebug.width, 1);
+                        frontContextForDebug.fillRect(0, maskEdgeB, frontCanvasForDebug.width, 1);
+                    }
+
+                    // 只检验正中央的部分
+                    let maskCenterL = maskEdgeL;
+                    let maskCenterR = maskEdgeR;
+                    let maskCenterT = maskEdgeT;
+                    let maskCenterB = maskEdgeB;
+                    const centerCheckSize = 28;
+                    if (maskCenterR - maskCenterL >= centerCheckSize) {
+                        const delta = (maskCenterR - maskCenterL - centerCheckSize) / 2;
+                        maskCenterL += delta;
+                        maskCenterR -= delta;
+                    }
+                    if (maskCenterB - maskCenterT >= centerCheckSize) {
+                        const delta = (maskCenterB - maskCenterT - centerCheckSize) / 2;
+                        maskCenterT += delta;
+                        maskCenterB -= delta;
+                    }
+
+                    const possiblePosArr = [];
+                    const maskColors = frontContext.getImageData(maskCenterL, maskCenterT, maskCenterR - maskCenterL, maskCenterB - maskCenterT).data;
+                    for (let alpha = 0.3; alpha <= 0.7; alpha += 0.05) {
+                        const grayMask = [0, 0, 0, 255 * alpha];
+                        const mixedColors = mixColors(maskColors, grayMask);
+                        for (let xDelta = 45; xDelta < backCanvas.width - 50; xDelta++) {
+                            const checkColors = backContext.getImageData(maskCenterL + offsetL + xDelta, maskCenterT + offsetT, maskCenterR - maskCenterL, maskCenterB - maskCenterT).data;
+                            const diff = colorDiff(mixedColors, checkColors);
+                            if (diff < 25) {
+                                if (possiblePosArr.length > 0 && possiblePosArr[0].diff < diff) {
+
+                                }
+                                else {
+                                    if (possiblePosArr.length > 0 && possiblePosArr[0].diff > diff) {
+                                        possiblePosArr.splice(0, possiblePosArr.length);
+                                    }
+                                    possiblePosArr.push({
+                                        diff: diff,
+                                        alpha: alpha,
+                                        delta: xDelta
+                                    });
+                                }
+                            }
+                        }
+                    }
+                    if (possiblePosArr.length) {
+                        // 如果仅通过 diff 判定出多个最优解，则还需要通过扩大mask的范围，一直到diff有唯一最小值
+                        let spreadSize = 12;
+                        while (possiblePosArr.length > 1) {
+                            const maskColors = frontContext.getImageData(maskCenterL - spreadSize, maskCenterT - spreadSize, maskCenterR - maskCenterL + spreadSize * 2, maskCenterB - maskCenterT + spreadSize * 2).data;
+                            for (let item of possiblePosArr) {
+                                const grayMask = [0, 0, 0, 255 * item.alpha];
+                                const mixedColors = mixColors(maskColors, grayMask);
+                                const checkColors = backContext.getImageData(maskCenterL - spreadSize + item.delta + offsetL, maskCenterT - spreadSize + offsetT, maskCenterR - maskCenterL + spreadSize * 2, maskCenterB - maskCenterT + spreadSize * 2).data;
+                                item.spreadDiff = colorDiff(mixedColors, checkColors);
+                                item.spreadSize = spreadSize;
+                            }
+                            possiblePosArr.sort((o1, o2) => o1.spreadDiff - o2.spreadDiff);
+                            for (let i = 1; i < possiblePosArr.length; i++) {
+                                if (possiblePosArr[i].spreadDiff !== possiblePosArr[0].spreadDiff) {
+                                    possiblePosArr.splice(i, possiblePosArr.length - i);
+                                    break;
+                                }
+                            }
+                            spreadSize += 1;
+                        }
+
+                        const bestPos = possiblePosArr[0];
+
+                        if (frontCanvasForDebug) {
+                            frontContextForDebug.fillStyle = `rgba(0,0,0,0.5)`;
+                            frontContextForDebug.fillRect(maskCenterL, maskCenterT, maskCenterR - maskCenterL, maskCenterB - maskCenterT);
+                        }
+
+                        if (backCanvasForDebug) {
+                            backContextForDebug.fillStyle = `rgb(255, 128, 83)`;
+                            backContextForDebug.fillRect(bestPos.delta + maskEdgeL, 0, 1, backCanvasForDebug.height);
+                            backContextForDebug.fillRect(bestPos.delta + maskEdgeR, 0, 1, backCanvasForDebug.height);
+                            backContextForDebug.fillRect(0, maskEdgeT + offsetT, backCanvasForDebug.width, 1);
+                            backContextForDebug.fillRect(0, maskEdgeB + offsetT, backCanvasForDebug.width, 1);
+                        }
+
+                        return bestPos.delta + offsetL;
+                    }
+                    // end
+                }
+            }
+
+            document.getElementById("openJigsawJson").onchange = event => {
+                if (event.target.files && event.target.files[0] && event.target.files[0].type === "application/json") {
+                    const fileReader = new FileReader();
+                    fileReader.onload = (err, res) => {
+                        const info = JSON.parse(fileReader.result);
+                        analysis(info);
+                    };
+                    fileReader.readAsBinaryString(event.target.files[0]);
+                }
+                else {
+                    alert("请选择一个 jigsaw-*.json 文件");
+                }
+            };
+        })();
+    </script>
+</body>
+</html>

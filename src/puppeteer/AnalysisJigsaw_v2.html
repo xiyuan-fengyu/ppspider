@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>研究滑块拼图的破解方案</title>
+    <meta name="description" content="仅检测边缘，仅对于一些网站效果良好，例如b站，qq网页登录">
+    <style>
+        html, body {
+            padding: 0;
+            margin: 0;
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        #canvasBox {
+            margin: 12px auto;
+        }
+
+        #canvasBox canvas {
+            display: block;
+            margin: 12px 12px 0 12px;
+        }
+    </style>
+</head>
+<body>
+    <div style="margin: 12px auto">
+        <input id="openJigsawJson" type="file">
+    </div>
+    <div id="canvasBox"></div>
+
+    <script>
+        (async () => {
+            async function createImgCanvas(imgInfo) {
+                return new Promise((resolve, reject) => {
+                    const img = document.createElement("img");
+                    img.onload = () => {
+                        const canvas = document.createElement("canvas");
+                        canvas.width = imgInfo.width;
+                        canvas.height = imgInfo.height;
+                        const context = canvas.getContext("2d");
+                        context.drawImage(img, 0, 0, canvas.width, canvas.height);
+                        resolve([canvas, context]);
+                    };
+                    img.onerror = err => {
+                        reject(err);
+                    };
+                    img.src = imgInfo.src;
+                });
+            }
+
+            async function analysis(jigsawInfo) {
+                const offsetL = jigsawInfo.front.left - jigsawInfo.back.left;
+                const offsetT = jigsawInfo.front.top - jigsawInfo.back.top;
+
+                // 需要先运行一次 src/test/component/DragJigsawTest1 或 src/test/component/DragJigsawTest2 来生成对应的验证码截图
+                const [frontCanvas, frontContext] = await createImgCanvas(jigsawInfo.front);
+                const [backCanvas, backContext] = await createImgCanvas(jigsawInfo.back);
+                const [frontCanvasForDebug, frontContextForDebug] = await createImgCanvas(jigsawInfo.front);
+                const [backCanvasForDebug, backContextForDebug] = await createImgCanvas(jigsawInfo.back);
+                const canvasBox = document.getElementById("canvasBox");
+                for (let child of Array.from(canvasBox.children)) {
+                    canvasBox.removeChild(child);
+                }
+                canvasBox.appendChild(frontCanvasForDebug);
+                canvasBox.appendChild(backCanvasForDebug);
+
+                {
+                    // start
+                    const getColorArr = (canvas, x, y, width, height) => {
+                        const data = canvas.getContext("2d").getImageData(x, y, width, height).data;
+                        const colorArr = [];
+                        for (let i = 0, len = data.length; i < len; i += 4) {
+                            colorArr.push(data.slice(i, i + 4));
+                        }
+                        return colorArr;
+                    };
+
+                    const arrDiff = (arr1, arr2) => {
+                        return arr1.map((item, index) => Math.abs(item - arr2[index])).reduce((preV, curV) => preV + curV);
+                    };
+
+                    // 将一条线段简化，[1,1,1,0,0,1,1,1]，值为1的地方表示主色，0表示其他颜色
+                    const simplifyByColors = colorArr => {
+                        let colorTypes = new Array(colorArr.length);
+                        colorTypes[0] = 1;
+                        let colorTypeCounts = {
+                            1: 1
+                        };
+                        let maxColorTypeCount = 1;
+                        let maxColorType = 1;
+                        let nextColorType = 2;
+                        for (let i = 1, len = colorArr.length; i < len; i++) {
+                            for (let j = 0; j < i; j++) {
+                                const d = arrDiff(colorArr[j], colorArr[i]);
+                                if (d < 32) {
+                                    colorTypes[i] = colorTypes[j];
+                                    break;
+                                }
+                            }
+                            if (!colorTypes[i]) {
+                                colorTypes[i] = nextColorType++;
+                            }
+                            const colorType = colorTypes[i];
+                            const tempTypeCount = colorTypeCounts[colorType] = (colorTypeCounts[colorType] || 0) + 1;
+                            if (maxColorTypeCount < tempTypeCount) {
+                                maxColorTypeCount = tempTypeCount;
+                                maxColorType = colorType;
+                            }
+                        }
+                        for (let i = 0, len = colorTypes.length; i < len; i++) {
+                            colorTypes[i] = colorTypes[i] === maxColorType ? 1 : 0;
+                        }
+                        return colorTypes;
+                    };
+
+                    const similarityOf01 = (arr1, arr2) => {
+                        return arr1.map((item, index) => item === arr2[index] ? 1 : -1).reduce((preV, curV) => preV + curV);
+                    };
+
+                    // 非透明色的个数
+                    const notTransparentNum = colors => {
+                        let res = 0;
+                        for (let i = 3; i < colors.length; i += 4) {
+                            if (colors[i] >= 200) {
+                                res++;
+                            }
+                        }
+                        return res;
+                    };
+
+                    let maskEdgeL = null;
+                    let maskEdgeR = null;
+                    let maskEdgeT = null;
+                    let maskEdgeB = null;
+
+                    for (let x = 0; x < frontCanvas.width; x++) {
+                        const maskColors = frontContext.getImageData(x, 0, 1, frontCanvas.height).data;
+                        if (notTransparentNum(maskColors) > 20) {
+                            if (maskEdgeL == null) {
+                                maskEdgeL = x;
+                            }
+                            maskEdgeR = x;
+                        }
+                    }
+
+                    for (let y = 0; y < frontCanvas.height; y++) {
+                        const maskColors = frontContext.getImageData(0, y, frontCanvas.width, 1).data;
+                        if (notTransparentNum(maskColors) > 20) {
+                            if (maskEdgeT == null) {
+                                maskEdgeT = y;
+                            }
+                            maskEdgeB = y;
+                        }
+                    }
+
+                    if (frontCanvasForDebug) {
+                        frontContextForDebug.fillStyle = `rgba(0,0,0,0.45)`;
+                        frontContextForDebug.fillRect(maskEdgeL, 0, 1, frontCanvasForDebug.height);
+                        frontContextForDebug.fillRect(maskEdgeR, 0, 1, frontCanvasForDebug.height);
+                        frontContextForDebug.fillRect(0, maskEdgeT, frontCanvasForDebug.width, 1);
+                        frontContextForDebug.fillRect(0, maskEdgeB, frontCanvasForDebug.width, 1);
+                    }
+
+                    const frontSimpleL = simplifyByColors(getColorArr(frontCanvas, maskEdgeL, maskEdgeT, 1, maskEdgeB - maskEdgeT));
+                    const frontSimpleR = simplifyByColors(getColorArr(frontCanvas, maskEdgeR, maskEdgeT, 1, maskEdgeB - maskEdgeT));
+                    const frontSimpleT = simplifyByColors(getColorArr(frontCanvas, maskEdgeL, maskEdgeT, maskEdgeR - maskEdgeL, 1));
+                    const frontSimpleB = simplifyByColors(getColorArr(frontCanvas, maskEdgeL, maskEdgeB, maskEdgeR - maskEdgeL, 1));
+
+                    let bestXDelta = backCanvas.width - (maskEdgeR - maskEdgeL) - 12;
+                    let bestS = 0;
+                    for (let xDelta = 25; xDelta < backCanvas.width - 25; xDelta++) {
+                        const backSimpleL = simplifyByColors(getColorArr(backCanvas, maskEdgeL + xDelta, maskEdgeT + offsetT, 1, maskEdgeB - maskEdgeT));
+                        const backSimpleR = simplifyByColors(getColorArr(backCanvas, maskEdgeR + xDelta, maskEdgeT + offsetT, 1, maskEdgeB - maskEdgeT));
+                        const backSimpleT = simplifyByColors(getColorArr(backCanvas, maskEdgeL + xDelta, maskEdgeT + offsetT, maskEdgeR - maskEdgeL, 1));
+                        const backSimpleB = simplifyByColors(getColorArr(backCanvas, maskEdgeL + xDelta, maskEdgeB + offsetT, maskEdgeR - maskEdgeL, 1));
+                        let s = similarityOf01(frontSimpleL, backSimpleL);
+                        s += similarityOf01(frontSimpleR, backSimpleR);
+                        s += similarityOf01(frontSimpleT, backSimpleT);
+                        s += similarityOf01(frontSimpleB, backSimpleB);
+                        if (bestS <= s) {
+                            bestXDelta = xDelta;
+                            bestS = s;
+                        }
+                    }
+
+                    if (backContextForDebug) {
+                        backContextForDebug.fillStyle = `rgba(0,0,0,0.45)`;
+                        backContextForDebug.fillRect(maskEdgeL + bestXDelta, 0, 1, backCanvasForDebug.height);
+                        backContextForDebug.fillRect(maskEdgeR + bestXDelta, 0, 1, backCanvasForDebug.height);
+                        backContextForDebug.fillRect(0, maskEdgeT + offsetT, backCanvasForDebug.width, 1);
+                        backContextForDebug.fillRect(0, maskEdgeB + offsetT, backCanvasForDebug.width, 1);
+                    }
+
+                    return bestXDelta - offsetL;
+                    // end
+                }
+            }
+
+            document.getElementById("openJigsawJson").onchange = event => {
+                if (event.target.files && event.target.files[0] && event.target.files[0].type === "application/json") {
+                    const fileReader = new FileReader();
+                    fileReader.onload = (err, res) => {
+                        const info = JSON.parse(fileReader.result);
+                        analysis(info);
+                    };
+                    fileReader.readAsBinaryString(event.target.files[0]);
+                }
+                else {
+                    alert("请选择一个 jigsaw-*.json 文件");
+                }
+            };
+        })();
+    </script>
+</body>
+</html>

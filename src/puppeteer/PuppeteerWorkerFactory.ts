@@ -9,6 +9,13 @@ export class PuppeteerWorkerFactory implements WorkerFactory<Page> {
 
     constructor(launchOptions?: LaunchOptions) {
         logger.info("init " + PuppeteerWorkerFactory.name + " ...");
+        if (launchOptions.args == null) {
+            launchOptions.args = [];
+        }
+        if (launchOptions.args.indexOf("--disable-features=site-per-process") == -1) {
+            // 解决iframe跨域情况下page.frames可能找不到某些iframe的bug
+            launchOptions.args.push("--disable-features=site-per-process");
+        }
         this.browser = launch(launchOptions).then(browser => {
             logger.info("init " + PuppeteerWorkerFactory.name + " successfully");
             return browser;
@@ -23,7 +30,7 @@ export class PuppeteerWorkerFactory implements WorkerFactory<Page> {
         return new Promise<Page>(resolve => {
             this.browser.then(async browser => {
                 const page = await browser.newPage();
-                await this.exPage(page);
+                await PuppeteerWorkerFactory.exPage(page);
                 resolve(page);
             });
         });
@@ -37,7 +44,7 @@ export class PuppeteerWorkerFactory implements WorkerFactory<Page> {
      * @param {Page} page
      * @returns {Page}
      */
-    private async exPage(page: Page) {
+    static async exPage(page: Page) {
         const prettyError = (oriError: Error, pageFunction: any) => {
             const oriStackArr = oriError.stack.split("\n");
             const errPosReg = new RegExp("__puppeteer_evaluation_script__:(\\d+):(\\d+)");
@@ -107,7 +114,7 @@ export class PuppeteerWorkerFactory implements WorkerFactory<Page> {
 
             // 绕开某些网站对 webdriver 的校验
             Object.defineProperties(navigator, {
-                webdriver: {get: () => false}
+                webdriver: {}
             });
         });
 

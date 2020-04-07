@@ -560,6 +560,10 @@ Job panel: search jobs and view details
 
 
 # Update Note  
+2020-04-07 v2.2.3  
+1. fix bug: in case of cross-domain, page.frames may not find some iframes.        
+2. optimize PuppeteerUtil.dragJigsaw implementation to improve accuracy.    
+
 2019-09-04 v2.2.3-preview.1578363288631
 1. fix bug in job interruption    
 

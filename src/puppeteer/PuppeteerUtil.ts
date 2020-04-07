@@ -6,9 +6,10 @@ import {logger} from "../common/util/logger";
 import {FileUtil} from "../common/util/FileUtil";
 import * as http from "http";
 import {RequestUtil} from "../common/util/RequestUtil";
-import {PromiseUtil} from "..";
+import {appInfo, DateUtil, PromiseUtil} from "..";
 import * as url from "url";
 import {EasingFunctions, Paths} from "../common/util/Paths";
+import * as path from "path";
 
 
 export type ResponseListener = (response: Response) => any;
@@ -873,15 +874,26 @@ export class PuppeteerUtil {
         let parentFrame: Page | Frame;
         while (curFrame.parentFrame && (parentFrame = curFrame.parentFrame())) {
             const curFrameName = (curFrame as Frame).name();
-            const [curFrameDomLeft, curFrameDomTop] = await parentFrame.evaluate(frameName => {
-                const rect = document.querySelector(`iframe[name='${frameName}']`).getBoundingClientRect();
+            const curFrameUrl = (curFrame as Frame).url();
+            const [curFrameDomLeft, curFrameDomTop] = await parentFrame.evaluate((frameName, frameUrl) => {
+                let frame = null;
+                if (frameName) {
+                    frame = document.querySelector(`iframe[name='${frameName}']`);
+                    if (!frame) {
+                        frame = document.querySelector(`iframe#${frameName}`);
+                    }
+                }
+                if (!frame) {
+                    frame = Array.from(document.querySelectorAll(`iframe`)).find(item => item.src == frameUrl);
+                }
+                const rect = frame.getBoundingClientRect();
                 return [rect.left, rect.top];
-            }, curFrameName);
+            }, curFrameName, curFrameUrl);
             frameLeft += curFrameDomLeft;
             frameTop += curFrameDomTop;
             curFrame = parentFrame;
         }
-        return [curFrame as Page, frameLeft, frameTop];
+        return [curFrame["_frameManager"]._page as Page, frameLeft, frameTop];
     }
 
     static async drag(page: Page, from: number[], to: number[], duration: number = 0.6, steps: number = 60, easing: keyof EasingFunctions = "quarticInOut") {
@@ -946,15 +958,14 @@ export class PuppeteerUtil {
      * @param frontSelector
      * @param backSelector
      * @param distanceFix 用于部分情况下修正拖动距离
-     * @param gapMaskColor 缺口地方的透明遮罩颜色，一般为透明黑色或透明白色，默认为透明黑色，传值为 [0,0,0]
      */
     static async dragJigsaw(
         page: Page | Frame,
         sliderSelector: string,
         frontSelector: string,
         backSelector: string,
-        distanceFix: (computedDis: number) => number = null,
-        gapMaskColor: [number, number, number] = [0, 0, 0]) {
+        distanceFix: (computedDis: number) => number = null
+    ) {
         // 原位置，向右拖动5px，截取两张图片，通过两张截图计算出 拼图 和 缺图 位置，拖动距离
         const [topPage, frameLeft, frameTop] = await this.getIFramePageAndPos(page);
         const getImageInfo = (selector: string) => page.evaluate(selector => {
@@ -985,7 +996,8 @@ export class PuppeteerUtil {
                         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36"
                     }
                 });
-                res.src = "data:image/png;base64," + imgRes.body.toString("base64");
+                const imgType = imgRes.headers["content-type"] || "image/png";
+                res.src = `data:${imgType};base64,` + imgRes.body.toString("base64");
             }
             return res;
         });
@@ -994,13 +1006,22 @@ export class PuppeteerUtil {
         const backInfo = await getImageInfo(backSelector);
 
         const jigsawInfo = {
-            gapMaskColor: gapMaskColor,
+            distanceFix: distanceFix ? distanceFix.toString() : null,
             front: frontInfo,
             back: backInfo
         };
 
-        // 保存当前信息，用于 src/test/component/DragJigsaw.html 调试
-        fs.writeFileSync("dragJigsaw.json", JSON.stringify(jigsawInfo), "utf-8");
+        // 保存当前信息，用于 src/puppeteer/AnalysisJigsaw.html 调试分析
+        const AnalysisJigsawHtmlSrcF = path.resolve(__filename, "../../../src/puppeteer/AnalysisJigsaw_v3.html");
+        if (fs.existsSync(AnalysisJigsawHtmlSrcF)) {
+            const jigsawJsonF = path.resolve("jigsaw-" + DateUtil.toStr(new Date(), "YYYYMMDDHHmmss") + ".json");
+            const AnalysisJigsawHtmlF = path.resolve(__filename, "../../spider/ui/web/AnalysisJigsaw.html");
+            if (!fs.existsSync(AnalysisJigsawHtmlF)) {
+                fs.copyFileSync(AnalysisJigsawHtmlSrcF, AnalysisJigsawHtmlF);
+            }
+            fs.writeFileSync(jigsawJsonF, JSON.stringify(jigsawInfo), "utf-8");
+            logger.debugValid && logger.debug(`open the following url in browser: \nhttp://localhost:${appInfo.webUiPort || 9000}/AnalysisJigsaw.html\nthen open file: \n${jigsawJsonF}`);
+        }
 
         // 计算拖动距离
         let dragDistance = await page.evaluate(async (jigsawInfo: any) => {
@@ -1019,9 +1040,8 @@ export class PuppeteerUtil {
                 });
             }
 
-            const gapMaskColor = jigsawInfo.gapMaskColor;
-            const offsetL = jigsawInfo.back.left - jigsawInfo.front.left;
-            const offsetT = jigsawInfo.back.top - jigsawInfo.front.top;
+            const offsetL = jigsawInfo.front.left - jigsawInfo.back.left;
+            const offsetT = jigsawInfo.front.top - jigsawInfo.back.top;
 
             const [frontCanvas, frontContext] = await createImgCanvas(jigsawInfo.front);
             const [backCanvas, backContext] = await createImgCanvas(jigsawInfo.back);
@@ -1030,49 +1050,46 @@ export class PuppeteerUtil {
 
             {
                 // start
-                const colorGray = colorArr => {
-                    const grayArr = [];
-                    for (let i = 0; i < colorArr.length; i += 4) {
-                        // 灰度计算 参考 https://blog.csdn.net/xdrt81y/article/details/8289963
-                        const gray = (colorArr[i] * 19595 + colorArr[i + 1] * 38469 + colorArr[i + 2] * 7472) >> 16;
-                        grayArr.push(gray);
+                const to0123 = (imageData, front0123) => {
+                    const grays = [];
+                    let grayAvg = 0;
+                    for (let i = 0, len = imageData.length; i < len; i += 4) {
+                        const color = imageData.subarray(i, i + 4);
+                        if (color[3] < 255 || (front0123 && front0123[Math.floor(i / 4)] === -1)) {
+                            // 透明区域不参加对比
+                            grays.push(-1);
+                        }
+                        else {
+                            const gray = color[0] * 0.3 + color[1] * 0.59 + color[2] * 0.11;
+                            grays.push(gray);
+                            grayAvg += gray;
+                        }
                     }
-                    return grayArr;
+                    grayAvg /= grays.length;
+                    let grayAvgLower = 0;
+                    let grayAvgLowerNum = 0;
+                    let grayAvgUpper = 0;
+                    let grayAvgUpperNum = 0;
+                    for (let item of grays) {
+                        if (item === -1) {
+
+                        }
+                        else if (item < grayAvg) {
+                            grayAvgLower += item;
+                            grayAvgLowerNum++;
+                        }
+                        else {
+                            grayAvgUpper += item;
+                            grayAvgUpperNum++;
+                        }
+                    }
+                    grayAvgLower /= grayAvgLowerNum || 1;
+                    grayAvgUpper /= grayAvgUpperNum || 1;
+                    return grays.map(item => item === -1 ? -1 : (item < grayAvgLower ? 0 : (item < grayAvg ? 1 : (item < grayAvgUpper ? 2 : 3))));
                 };
 
-                const colorDiff = (arr0, arr1) => {
-                    const gray0 = colorGray(arr0);
-                    const gray1 = colorGray(arr1);
-                    let diffs = [];
-                    for (let i = 0; i < gray0.length; i++) {
-                        const delta = Math.abs(gray0[i] - gray1[i]);
-                        diffs.push(delta);
-                    }
-                    diffs = diffs.sort((o1, o2) => o1 - o2).slice(Math.floor(diffs.length * 0.25), Math.floor(diffs.length * 0.75));
-                    const sum = diffs.reduce((pre, cur) => pre + cur);
-                    return sum / diffs.length;
-                };
-
-                // 颜色混合
-                // 参考 https://stackoverflow.com/questions/12011081/alpha-blending-2-rgba-colors-in-c
-                const mixColor = (backRgba, frontRgba) => {
-                    const alpha = frontRgba[3] + 1;
-                    const invAlpha = 256 - frontRgba[3];
-                    return [
-                        (alpha * frontRgba[0] + invAlpha * backRgba[0]) >> 8,
-                        (alpha * frontRgba[1] + invAlpha * backRgba[1]) >> 8,
-                        (alpha * frontRgba[2] + invAlpha * backRgba[2]) >> 8,
-                        255
-                    ];
-                };
-
-                const mixColors = (backColors, fronRgba) => {
-                    const mixedColors = [];
-                    for (let i = 0; i < backColors.length; i += 4) {
-                        const mixedColor = mixColor(backColors.subarray(i, i + 4), fronRgba);
-                        mixedColor.forEach(item => mixedColors.push(item));
-                    }
-                    return mixedColors;
+                const sameOf0123 = (arr1, arr2) => {
+                    return arr1.map((item, index) => item === -1 ? 0 : 1 - Math.abs(item - arr2[index]) * 0.8).reduce((preV, curV) => preV + curV);
                 };
 
                 // 非透明色的个数
@@ -1086,10 +1103,26 @@ export class PuppeteerUtil {
                     return res;
                 };
 
+                // 色阶转换，用于debug
+                const colorLevels = [
+                    [0, 187, 255, 255],
+                    [0, 255, 136, 255],
+                    [216, 255, 0, 255],
+                    [255, 0, 95, 255],
+                ];
+                const translateColorLevels = (imageData, color0123) => {
+                    color0123.forEach((value, index) => {
+                        if (value > -1) {
+                            imageData.set(colorLevels[value], index * 4);
+                        }
+                    });
+                };
+
                 let maskEdgeL = null;
                 let maskEdgeR = null;
                 let maskEdgeT = null;
                 let maskEdgeB = null;
+                let maskEdgeMargin = 3;
 
                 for (let x = 0; x < frontCanvas.width; x++) {
                     const maskColors = frontContext.getImageData(x, 0, 1, frontCanvas.height).data;
@@ -1110,95 +1143,51 @@ export class PuppeteerUtil {
                         maskEdgeB = y;
                     }
                 }
+                maskEdgeL += maskEdgeMargin;
+                maskEdgeR -= maskEdgeMargin;
+                maskEdgeT += maskEdgeMargin;
+                maskEdgeB -= maskEdgeMargin;
+
+                let bestSame = 0;
+                let bestDelta = backCanvas.width - (maskEdgeR - maskEdgeL) - 12;
+                const frontImageData = frontContext.getImageData(maskEdgeL, maskEdgeT, maskEdgeR - maskEdgeL, maskEdgeB - maskEdgeT).data;
+                const front0123 = to0123(frontImageData, null);
+                for (let xDelta = 25; xDelta < backCanvas.width - 25; xDelta++) {
+                    const backImageData = backContext.getImageData(maskEdgeL + xDelta, maskEdgeT + offsetT, maskEdgeR - maskEdgeL, maskEdgeB - maskEdgeT).data;
+                    const back0123 = to0123(backImageData, front0123);
+                    const same = sameOf0123(front0123, back0123);
+                    if (bestSame <= same) {
+                        bestSame = same;
+                        bestDelta = xDelta;
+                    }
+                }
 
                 if (frontCanvasForDebug) {
-                    frontContextForDebug.fillStyle = `rgba(0,0,0,0.45)`;
+                    frontContextForDebug.fillStyle = `rgb(255, 128, 83)`;
                     frontContextForDebug.fillRect(maskEdgeL, 0, 1, frontCanvasForDebug.height);
                     frontContextForDebug.fillRect(maskEdgeR, 0, 1, frontCanvasForDebug.height);
                     frontContextForDebug.fillRect(0, maskEdgeT, frontCanvasForDebug.width, 1);
                     frontContextForDebug.fillRect(0, maskEdgeB, frontCanvasForDebug.width, 1);
+
+                    const imageData = frontContextForDebug.getImageData(maskEdgeL, maskEdgeT, maskEdgeR - maskEdgeL, maskEdgeB - maskEdgeT);
+                    translateColorLevels(imageData.data, front0123);
+                    frontContextForDebug.putImageData(imageData, maskEdgeL, maskEdgeT);
                 }
 
-                // 只检验正中央的部分
-                let maskCenterL = maskEdgeL;
-                let maskCenterR = maskEdgeR;
-                let maskCenterT = maskEdgeT;
-                let maskCenterB = maskEdgeB;
-                const centerCheckSize = 28;
-                if (maskCenterR - maskCenterL >= centerCheckSize) {
-                    const delta = (maskCenterR - maskCenterL - centerCheckSize) / 2;
-                    maskCenterL += delta;
-                    maskCenterR -= delta;
-                }
-                if (maskCenterB - maskCenterT >= centerCheckSize) {
-                    const delta = (maskCenterB - maskCenterT - centerCheckSize) / 2;
-                    maskCenterT += delta;
-                    maskCenterB -= delta;
+                if (backContextForDebug) {
+                    backContextForDebug.fillStyle = `rgb(255, 128, 83)`;
+                    backContextForDebug.fillRect(maskEdgeL + bestDelta, 0, 1, backCanvasForDebug.height);
+                    backContextForDebug.fillRect(maskEdgeR + bestDelta, 0, 1, backCanvasForDebug.height);
+                    backContextForDebug.fillRect(0, maskEdgeT + offsetT, backCanvasForDebug.width, 1);
+                    backContextForDebug.fillRect(0, maskEdgeB + offsetT, backCanvasForDebug.width, 1);
+
+                    const backImageData = backContext.getImageData(maskEdgeL + bestDelta, maskEdgeT + offsetT, maskEdgeR - maskEdgeL, maskEdgeB - maskEdgeT);
+                    const back0123 = to0123(backImageData.data, front0123);
+                    translateColorLevels(backImageData.data, back0123);
+                    backContextForDebug.putImageData(backImageData, maskEdgeL + bestDelta, maskEdgeT + offsetT);
                 }
 
-                const possiblePosArr = [];
-                const maskColors = frontContext.getImageData(maskCenterL, maskCenterT, maskCenterR - maskCenterL, maskCenterB - maskCenterT).data;
-                for (let alpha = 0.3; alpha <= 0.7; alpha += 0.05) {
-                    const grayMask = [...gapMaskColor, 255 * alpha];
-                    const mixedColors = mixColors(maskColors, grayMask);
-                    for (let xDelta = 45; xDelta < backCanvas.width - 50; xDelta++) {
-                        const checkColors = backContext.getImageData(maskCenterL + offsetL + xDelta, maskCenterT + offsetT, maskCenterR - maskCenterL, maskCenterB - maskCenterT).data;
-                        const diff = colorDiff(mixedColors, checkColors);
-                        if (diff < 25) {
-                            if (possiblePosArr.length > 0 && possiblePosArr[0].diff < diff) {
-
-                            }
-                            else {
-                                if (possiblePosArr.length > 0 && possiblePosArr[0].diff > diff) {
-                                    possiblePosArr.splice(0, possiblePosArr.length);
-                                }
-                                possiblePosArr.push({
-                                    diff: diff,
-                                    alpha: alpha,
-                                    delta: xDelta
-                                });
-                            }
-                        }
-                    }
-                }
-                if (possiblePosArr.length) {
-                    // 如果仅通过 diff 判定出多个最优解，则还需要通过扩大mask的范围，一直到diff有唯一最小值
-                    let spreadSize = 12;
-                    while (possiblePosArr.length > 1) {
-                        const maskColors = frontContext.getImageData(maskCenterL - spreadSize, maskCenterT - spreadSize, maskCenterR - maskCenterL + spreadSize * 2, maskCenterB - maskCenterT + spreadSize * 2).data;
-                        for (let item of possiblePosArr) {
-                            const grayMask = [...gapMaskColor, 255 * item.alpha];
-                            const mixedColors = mixColors(maskColors, grayMask);
-                            const checkColors = backContext.getImageData(maskCenterL - spreadSize + item.delta + offsetL, maskCenterT - spreadSize + offsetT, maskCenterR - maskCenterL + spreadSize * 2, maskCenterB - maskCenterT + spreadSize * 2).data;
-                            item.spreadDiff = colorDiff(mixedColors, checkColors);
-                            item.spreadSize = spreadSize;
-                        }
-                        possiblePosArr.sort((o1, o2) => o1.spreadDiff - o2.spreadDiff);
-                        for (let i = 1; i < possiblePosArr.length; i++) {
-                            if (possiblePosArr[i].spreadDiff !== possiblePosArr[0].spreadDiff) {
-                                possiblePosArr.splice(i, possiblePosArr.length - i);
-                                break;
-                            }
-                        }
-                        spreadSize += 1;
-                    }
-
-                    const bestPos = possiblePosArr[0];
-
-                    if (frontCanvasForDebug) {
-                        frontContextForDebug.fillStyle = `rgba(0,120,255,0.5)`;
-                        frontContextForDebug.fillRect(maskCenterL, maskCenterT, maskCenterR - maskCenterL, maskCenterB - maskCenterT);
-                    }
-
-                    if (backCanvasForDebug) {
-                        backContextForDebug.fillStyle = `rgba(255,120,0,0.4)`;
-                        backContextForDebug.fillRect(bestPos.delta + maskCenterL + offsetL, maskCenterT + offsetT, maskCenterR - maskCenterL, maskCenterB - maskCenterT);
-                        possiblePosArr.forEach(item => console.log(item));
-                        console.log("拖动距离：" + (bestPos.delta + offsetL));
-                    }
-
-                    return bestPos.delta + offsetL;
-                }
+                return bestDelta - offsetL;
                 // end
             }
         }, jigsawInfo);
@@ -1213,12 +1202,12 @@ export class PuppeteerUtil {
             ];
         }, sliderSelector);
 
-        const dur = Math.min(Math.max(dragDistance / 240, 0.45), 0.9);
+        const dur = Math.min(Math.max(dragDistance / 180, 0.45), 0.9);
         // 拖动到正确的位置
         await this.drag(topPage,
             [dragPoint[0] + frameLeft, dragPoint[1] + frameTop],
             [dragPoint[0] + frameLeft + dragDistance, dragPoint[1] + frameTop + Math.random() * 6 - 3],
-            dur, 60, "quarticInOut");
+            dur, dragDistance / 8, "quarticInOut");
     }
 
 }
