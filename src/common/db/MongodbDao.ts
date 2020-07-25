@@ -178,4 +178,15 @@ export class MongodbDao extends DbDao {
         });
     }
 
+    aggregate(collectionName, aggs: any[]): Promise<Pager> {
+        return new Promise<any>( (resolve, reject) => {
+            this.dbPromise.then(async (db: Db) => {
+                const collection = db.collection(collectionName);
+                collection.aggregate(aggs, { allowDiskUse: true }).toArray((err, docs) => {
+                    PromiseUtil.rejectOrResolve(reject, err, resolve, docs);
+                });
+            });
+        });
+    }
+
 }
