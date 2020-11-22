@@ -5,10 +5,19 @@ import {Page} from "./Page";
 
 export class PuppeteerWorkerFactory implements WorkerFactory<Page> {
 
+    private launchOptions: LaunchOptions;
+
     private browser: Promise<Browser>;
 
     constructor(launchOptions?: LaunchOptions) {
         logger.info("init " + PuppeteerWorkerFactory.name + " ...");
+        if (!launchOptions) {
+            launchOptions = {};
+        }
+        if (!launchOptions.userDataDir) {
+            // 防止 puppeteer不正常关闭情况下，在临时目录创建大量puppeteer临时文件，占用大量磁盘空间
+            launchOptions.userDataDir = "workplace/puppeteer_default"
+        }
         if (launchOptions.args == null) {
             launchOptions.args = [];
         }
@@ -16,10 +25,22 @@ export class PuppeteerWorkerFactory implements WorkerFactory<Page> {
             // 解决iframe跨域情况下page.frames可能找不到某些iframe的bug
             launchOptions.args.push("--disable-features=site-per-process");
         }
-        this.browser = launch(launchOptions).then(browser => {
+        this.launchOptions = launchOptions;
+        this.reopenChrome().then(() =>  {
             logger.info("init " + PuppeteerWorkerFactory.name + " successfully");
-            return browser;
-        });
+        })
+    }
+
+    async reopenChrome() {
+        if (this.browser) {
+            try {
+                await (await this.browser).close();
+            }
+            catch (e) {
+                logger.error(e);
+            }
+        }
+        this.browser = launch(this.launchOptions);
     }
 
     workerType(): any {
@@ -29,7 +50,12 @@ export class PuppeteerWorkerFactory implements WorkerFactory<Page> {
     get(): Promise<Page> {
         return new Promise<Page>(resolve => {
             this.browser.then(async browser => {
-                const page = await browser.newPage();
+                const isConnected = browser.isConnected();
+                if (!isConnected) {
+                    // 重启浏览器
+                    await this.reopenChrome();
+                }
+                const page = await (await this.browser).newPage();
                 await PuppeteerWorkerFactory.exPage(page);
                 resolve(page);
             });
