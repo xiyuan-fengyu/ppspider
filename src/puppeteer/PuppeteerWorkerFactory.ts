@@ -2,7 +2,7 @@ import {Browser, launch, LaunchOptions} from "puppeteer";
 import {WorkerFactory} from "../spider/worker/WorkerFactory";
 import {logger} from "../common/util/logger";
 import {Page} from "./Page";
-import fs from "fs";
+import * as fs from "fs";
 
 export class PuppeteerWorkerFactory implements WorkerFactory<Page> {
 
