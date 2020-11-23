@@ -46,7 +46,7 @@
     "@types/cron": "^1.7.0",
     "@types/nedb": "^1.8.5",
     "@types/mongodb": "^3.1.27",
-    "@types/node": "^11.9.4",
+    "@types/node": "^12.10.0",
     "@types/puppeteer": "1.20.3",
     "@types/request": "^2.48.1",
     "@types/socket.io": "^2.1.2",

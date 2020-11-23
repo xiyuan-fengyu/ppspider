@@ -2,6 +2,7 @@ import {Browser, launch, LaunchOptions} from "puppeteer";
 import {WorkerFactory} from "../spider/worker/WorkerFactory";
 import {logger} from "../common/util/logger";
 import {Page} from "./Page";
+import fs from "fs";
 
 export class PuppeteerWorkerFactory implements WorkerFactory<Page> {
 
@@ -38,6 +39,22 @@ export class PuppeteerWorkerFactory implements WorkerFactory<Page> {
             }
             catch (e) {
                 logger.error(e);
+            }
+        }
+        if (this.launchOptions.userDataDir && fs.existsSync(this.launchOptions.userDataDir)) {
+            const mvAndRmPath = this.launchOptions.userDataDir + "_rm_" + new Date().getTime();
+            try {
+                fs.renameSync(this.launchOptions.userDataDir, mvAndRmPath);
+            }
+            catch (e) {
+                try {
+                    fs.renameSync(this.launchOptions.userDataDir, mvAndRmPath);
+                }
+                catch (e) {
+                }
+            }
+            if (fs.existsSync(mvAndRmPath)) {
+                fs.rmdir(mvAndRmPath, {recursive: true}, () => {});
             }
         }
         this.browser = launch(this.launchOptions);
