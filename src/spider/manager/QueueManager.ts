@@ -122,9 +122,7 @@ export class QueueManager {
         await PromiseUtil.wait(() => this.runningNum <= 0, 500, Defaults.shutdownTimeout);
         if (this.runningNum > 0) {
             // 发出强行终止任务的信号
-            setTimeout(() => {
-                appInfo.eventBus.emit(Events.QueueManager_InterruptJob, null, "system shutdown");
-            }, 0);
+            await appInfo.eventBus.emit(Events.QueueManager_InterruptJob, null, "system shutdown");
             await PromiseUtil.wait(() => this.runningNum <= 0, 500);
         }
         if (this.runningNum > 0) this.failNum += this.runningNum;
@@ -1001,10 +999,7 @@ export class QueueManager {
                             interrupted = true;
                             reject(new Error(Events.QueueManager_InterruptJob + ": " + reason));
                             if (jobId) {
-                                // 这里必须要setTimeout才能通知成功，很奇怪
-                                setTimeout(() => {
-                                    appInfo.eventBus.emit(Events.QueueManager_InterruptJobSuccess(jobId));
-                                }, 0);
+                                appInfo.eventBus.emit(Events.QueueManager_InterruptJobSuccess(jobId));
                             }
                         }
                     };
@@ -1073,7 +1068,7 @@ export class QueueManager {
                 queueInfo.tryFail = (queueInfo.tryFail || 0) + 1;
             }
 
-            appInfo.eventBus.emit(Events.QueueManager_JobExecuted, {
+            await appInfo.eventBus.emit(Events.QueueManager_JobExecuted, {
                 job: job,
                 worker: worker,
                 queues: this.simpleQueueInfos()

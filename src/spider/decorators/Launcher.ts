@@ -22,6 +22,7 @@ import {getBean} from "../../common/bean/Bean";
 import {Job} from "../job/Job";
 import {MongodbDao} from "../../common/db/MongodbDao";
 import {NedbDao} from "../../common/db/NedbDao";
+import {EventBus} from "../Events";
 
 
 
@@ -87,12 +88,11 @@ export function Launcher(appConfig: AppConfig) {
     logger.setting = appConfig.logger;
 
     // 初始化消息总线
-    appInfo.eventBus = new EventEmitter();
-    appInfo.eventBus.setMaxListeners(1024);
+    appInfo.eventBus = new EventBus();
     for (let onEventConfig of onEventConfigs) {
         appInfo.eventBus.on(onEventConfig.event, (...args: any) => {
             const target = getBean(onEventConfig.target);
-            target[onEventConfig.method].call(target, ...args);
+            return target[onEventConfig.method].call(target, ...args);
         });
     }
 

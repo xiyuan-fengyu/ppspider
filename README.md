@@ -518,9 +518,10 @@ Job 面板可以对所有子任务实例进行搜索，查看任务详情
     参数类型，导致 page 参数无法正常注入，这个错误在启动过程中就会检查出来。  
           
 # 更新日志
-2020-12-07 v2.2.4-preview.1607319165789
+2020-12-07 v2.2.4-preview.1607348673979
 1. 修改puppeteer默认的userDataDir，防止puppeteer意外崩溃的情况下，产生过多临时文件夹    
 2. QueueManager_JobExecuted 事件传递参数中增加 worker 的信息   
+3. 重写 EventBus，使得可以等待异步通知  
 
 2020-04-07 v2.2.3  
 1. 解决跨域情况下，page.frames可能找不到iframe的bug    

@@ -8,6 +8,7 @@ import {QueueManager} from "./manager/QueueManager";
 import {LoggerSetting} from "../common/util/logger";
 import {WebServer} from "./ui/WebServer";
 import {DbDao} from "../common/db/DbDao";
+import {EventBus} from "./Events";
 
 export type Class_Queue = new () => Queue;
 
@@ -112,7 +113,7 @@ export interface AppInfo extends AppConfig {
 
     webServer: WebServer;
 
-    eventBus: EventEmitter;
+    eventBus: EventBus;
 
     db: DbDao;
 

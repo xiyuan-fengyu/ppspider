@@ -1,25 +1,35 @@
-import {AddToQueue, Events, FromQueue, Job, Launcher, OnEvent, OnStart} from "../..";
+import {
+    AddToQueue,
+    appInfo,
+    Events,
+    FromQueue,
+    Job,
+    Launcher,
+    OnEvent,
+    OnStart,
+    Page, PromiseUtil,
+    PuppeteerWorkerFactory
+} from "../..";
 
 class TestTask {
 
-    @OnStart({urls: ""})
-    @AddToQueue({name: "sub"})
-    async rootJob() {
-        return ["job0", "job1", "job2"];
-    }
-
-    @FromQueue({name: "sub"})
-    async subJob(job: Job) {
-        console.log("execute: " + job.url);
+    @OnStart({urls: "https://www.baidu.com"})
+    async start(job: Job, page: Page) {
+        await page.goto(job.url);
     }
 
     @OnEvent(Events.QueueManager_JobExecuted)
-    async onQueueInfoChanged(event: any) {
-        if (event.job.queue == "sub"
-            && event.queues.sub.running == 0
-            && event.queues.sub.remain == 0) {
-            console.log("all jobs finished");
-        }
+    async testEvent(info: {
+        job: Job,
+        worker: Page,
+        queues: any
+    }) {
+        await info.worker.screenshot({
+            path: appInfo.workplace + "/test.jpg",
+            type: "jpeg",
+            quality: 95,
+            encoding: "binary"
+        });
     }
 
 }
@@ -30,6 +40,9 @@ class TestTask {
         TestTask
     ],
     workerFactorys: [
+        new PuppeteerWorkerFactory({
+            headless: false
+        })
     ],
     webUiPort: 9001
 })
