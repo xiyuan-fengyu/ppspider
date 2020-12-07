@@ -560,7 +560,7 @@ Job panel: search jobs and view details
 
 
 # Update Note  
-2020-12-07 v2.2.4-preview.1607348673979
+2020-12-07 v2.2.4-preview.1607350101966
 1. Modify puppeteer's default userDataDir to prevent generating excessive temporary folders when puppeteer crashes unexpectedly  
 2. Add worker info in QueueManager_JobExecuted event    
 3. rewrite EventBus to await EventBus.emit   

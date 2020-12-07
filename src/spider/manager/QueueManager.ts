@@ -1068,11 +1068,16 @@ export class QueueManager {
                 queueInfo.tryFail = (queueInfo.tryFail || 0) + 1;
             }
 
-            await appInfo.eventBus.emit(Events.QueueManager_JobExecuted, {
-                job: job,
-                worker: worker,
-                queues: this.simpleQueueInfos()
-            });
+            try {
+                await appInfo.eventBus.emit(Events.QueueManager_JobExecuted, {
+                    job: job,
+                    worker: worker,
+                    queues: this.simpleQueueInfos()
+                });
+            }
+            catch (e) {
+                logger.error(e);
+            }
 
             if (job.status == JobStatus.RetryWaiting) {
                 await this.addJobToQueue(job, null, job.queue, queueInfo.queue, null);
