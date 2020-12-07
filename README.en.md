@@ -560,6 +560,10 @@ Job panel: search jobs and view details
 
 
 # Update Note  
+2020-12-07 v2.2.4-preview.1607319165789
+1. Modify puppeteer's default userDataDir to prevent generating excessive temporary folders when puppeteer crashes unexpectedly  
+2. Add worker info in QueueManager_JobExecuted event     
+
 2020-04-07 v2.2.3  
 1. fix bug: in case of cross-domain, page.frames may not find some iframes.        
 2. optimize PuppeteerUtil.dragJigsaw implementation to improve accuracy.    

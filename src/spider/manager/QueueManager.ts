@@ -955,11 +955,6 @@ export class QueueManager {
                             const interval = (queueInfo.config.exeInterval || 0)
                                 + (Math.random() * 2 - 1) * queueInfo.config.exeIntervalJitter;
                             this.queueParallelNextExeTimes[queueName][curParallelIndex] = new Date().getTime() + interval;
-                        }).then(() => {
-                            appInfo.eventBus.emit(Events.QueueManager_JobExecuted, {
-                                job: job,
-                                queues: this.simpleQueueInfos()
-                            });
                         });
                     }
                     else break;
@@ -1077,6 +1072,12 @@ export class QueueManager {
                 // 队列中每尝试失败一次，该队列尝试失败的次数就加1
                 queueInfo.tryFail = (queueInfo.tryFail || 0) + 1;
             }
+
+            appInfo.eventBus.emit(Events.QueueManager_JobExecuted, {
+                job: job,
+                worker: worker,
+                queues: this.simpleQueueInfos()
+            });
 
             if (job.status == JobStatus.RetryWaiting) {
                 await this.addJobToQueue(job, null, job.queue, queueInfo.queue, null);
