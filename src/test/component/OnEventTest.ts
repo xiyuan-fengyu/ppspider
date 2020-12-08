@@ -16,6 +16,10 @@ class TestTask {
     @OnStart({urls: "https://www.baidu.com"})
     async start(job: Job, page: Page) {
         await page.goto(job.url);
+        page.on("dialog", dialog => {
+            return dialog.accept();
+        });
+        await page.evaluate(() => confirm("test"));
     }
 
     @OnEvent(Events.QueueManager_JobExecuted)
