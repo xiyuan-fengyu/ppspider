@@ -68,8 +68,8 @@ npm install -g typescript
 
 ## Prepare the development environment
 Recommended IDEA(Ultimate version)  
-![Ultimate 版本截图](https://s1.ax1x.com/2018/06/13/CO6qRf.png)    
-  
+![Ultimate 版本截图](https://raw.githubusercontent.com/xiyuan-fengyu/ppspider/master/github/1.png)  
+
 Nodejs And Javascript Configuration in IDEA   
 ![nodejs-config.png](https://i.loli.net/2019/07/11/5d2747dff288e83940.png)  
 ![javascript-config.png](https://i.loli.net/2019/07/11/5d2747e00f32352225.png)  
