@@ -71,18 +71,17 @@ Recommended IDEA(Ultimate version)
 ![Ultimate 版本截图](https://raw.githubusercontent.com/xiyuan-fengyu/ppspider/master/github/1.png)  
 
 Nodejs And Javascript Configuration in IDEA   
-![nodejs-config.png](https://i.loli.net/2019/07/11/5d2747dff288e83940.png)  
-![javascript-config.png](https://i.loli.net/2019/07/11/5d2747e00f32352225.png)  
+![nodejs-config.png](https://raw.githubusercontent.com/xiyuan-fengyu/ppspider/master/github/2.png)  
+![javascript-config.png](https://raw.githubusercontent.com/xiyuan-fengyu/ppspider/master/github/3.png)
 
 ## Download And Run ppspider_example
 ppspider_example github address  
 https://github.com/xiyuan-fengyu/ppspider_example  
 ### Clone ppspider_example with IDEA   
 Warning: git is required and the executable file path of git should be set in IDEA  
-![IDEA git 配置](https://s1.ax1x.com/2018/06/13/COcr6S.png)
-
-![IDEA clone from git](https://s1.ax1x.com/2018/06/13/COc6mQ.png)  
-![IDEA clone from git](https://s1.ax1x.com/2018/06/13/COccwj.png)
+![IDEA git 配置](https://raw.githubusercontent.com/xiyuan-fengyu/ppspider/master/github/4.png)
+![IDEA clone from git](https://raw.githubusercontent.com/xiyuan-fengyu/ppspider/master/github/5.png)  
+![IDEA clone from git](https://raw.githubusercontent.com/xiyuan-fengyu/ppspider/master/github/6.png)
 
 ### Install npm dependencies  
 Click "Terminal" on the bottom side of IDEA to open a terminal and run the following command 
@@ -116,7 +115,7 @@ https://github.com/xiyuan-fengyu/ppspider_docker_deploy/blob/master/README.en.md
 10. Depth-First-Search，DFS (By default, DefaultQueue is breadth-first search) [DepthFirstSearchApp](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/examples/DepthFirstSearchApp.ts)  
 11. request + cheerio, crawling static web pages [QuotesToScrapeApp](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/examples/QuotesToScrapeApp.ts)  
 12. [Music 163](https://music.163.com) download [Music163App](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/examples/Music163App.ts)  
-    ![Music 163 download result](https://i.loli.net/2019/06/26/5d132eb516fb762204.png)   
+    ![网易云音乐爬取结果](https://raw.githubusercontent.com/xiyuan-fengyu/ppspider/master/github/7.png)   
 13. [ProxyPool](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/examples/ProxyPoolApp.ts)  
 14. [Bandcamp Music download](https://github.com/banbuchunqiu/ppspider_bandcamp)    
 15. Set max try num of job [SetMaxTryApp](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/examples/SetMaxTryApp.ts)  
@@ -355,16 +354,16 @@ You should import the DataUiClass in @Launcher appConfig.dataUis
 There is a built-in DataUi DbHelperUi which can support db search        
   
 [example 1 DataUi basic usage](https://github.com/xiyuan-fengyu/ppspider/blob/master/src/test/dataUi/test.ts)  
-![nedbHelper.png](https://i.loli.net/2019/04/04/5ca5c313d92c4.png)  
-![dataUiTest1.png](https://i.loli.net/2019/04/04/5ca5c380b5c04.png)  
-![dataUiTest2.png](https://i.loli.net/2019/04/04/5ca5c3d152c72.png)  
-  
+![nedbHelper.png](https://raw.githubusercontent.com/xiyuan-fengyu/ppspider/master/github/8.png)  
+![dataUiTest1.png](https://raw.githubusercontent.com/xiyuan-fengyu/ppspider/master/github/9.png)  
+![dataUiTest2.png](https://raw.githubusercontent.com/xiyuan-fengyu/ppspider/master/github/10.png)  
+
 [example 2 Add Dynamic Job On UI](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/dataUi/App.ts)  
-![动态任务.png](https://i.loli.net/2019/04/04/5ca5c060b5462.png)  
-  
+![动态任务.png](https://raw.githubusercontent.com/xiyuan-fengyu/ppspider/master/github/11.png)  
+
 [example 3 Web Page Screenshot](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/dataUi/ScreenshotApp.ts)  
 Long web page screenshot is also supported     
-![网页截图.png](https://i.loli.net/2019/04/04/5ca5c172afff3.png)
+![网页截图.png](https://raw.githubusercontent.com/xiyuan-fengyu/ppspider/master/github/12.png)  
 
 ## PuppeteerUtil
 ### PuppeteerUtil.defaultViewPort
@@ -506,7 +505,7 @@ export class TestTask {
 ```
 
 In addition, when developing DataUi, you can debug it in browser  
-![DataUiDebug.png](https://i.loli.net/2019/04/04/5ca5ca3417d49.png)  
+![DataUiDebug.png](https://raw.githubusercontent.com/xiyuan-fengyu/ppspider/master/github/13.png)  
 
 # Related Information 
 ## jQuery
@@ -537,10 +536,10 @@ write the ui interface directly in DataUi.
 open http://localhost:9000 in browser  
 
 Queue panel: view and control app status  
-![Queue Help](https://s1.ax1x.com/2018/06/13/COcgTs.png)  
+![Queue Help]((https://raw.githubusercontent.com/xiyuan-fengyu/ppspider/master/github/14.png))  
 
 Job panel: search jobs and view details  
-![ppspiderJobs.en.png](https://i.loli.net/2018/08/29/5b862f27e2809.png)
+![ppspiderJobs.cn.png]((https://raw.githubusercontent.com/xiyuan-fengyu/ppspider/master/github/15.png))  
 
 # Question
 1. When running an app in idea under debug mode after a long time, the application may get stucked

@@ -72,18 +72,17 @@ IDEA一定要下载 Ultimate 版本，否则有很多功能无法使用
 ![Ultimate 版本截图](https://raw.githubusercontent.com/xiyuan-fengyu/ppspider/master/github/1.png)  
 
 IDEA中 nodejs 和 javascript 配置  
-![nodejs-config.png](https://i.loli.net/2019/07/11/5d2747dff288e83940.png)  
-![javascript-config.png](https://i.loli.net/2019/07/11/5d2747e00f32352225.png)  
+![nodejs-config.png](https://raw.githubusercontent.com/xiyuan-fengyu/ppspider/master/github/2.png)  
+![javascript-config.png](https://raw.githubusercontent.com/xiyuan-fengyu/ppspider/master/github/3.png)  
 
 ## 下载运行 ppspider_example
 ppspider_example github 地址  
 https://github.com/xiyuan-fengyu/ppspider_example  
 ### 在IDEA中clone ppspider_example 
 需要先安装git，并在IDEA中配置git的可执行文件的路径  
-![IDEA git 配置](https://s1.ax1x.com/2018/06/13/COcr6S.png)
-
-![IDEA clone from git](https://s1.ax1x.com/2018/06/13/COc6mQ.png)  
-![IDEA clone from git](https://s1.ax1x.com/2018/06/13/COccwj.png)
+![IDEA git 配置](https://raw.githubusercontent.com/xiyuan-fengyu/ppspider/master/github/4.png)
+![IDEA clone from git](https://raw.githubusercontent.com/xiyuan-fengyu/ppspider/master/github/5.png)  
+![IDEA clone from git](https://raw.githubusercontent.com/xiyuan-fengyu/ppspider/master/github/6.png)
 
 ### 安装项目的npm依赖  
 点击 IDEA 底下工具栏的 Terminal，打开命令行面板，输入如下命令安装依赖  
@@ -131,7 +130,7 @@ https://github.com/xiyuan-fengyu/ppspider_docker_deploy
 10. Depth-First-Search，DFS 深度优先搜索例子（通常情况下用 DefaultQueue 是广度优先搜索） [DepthFirstSearchApp](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/examples/DepthFirstSearchApp.ts)  
 11. request + cheerio 抓取静态网站的例子 [QuotesToScrapeApp](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/examples/QuotesToScrapeApp.ts)  
 12. [网易云音乐](https://music.163.com)下载 [Music163App](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/examples/Music163App.ts)  
-    ![网易云音乐爬取结果](https://i.loli.net/2019/06/26/5d132eb516fb762204.png)   
+    ![网易云音乐爬取结果](https://raw.githubusercontent.com/xiyuan-fengyu/ppspider/master/github/7.png)   
 13. 代理池 [ProxyPool](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/examples/ProxyPoolApp.ts)    
 14. [Bandcamp Music download](https://github.com/banbuchunqiu/ppspider_bandcamp)  
 15. 设置job的最大尝试次数 [SetMaxTryApp](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/examples/SetMaxTryApp.ts)  
@@ -317,16 +316,16 @@ export function RequestMapping(url: string, method: "" | "GET" | "POST" = "") {}
 系统内置了一个DbHelperUi，引入这个DataUi后，在UI界面上添加一个名为“Db Helper”的tab页，可以辅助查询数据库中的数据    
   
 [example 1 DataUi 基本功能演示](https://github.com/xiyuan-fengyu/ppspider/blob/master/src/test/dataUi/test.ts)  
-![nedbHelper.png](https://i.loli.net/2019/04/04/5ca5c313d92c4.png)  
-![dataUiTest1.png](https://i.loli.net/2019/04/04/5ca5c380b5c04.png)  
-![dataUiTest2.png](https://i.loli.net/2019/04/04/5ca5c3d152c72.png)  
+![nedbHelper.png](https://raw.githubusercontent.com/xiyuan-fengyu/ppspider/master/github/8.png)  
+![dataUiTest1.png](https://raw.githubusercontent.com/xiyuan-fengyu/ppspider/master/github/9.png)  
+![dataUiTest2.png](https://raw.githubusercontent.com/xiyuan-fengyu/ppspider/master/github/10.png)   
   
 [example 2 演示UI界面动态添加任务的例子](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/dataUi/App.ts)  
-![动态任务.png](https://i.loli.net/2019/04/04/5ca5c060b5462.png)  
+![动态任务.png](https://raw.githubusercontent.com/xiyuan-fengyu/ppspider/master/github/11.png)   
   
 [example 3 网页截图工具](https://github.com/xiyuan-fengyu/ppspider_example/blob/master/src/dataUi/ScreenshotApp.ts)  
 支持超长网页截图  
-![网页截图.png](https://i.loli.net/2019/04/04/5ca5c172afff3.png)
+![网页截图.png](https://raw.githubusercontent.com/xiyuan-fengyu/ppspider/master/github/12.png)  
 
 ## 工具类 PuppeteerUtil
 ### PuppeteerUtil.defaultViewPort
@@ -463,7 +462,7 @@ export class TestTask {
 ```
 
 另外，开发者在开发 DataUi 时，界面部分也是在浏览器中调试  
-![DataUiDebug.png](https://i.loli.net/2019/04/04/5ca5ca3417d49.png)  
+![DataUiDebug.png](https://raw.githubusercontent.com/xiyuan-fengyu/ppspider/master/github/13.png)  
 
 # 相关知识
 ## jQuery
@@ -498,10 +497,10 @@ web ui中集成了 bootstrap, jquery，方便在DataUi中可以直接使用boots
 # 控制界面
 使用浏览器打开 http://localhost:9000  
 Queue 面板可以查看和管理整个系统中子任务的运行情况  
-![Queue Help](https://s1.ax1x.com/2018/06/13/COc4pV.png)  
+![Queue Help]((https://raw.githubusercontent.com/xiyuan-fengyu/ppspider/master/github/14.png))  
 
 Job 面板可以对所有子任务实例进行搜索，查看任务详情  
-![ppspiderJobs.cn.png](https://i.loli.net/2018/08/29/5b862ef9b9dd5.png)
+![ppspiderJobs.cn.png]((https://raw.githubusercontent.com/xiyuan-fengyu/ppspider/master/github/15.png))  
 
 # 问题
 1. 在idea中使用debug模式运行时，运行较长一段时间后，代码可能会停在某一行，就像断点停住一样，
