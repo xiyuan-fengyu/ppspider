@@ -497,10 +497,10 @@ web ui中集成了 bootstrap, jquery，方便在DataUi中可以直接使用boots
 # 控制界面
 使用浏览器打开 http://localhost:9000  
 Queue 面板可以查看和管理整个系统中子任务的运行情况  
-![Queue Help]((https://raw.githubusercontent.com/xiyuan-fengyu/ppspider/master/github/14.png))  
+![Queue Help](https://raw.githubusercontent.com/xiyuan-fengyu/ppspider/master/github/14.png)  
 
 Job 面板可以对所有子任务实例进行搜索，查看任务详情  
-![ppspiderJobs.cn.png]((https://raw.githubusercontent.com/xiyuan-fengyu/ppspider/master/github/15.png))  
+![ppspiderJobs.cn.png](https://raw.githubusercontent.com/xiyuan-fengyu/ppspider/master/github/15.png)  
 
 # 问题
 1. 在idea中使用debug模式运行时，运行较长一段时间后，代码可能会停在某一行，就像断点停住一样，

@@ -536,10 +536,10 @@ write the ui interface directly in DataUi.
 open http://localhost:9000 in browser  
 
 Queue panel: view and control app status  
-![Queue Help]((https://raw.githubusercontent.com/xiyuan-fengyu/ppspider/master/github/14.png))  
+![Queue Help](https://raw.githubusercontent.com/xiyuan-fengyu/ppspider/master/github/14.png)  
 
 Job panel: search jobs and view details  
-![ppspiderJobs.cn.png]((https://raw.githubusercontent.com/xiyuan-fengyu/ppspider/master/github/15.png))  
+![ppspiderJobs.cn.png](https://raw.githubusercontent.com/xiyuan-fengyu/ppspider/master/github/15.png)  
 
 # Question
 1. When running an app in idea under debug mode after a long time, the application may get stucked
