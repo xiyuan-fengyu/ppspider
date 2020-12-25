@@ -1,4 +1,5 @@
-[English document](https://github.com/xiyuan-fengyu/ppspider/blob/master/README.en.md)
+[English document](https://github.com/xiyuan-fengyu/ppspider/blob/master/README.en.md)  
+交流qq群 725187346  
 
 <!-- toc -->
 
